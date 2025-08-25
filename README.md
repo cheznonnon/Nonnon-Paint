@@ -3,4 +3,5 @@
 
 you can use Xcode to build.
 
-GitHub in Xcode is completely broken. so this repo will be deleted and regenerate when changed.
+GitHub in Xcode is completely broken.
+use "GitHub Desktop".
