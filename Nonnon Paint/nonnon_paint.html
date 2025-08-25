@@ -1,0 +1,1358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+
+
+<head>
+
+	<title>Nonnon Paint</title>
+
+
+	<meta
+		http-equiv = "Content-Type"
+		content    = "text/html; charset=utf-8"
+	>
+
+
+	<style type="text/css">
+
+
+	body {
+
+		margin           : 0px;
+
+		font-family      : "Trebuchet MS", sans-serif;
+		font-weight      : bold;
+
+		background-color : rgb( 255,255,255 );
+		color            : rgb(   0,150,200 );
+
+		border-width     : 0px 8px 0px 8px;
+		border-style     : solid;
+		border-color     : rgb(   0,200,255 );
+
+		scrollbar-3dlight-color    : rgb( 255,255,255 );
+		scrollbar-darkshadow-color : rgb( 255,255,255 );
+
+		scrollbar-shadow-color     : rgb( 222,222,222 );
+		scrollbar-highlight-color  : rgb( 222,222,222 );
+		scrollbar-base-color       : rgb( 255,255,255 );
+		scrollbar-face-color       : rgb( 255,255,255 );
+
+		scrollbar-arrow-color      : rgb(   0,200,255 );
+
+	}
+
+
+	a {
+
+		color            : rgb( 200,  0,150 );
+
+	}
+
+
+	hr {
+
+		border-width     : 1px 0px 1px 0px;
+		border-style     : solid;
+		border-color     : rgb( 222,222,222 );
+
+	}
+
+
+	pre {
+
+		width            : 80%;
+		overflow         : hidden;
+
+		padding          : 8px;
+
+		font-family      : "Trebuchet MS", sans-serif;
+		font-size        : 100%;
+		font-weight      : normal;
+
+		background-color : rgb( 255,255,255 );
+		color            : rgb(   0,100,150 );
+
+		border-width     : 1px;
+		border-style     : solid;
+		border-color     : rgb(   0,200,255 );
+
+		border-radius    : 16px;
+		border-width     :  2px;
+
+		text-align       : left;
+
+	}
+
+	.info {
+
+		width            : 95%;
+
+		font-family      : "Osaka-Mono", sans-serif;
+		font-size        : 80%;
+		font-weight      : normal;
+
+		background-color : rgb( 250,250,250 );
+		color            : rgb( 111,111,111 );
+
+		border-width     : 1px;
+		border-style     : dashed;
+		border-color     : rgb( 222,222,222 );
+
+	}
+
+
+	::selection {
+
+		background-color : rgb(   0,200,255 );
+		color            : rgb( 255,255,255 );
+
+	}
+
+	::-moz-selection {
+
+		background-color : rgb(   0,200,255 );
+		color            : rgb( 255,255,255 );
+
+	}
+
+
+	@media ( prefers-color-scheme : dark ) {
+
+		body {
+
+			margin           : 0px;
+
+			font-family      : "Trebuchet MS", sans-serif;
+			font-weight      : bold;
+
+			background-color : rgb(  66, 66, 66 );
+			color            : rgb( 240,240,240 );
+
+			border-width     : 0px 8px 0px 8px;
+			border-style     : solid;
+			border-color     : rgb(   0,200,255 );
+
+			scrollbar-3dlight-color    : rgb(  66, 66, 66 );
+			scrollbar-darkshadow-color : rgb(  66, 66, 66 );
+
+			scrollbar-shadow-color     : rgb(  66, 66, 66 );
+			scrollbar-highlight-color  : rgb(  66, 66, 66 );
+			scrollbar-base-color       : rgb(  66, 66, 66 );
+			scrollbar-face-color       : rgb( 111,111,111 );
+
+			scrollbar-arrow-color      : rgb(   0,200,255 );
+
+		}
+
+
+		a {
+
+			color            : rgb( 222,  0,150 );
+
+		}
+
+
+		hr {
+
+			border-width     : 1px 0px 1px 0px;
+			border-style     : solid;
+			border-color     : rgb( 222,222,222 );
+
+		}
+
+
+		pre {
+
+			width            : 80%;
+			overflow         : hidden;
+
+			padding          : 8px;
+
+			font-family      : "Trebuchet MS", sans-serif;
+			font-size        : 100%;
+			font-weight      : normal;
+
+			background-color : rgb(  66, 66, 66 );
+			color            : rgb( 240,240,240 );
+
+			border-width     : 1px;
+			border-style     : solid;
+			border-color     : rgb(   0,200,255 );
+
+			border-radius    : 16px;
+			border-width     :  2px;
+
+			text-align       : left;
+
+		}
+
+		.info {
+
+			width            : 95%;
+
+			font-family      : "Osaka-Mono", sans-serif;
+			font-size        : 80%;
+			font-weight      : normal;
+
+			background-color : rgb(  33, 33, 33 );
+			color            : rgb( 240,240,240 );
+
+			border-width     : 1px;
+			border-style     : dashed;
+			border-color     : rgb( 111,111,111 );
+
+		}
+
+
+		::selection {
+
+			background-color : rgb(   0,200,255 );
+			color            : rgb( 255,255,255 );
+
+		}
+
+		::-moz-selection {
+
+			background-color : rgb(   0,200,255 );
+			color            : rgb( 255,255,255 );
+
+		}
+
+	}
+
+
+	img {
+
+		border-width     : 0px;
+		border-style     : none;
+
+	}
+
+
+	p.title {
+
+		font-size        : 200%;
+		font-weight      : bold;
+
+	}
+
+
+	p.header {
+
+		font-size        : 150%;
+		font-weight      : bold;
+
+	}
+
+	</style>
+
+</head>
+
+
+<body>
+<center>
+
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="title">
+		Nonnon Paint
+	</p>
+
+<pre class="article">
+
+	Graphics Editor
+
+
+	hand-made-only-painter
+
+		for everyone who loves painting
+
+
+	good
+
+		image with sharp contrast
+
+		+ dot-based, pop-art
+
+
+		image with complexity
+
+		+ fine art
+
+	bad
+
+		accurate geometric objects
+
+		+ 3D, draw-based
+
+
+	largest editable size
+
+		20000 x 20000
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Global Tips
+	</p>
+
+<pre class="article">
+
+	menu-click emulator
+
+		press shift key, then click
+
+		+ Pen     : color picker
+		+ Grabber : finish
+		+ Save    : change format
+
+
+	for Mos app users
+
+		please register "Exception" list
+
+		+ and uncheck "Smooth"
+		+ you can easily register when Nonnon Paint is running
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Limitation of Lite Version
+	</p>
+
+<pre class="article">
+
+	Lite Version is under App Sandbox
+
+	[ so you cannot do ... ]
+
+		alias resolver is not available
+
+		+ a path is not accessible
+
+		Multi-Layer is not available
+
+		+ programmers cannot make a folder and files for saving
+
+	[ Full Version is here ]
+
+		<a href="https://github.com/cheznonnon/Nonnon_for_Mac">download from here</a>
+
+	[ How to check Lite or not ]
+
+		see titlebar of tool window
+
+			"Nonnon Paint Lite" is lite version
+			"Nonnon Paint" is full version
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		HowToUse
+	</p>
+
+<pre class="article">
+
+	Open
+
+		drop an image file or a folder (when Nonnon Multi-Layer)
+
+		[ Supported Formats ]
+
+			BMP / ICO / CUR / PNG / JPG / Nonnon Multi-Layer
+
+			[ load as PNG only ]
+
+			Tiff / WebP / JPEG2000 and more by macOS system
+
+
+	Save
+
+		press a diskette icon button
+
+		+ see below "Tool Window" for details
+
+		[ Important ]
+
+			data are not auto-saved
+
+			+ this is like Windows apps
+			+ for easy to undo (undo is not implemented)
+
+
+	Close
+
+		press the close button
+
+		+ never say "Do you really want to exit?" or like that
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Tool Window
+	</p>
+
+<pre class="article">
+
+	[ Scrollbars ]
+
+
+	Size
+
+		pen size
+
+
+	Mix
+
+		smoothness
+
+		+ percentage between a canvas and a picked color
+		+ nothing will happen when 0, only for exercise
+
+
+	Boost
+
+		precision booster
+
+		+ useful when pen size is 1px or 3px
+
+		+ zero means OFF
+
+
+	Air
+
+		air brush
+
+		+ zero means OFF
+
+
+	Zoom
+
+		stretch a canvas
+
+
+	A R G B
+
+		set a color
+
+		+ menu-click to pick a color on a canvas
+
+		[ Canvas Gray Margin ]
+
+			you can get a color ARGB( 0,255,255,255 )
+
+		[ Multi-Layer ]
+
+			Cmd + menu-click to pick a top-most color
+
+
+	[ Icon Buttons : Upper ]
+
+		[ Applied area ]
+
+			[ Pen / Fill ]
+
+				all canvas and the grabbed area
+
+			[ Grabber ]
+
+				the grabbed area
+				all canvas when not grabbed
+
+
+	1 : Shrink : 1/2
+
+		less memory, less precision
+
+
+	2 : Enlarge : x2
+
+		more memory, more precision
+
+
+	3 : Mirror
+
+		left side right effect
+
+		+ for adjusting balance or for removing distortion
+
+
+	4 : Rotate : Left
+	5 : Rotate : Right
+
+		make a round
+
+		+ for adjusting balance or for removing distortion
+
+
+	[ Icon Buttons : Middle ]
+
+
+	1 : Blank
+	2 : Blank
+	3 : Blank
+
+	4 : Resizer
+
+		a special window will appear
+
+		+ see below for details
+
+
+	5 : Save
+
+		an overwrite button
+
+		+ menu-click to change formats
+		+ rotation : BMP => ICO => CUR => JPG => PNG => Layer
+
+
+	[ Icon Buttons : Lower ]
+
+
+	[ Pen Mode ]
+
+
+	1 : Pen
+
+		round pen
+
+
+	2 : Fill
+
+		flushing with a picked color into a closed area
+
+		+ as same as "bucket tool" or "closed area"
+
+		Smooth Fill
+
+			press Comamnd key when click
+
+			+ currently fill-as-chunk only available
+			+ you cannot use black(RGB 0,0,0) as filling color
+
+
+	3 : Grabber
+
+		cut and paste tool
+
+
+		[ Usage ]
+
+			1 : drag to select an area
+			2 : drag to move
+			3 : menu-click to paste
+
+			+ to clear selection, press a button again
+
+			+ you can resize when dots are accent color
+
+
+		[ Checkbox : Per-Pixel Alpha Blending ]
+
+			alpha value will be used
+
+
+		[ Scrollbar : Blend ]
+
+			Global Blending On/Off
+
+		[ Combobox : Style ]
+
+			Ant   : animated edged frame
+			Pixel : pixel unit frame
+
+			+ Nonnon Paint remembers the last setting
+
+
+		[ Key Bindings ]
+
+			Arrow       : move a grabbed area
+
+			Command + C : "Drag OK" : copy / re-grabbing
+			Command + V : "Drag OK" : paste
+
+			Command + A : "Neutral" : select all
+
+			Z           : hide frame temporarily
+
+
+		[ Double Click ]
+
+			"Neutral" : select all
+			"Drag OK" : reset to starting position
+
+
+		[ Quick Stretch ]
+
+			[ Proportional ]
+
+			start to drag while pressing Command key
+
+			[ Transform ]
+
+			start to drag while pressing Command key and Option key
+
+
+		[ Quick Layer ]
+
+			you can paint on the grabbed area
+			select another tool while "Drag OK"
+
+			+ too much complicated tool, use carefully!
+
+			[ Eraser ]
+
+				canvas color will be copied to the grabbed area
+
+				1 : colorpicker : pick from gray margin
+				2 : paint it
+
+				+ you can use any full-transparent colors
+
+
+		[ Drop2Save ]
+
+			you can save an image to desktop when drop to out of canvas
+
+
+		[ Drop ]
+
+			load as a new grabbed area
+
+			+ position will be zero when you drop to Tool Window
+
+
+	4 : Blank
+
+
+	5 : Color History
+
+		dispklay picked colors and more
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Resizer
+	</p>
+
+<pre class="article">
+
+	Resize Option
+
+		margin color will be invisible white
+
+
+		Center
+
+			auto-centering
+
+		Fit
+
+			proportional stretching
+
+			+ "Lock X" : Y will be auto-calculated
+			+ "Lock Y" : X will be auto-calculated
+
+		Tile
+
+			copy as repeating pattern
+
+		Top-Left
+
+			original image remains in top-left corner
+
+		Transform
+
+			stretching
+
+		Pixelart 2x
+		Pixelart 3x
+		Cel Art 2x
+
+			enlarge with special algorithm
+
+			+ 2x will be twice, 3x will be 3 times larger
+
+			+ "Pixelart" : effective with dot-based images
+			+ "Cel Art"  : effective with anime-like images
+
+
+	Size
+
+		input fields for output size
+
+
+	Round
+
+		rotate by degree ( -360 <=> 0 <=> +360 )
+
+
+	---
+
+
+	Color Option
+
+		None
+
+			do nothing
+
+		Grayscale
+
+			output grayscaled bitmap
+
+			+ simple average based algorithm
+
+		Monochrome
+
+			output black and white image
+
+		Reverse
+
+			output RGB reversed image
+
+			+ ( 255 - n ) is used
+
+		Color Reduction
+
+			Nonnon Smart Color Reduction
+
+			+ use with PNG files for shrinking size
+			+ this can reduce 20% to 50%
+
+		Auto White Balance
+
+			for picutres
+
+			+ very strong tool
+
+		Squircle Icon Maker
+
+			make an icon for Mac
+
+		Contour
+
+			auto contour
+
+			+ alpha sensitive version of Monochrome
+
+			[ Conditions ]
+
+				background has alpha zero
+
+			[ Usage ]
+
+				for thicker contour, use this many times
+				an output image is jaggy as intended
+
+				+ use "Fill" and "Color Replacer" to remove garbage pixels
+				+ you can use "Thicken Lines" of Multi-Layer too
+
+	Gamma
+
+		gamma correction, for tweaking brightness
+
+		+ image will become black at 0.0
+		+ image will become white at 2.0 by adjustment
+
+
+	Color Wheel
+
+		tweak color itself
+
+		+ for changing color after painted
+		+ useless for whole canvas, useful for Grabber
+
+		+ this is the same as Hue in HSL colorspace
+
+
+	Vividness
+
+		tweak vividness
+
+		+ this is the same as Saturation in HSL colorspace
+
+
+	Sharpness
+
+		tweak sharpness
+
+		+  plus value :   sharpen filter
+		+ minus value : smoothing filter
+
+		+ smoothing filter is also known as "Anti-alias"
+		+ use before shrinking
+
+
+	Contrast
+
+		tweak contrast
+
+		+ very strong tool, use a small value
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Menu
+	</p>
+
+<pre class="article">
+
+	Preview
+
+		preview on/off
+
+		+ useful for large image
+		+ you can resize to stretch, useful for remove distortion
+
+	Grid
+
+		helper grid on/off
+
+		+ useful when free-handed images
+		+ display canvas centerline and guideline
+
+		+ Nonnon Paint remembers the last setting
+
+
+	Pixel Grid
+
+		add frame around a pixel
+
+		+ useful when dot-based images
+
+		+ Nonnon Paint remembers the last setting
+
+
+	Alpha Emphasizer
+
+		for cleaning alpha garbages
+
+		+ yellow color is blended when alpha has non-visible value
+
+		+ Nonnon Paint remembers the last setting
+
+	---
+
+
+	Clear Canvas / Clear Grabbed Area
+
+		make a canvas empty
+
+		[ How to make a color balanced area ]
+
+			1 : Grabber : select all
+			2 : Clear Canvas : choose a color
+			3 : tweak blend ratio
+			4 : paste it
+			5 : Fill : margin
+
+			+ you can tweak everything
+			+ like RGB / CMY / Black / White
+
+
+	Color Replacer
+
+		replace a color for another color
+
+		+ for dot-based images
+
+
+	Alpha Tweaker
+
+		Clear
+
+			set visible to all alpha values
+
+
+		Reverse
+
+			reverse all alpha values
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Wheel Mouse Support
+	</p>
+
+<pre class="article">
+
+	Canvas
+
+		wheeling     : zooming
+		wheel button : grab and drag scrolling
+
+
+	Scrollbars
+
+		wheeling     : scroll up/down when a cursor is hovering
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Keyboard Support
+	</p>
+
+<pre class="article">
+
+	1
+
+		Preview
+
+		+ same as "Preview" on menu
+
+	Z
+
+		Quick Eraser
+
+		+ color will be eraser color while pressing
+
+	X
+
+		Quick Blur
+
+		+ pen input with antialias only
+		+ picked color is not used
+
+	C
+
+		Multi-Layer Whole Eraser
+
+		+ all layers are applicable
+
+	F2
+
+		fork the current image
+
+		+ rename to today's date and time
+
+	F3
+
+		Multi-Layer : used layer indicator
+
+		+ for removing pixel noises
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		PNG Support
+	</p>
+
+<pre class="article">
+
+	typical format only available
+
+	[ Limitaion ]
+
+		saved format might be different from opened format
+
+		only basic information will be saved
+		file size may bloat
+		automatically convert to minimal size
+
+		less colors make better compression
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Jpeg Support
+	</p>
+
+<pre class="article">
+
+	fully supported by macOS
+
+	[ Limitaion ]
+
+		transparent color is not supported by format
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Multi-Layer Support
+	</p>
+
+<pre class="article">
+
+	at first, you need to save with a save button
+
+	this is very complicated tool, use carefully
+
+	[ Format ]
+
+		a folder which has "nonnon_paint.ini" and "0.png"
+
+		+ default least layer number is 16 layers
+		+ you can control via "nonnon_paint.ini"
+
+		+ don't remove "0.png"
+
+	[ Layer Window UI ]
+
+		+ layer order is upside down with Photoshop or GIMP
+		+ because of easy to implement and to be scalable
+
+		click
+
+			select an editable layer
+
+		double click
+
+			[ TxtBox ]
+
+			visibility on/off
+
+			+ italic font is used when OFF
+
+		menu click
+
+			[ Up/Down ]
+
+			focus up/down
+
+			[ Rename ]
+
+			you can name each layer
+
+			+ you can use enter key to turn on/off
+			+ available when a layer window has focus
+
+			+ enter key : inline edit
+			+ via menu  : external window
+
+			+ if you meet troubles, use external window
+
+			[ All On/Off ]
+
+			all layers turn on/off
+
+			[ This Only ]
+
+			turn off except for a selected layer
+
+			[ Thicken Lines ]
+			[ Thin Lines ]
+
+			make lines thicker/thinner
+
+			+ background : argb(   0,255,255,255 )
+			+ foreground : color on color picker
+
+			[ Add A New Layer ]
+
+			add a new layer
+
+			+ if you make flare-like effect,
+			+ fill a wanted color with alpha zero before use it
+
+		"Whole Preview" checkbox
+
+			virtually all layers are visible
+
+		"Whole Grab" checkbox
+
+			effect many layers at once
+
+			+ this will apply only visible layers
+
+		"Whole Save" checkbox
+
+			Drop2Save behavior will change
+
+			On  : save as one image (default)
+			Off : a current layer only
+
+			+ turn on when "Whole Grab" is used
+
+		"Blur" scroller
+
+			for focus blur emulation
+
+			+ you need not to break images
+
+		"Blend" scroller
+
+			opacity 0% to 100%
+
+		key input
+
+			it works when a cursor is on the layer window
+
+		Shift + Up/Down Arrow
+
+			swap
+
+		[ Special Layer ]
+
+			a name started by "*" is handled as special
+
+			+ Read-only     : not editable
+			+ Whole Grab    : ignored
+			+ Whole Preview : ignored
+
+			+ for Background, Dessin
+
+	[ Basic UI ]
+
+		Pen and Fill
+
+			these will be applied visible layers only
+
+		Save
+
+			you can save via layer saver only
+			other savers mean to save as one image
+
+		Resizer
+
+			resize option will be applied a whole layer
+
+			color option will be applied visible layers only
+
+		Buttons on a Tool Window
+
+			effect will be applied a whole layer
+
+		Menu Effect ("Clear Canvas" or so)
+
+			effect will be applied visible layers only
+
+	[ How to use ]
+
+		[ Open ]
+
+		drop a folder or drop "nonnon_paint.ini"
+
+		[ Workflow ]
+
+		line for upper layer, color for lower layer
+
+		+ this is like animation cel
+
+	[ Known Problems ]
+
+		heavy
+
+			machine power is required
+			+ many CPU cores make better performance
+
+			+ turn off visibility in unused layers
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Nonnon INI2GDI Script
+	</p>
+
+<pre class="article">
+
+	make below code as a text file then drop to Nonnon Paint
+
+	[ Single-Layer / Simple Version ]
+<pre class="info">
+
+[Nonnon INI2GDI]
+
+size               = 256 256
+style              = smooth contour shadow
+layout             = vertical
+align              = center
+
+base_color         = 255 255 255 255, 255 0 200 255
+base_style         = vertical
+
+text               = "Nonnon INI2GDI"
+text_font          = Arial, 33
+text_color         = 255 255 255 255, 255 0 150 200
+text_color_shadow  = 255   0 100 150
+text_color_contour = 255   0 150 200
+text_style         = bold gradient
+text_fxsize        = 1 2
+
+</pre>	[ Multi-Layer ]<pre class="info">
+
+[Nonnon INI2GDI Layer]
+
+0 = "Nonnon INI2GDI Layer #0"
+1 = "Nonnon INI2GDI Layer #1"
+2 = "Nonnon INI2GDI Layer #2"
+
+
+[Nonnon INI2GDI Layer #0]
+
+size               = 256 256
+base_color         = 255 255 255 255, 255 0 200 255
+base_style         = vertical
+
+frame_style        = round
+frame_fxsize       = 32
+
+
+[Nonnon INI2GDI Layer #1]
+
+layer              = 0 0 25
+size               = 256 256
+
+base_color         = 255 255 255 255, 255 0 200 255
+base_style         = gingham
+base_unit          = 32
+
+frame_style        = round
+frame_fxsize       = 32
+
+
+[Nonnon INI2GDI Layer #2]
+
+layer              = 0 0 0
+
+size               = 256 256
+style              = smooth contour shadow
+layout             = vertical
+align              = center
+
+base_color         = 0 255 255 255
+
+text               = "Nonnon INI2GDI"
+text_font          = Arial, 33
+text_color         = 255 255 255 255, 255 0 150 200
+text_color_shadow  = 255   0 100 150
+text_color_contour = 255   0 150 200
+text_style         = bold gradient
+text_fxsize        = 1 2
+
+</pre>	Reference is here<pre class="info">
+
+[Nonnon INI2GDI::Reference::Mac Version]
+
+some options are not available
+
+
+
+
+[Nonnon INI2GDI::Reference]
+
+size               = x y
+style              = [ combination  ] default | gray | clarity | nomargin | automargin | pressed | systemcolor
+layout             = [ one of these ] horizontal | vertical
+align              = [ combination  ] center | top | bottom | left | right
+scale              = frame wll be larger
+                     default is 1
+                     -1 means "auto / use a system setting"
+
+base               = file_name, index
+base_color         = A1 R1 G1 B1, A2 R2 G2 B2 : background, foreground
+base_style         = Basics   : solid
+                     Gradient : vertical | horizontal | rectangle | circle
+                     Pattern  : polkadot | polkadot_pop | polkadot_rnd
+                     Pattern  : rect_tile
+                     Pattern  : gingham | tartan | stripe | checker
+                     Mimic    : luna | luna_press
+                     Image    : image | image_tile
+base_unit          = unit size for polkadot | rect_tile | gingham | tartan | stripe
+base_margin        = margin for polkadot or rect_tile
+
+frame_style        = [ one of these ] noframe | simple | flat | button | scroll | push | sink | etch | luna | round | rpg | aqua
+frame_fxsize       = round for "round" or "rpg" : default is "4"
+frame_corner_color = A R G B : for "luna" "round"
+
+icon               = file_name, index
+icon_color_shadow  = A1 R1 G1 B1
+icon_color_contour = A1 R1 G1 B1
+icon_color_sink    = A1 R1 G1 B1, A2 R2 G2 B2 : *1 for top-left, *2 for bottom-right
+icon_style         = [ combination  ] default | ( shadow | shadow_fog ) | ( contour | contour_fog | sink ) | stretch | tile
+icon_size          = x y
+icon_fxsize        = o1 o2 : offset1 for shadow, offset2 for contour/sink
+
+text               = file_name
+text_font          = font_name, size
+text_color         = A1 R1 G1 B1, A2 R2 G2 B2 : color, gradient color
+text_color_shadow  = A1 R1 G1 B1
+text_color_contour = A1 R1 G1 B1
+text_color_sink    = A1 R1 G1 B1, A2 R2 G2 B2 : *1 for top-left, *2 for bottom-right
+text_style         = [ combination  ] bold | italic | underline | strikeout | fixed | smooth | clear | gradient
+                     [ combination  ] default | ( shadow | shadow_fog ) | ( contour | contour_fog | sink )
+text_fxsize        = o1 o2 : offset1 for shadow, offset2 for contour/sink
+
+
+
+
+[Nonnon INI2GDI::Details]
+
+layer              = x y blend(%) rotate(360degree)
+                     not used with the first layer
+
+size               = 0 means "auto adjustment"
+style              = icon/text both : ( shadow | shadow_fog ) | ( contour | contour_fog | sink )
+align              = only "size" is set, not used when "auto adjustment"
+
+base_style         = luna  : foreground will be hover/focus frame, zero means off
+                     image, image_tile : load with "base"
+
+frame_style        = Flat    : simple | flat | etch | luna | round | rpg | aqua
+                     3D      : button
+                     Pushed  : push(deep) | sink(shallow)
+
+text               = a single line will be drawn when a file is not exist
+text_font          = some styles need empty name
+
+icon               = Explorer Compatible : EXE DLL ICO CUR ...
+                     Image Loader        : BMP PNG JPG GIF
+icon_style         = stretch             : stretch when "icon_size" is larger than image size
+                     tile                : other parameters are not used
+icon_size          = Explorer Compatible : margin will be added
+                     Image Loader        : an image will be resized
+
+icon_clip          = "image name(.BMP or .PNG)", offset_x, offset_y : use non-draw area
+
+</pre>
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+	<p class="header">
+		Support Forum
+	</p>
+
+<pre class="article">
+
+	feel free to report/complain
+
+	<a href="https://github.com/cheznonnon/Forum/discussions">click here</a>
+
+</pre>
+
+<hr><!------------------------------------------------------------------->
+
+</center>
+</body>
+
+
+</html>
+

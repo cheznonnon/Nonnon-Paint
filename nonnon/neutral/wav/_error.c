@@ -1,0 +1,38 @@
+// Nonnon Nyaurism
+// copyright (c) nonnon all rights reserved
+// License : GPL http://www.gnu.org/copyleft/gpl.html
+
+
+
+
+#ifndef _H_NONNON_NEUTRAL_WAV_ERROR
+#define _H_NONNON_NEUTRAL_WAV_ERROR
+
+
+
+
+#include "../wav.c"
+
+
+
+
+n_posix_bool
+n_wav_error_format( const n_wav *wav )
+{
+
+	if ( n_wav_error( wav ) ) { return n_posix_true; }
+
+
+	if (     2 != N_WAV_STEREO( wav ) ) { return n_posix_true; }
+	if (    16 != N_WAV_BIT   ( wav ) ) { return n_posix_true; }
+	if ( 44100 != N_WAV_RATE  ( wav ) ) { return n_posix_true; }
+
+
+	return n_posix_false;
+}
+
+
+
+
+#endif // _H_NONNON_NEUTRAL_WAV_ERROR
+
