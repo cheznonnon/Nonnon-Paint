@@ -8,6 +8,12 @@
 
 
 
+#define N_TXTBOX_INDICATOR_SEARCH n_mac_nscolor_argb( 255,255,  0,128 )
+#define N_TXTBOX_INDICATOR_CARET  n_mac_nscolor_argb( 255,  0,200,255 )
+
+
+
+
 void
 n_mac_image_alpha_grow( n_bmp *bmp, u32 color_replace, n_type_real d )
 {
@@ -1694,7 +1700,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 						if ( n_search_marker[ i ] )
 						{
 							NSRect rect = NSMakeRect( scr_x, i * step, scrsx, 1 );
-							n_mac_draw_box( n_mac_nscolor_argb( 255,255,0,0 ), rect );
+							n_mac_draw_box( N_TXTBOX_INDICATOR_SEARCH, rect );
 						}
 
 						i++;
@@ -1767,6 +1773,13 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 				NSRect   rct = NSMakeRect( scr_x,scr_y, scrsx,scrsy );
 				n_mac_draw_roundrect( clr, rct, scrsx / 2 );
 			}
+
+
+			// [!] : caret indicator on a shaft
+
+			NSRect rect = NSMakeRect( scr_x, offset_y + ( step * n_focus ), scrsx, 1 );
+			n_mac_draw_box( N_TXTBOX_INDICATOR_CARET, rect );
+
 
 			n_bmp_flip_onoff = n_posix_false;
 		}
