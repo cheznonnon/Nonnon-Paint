@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		83E4AAEB2E5FEFB5001E85C9 /* libturbojpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 83E4AAEA2E5FEFB5001E85C9 /* libturbojpeg.a */; };
 		8431F24A28DA64F000ED9B2D /* rc in Resources */ = {isa = PBXBuildFile; fileRef = 8431F24928DA64F000ED9B2D /* rc */; };
 		8434AC1628D00DE200B69397 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8434AC1528D00DE200B69397 /* AppDelegate.m */; };
 		8434AC1828D00DE300B69397 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8434AC1728D00DE300B69397 /* Assets.xcassets */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		83E4AAEA2E5FEFB5001E85C9 /* libturbojpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libturbojpeg.a; sourceTree = "<group>"; };
 		8431F24928DA64F000ED9B2D /* rc */ = {isa = PBXFileReference; lastKnownFileType = folder; path = rc; sourceTree = "<group>"; };
 		8434AC1128D00DE200B69397 /* Nonnon Paint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Nonnon Paint.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8434AC1428D00DE200B69397 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -33,6 +35,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83E4AAEB2E5FEFB5001E85C9 /* libturbojpeg.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +69,7 @@
 				8434AC1D28D00DE300B69397 /* main.m */,
 				8434AC1F28D00DE300B69397 /* Nonnon_Paint.entitlements */,
 				8463848B28F2519300D86DC5 /* nonnon_paint.html */,
+				83E4AAEA2E5FEFB5001E85C9 /* libturbojpeg.a */,
 				8431F24928DA64F000ED9B2D /* rc */,
 			);
 			path = "Nonnon Paint";
@@ -98,7 +102,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					8434AC1028D00DE200B69397 = {
 						CreatedOnToolsVersion = 12.4;
@@ -165,7 +169,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -228,7 +231,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -300,7 +302,11 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Nonnon\\ Paint",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2025.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nonnon.Nonnon-Paint";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -328,7 +334,11 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Nonnon\\ Paint",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2025.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "Nonnon.Nonnon-Paint";
 				PRODUCT_NAME = "$(TARGET_NAME)";

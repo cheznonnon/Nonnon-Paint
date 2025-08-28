@@ -94,22 +94,20 @@
 #ifdef N_POSIX_PLATFORM_MAC
 
 
-#define N_JPG_NO_MEM_API
-#include "../floss/libjpeg.c"
+//#define N_JPG_NO_MEM_API
+//#include "../floss/libjpeg.c"
 
 
 // [!] : hard to explain
 //
-//	1 : use Homebrew to install libjpeg
-//	2 : "/opt/homebrew/opt" has link
+//	1 : download .dmg from libjpeg-turbo site
+//	2 : "/opt/libjpeg-turbo" is made
 //	3 : drop "lib/libjpeg.a" left pane of Xcode
 //	4 : include "include/*.h"
-//	5 : "Build Settings" "Architectures" "Build Active Architecture Only" "Yes"
-//	6 : "General" "Minimum Deployments" set "Sequoia 15"
 //
-//	so, compatibility will be Sequoia 15 and M2 only
+//	don't use "Homebrew" : compatibility is narrow
 
-//#include "../mac/libjpeg/jpeglib.h"
+#include "../mac/libjpeg-turbo/jpeglib.h"
 
 
 #else  // #ifdef N_POSIX_PLATFORM_MAC
