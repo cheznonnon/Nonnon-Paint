@@ -95,8 +95,21 @@
 
 
 #define N_JPG_NO_MEM_API
-
 #include "../floss/libjpeg.c"
+
+
+// [!] : hard to explain
+//
+//	1 : use Homebrew to install libjpeg
+//	2 : "/opt/homebrew/opt" has link
+//	3 : drop "lib/libjpeg.a" left pane of Xcode
+//	4 : include "include/*.h"
+//	5 : "Build Settings" "Architectures" "Build Active Architecture Only" "Yes"
+//	6 : "General" "Minimum Deployments" set "Sequoia 15"
+//
+//	so, compatibility will be Sequoia 15 and M2 only
+
+//#include "../mac/libjpeg/jpeglib.h"
 
 
 #else  // #ifdef N_POSIX_PLATFORM_MAC
@@ -241,8 +254,8 @@ n_jpg_bmp2jpg( const n_posix_char *jpgname, const n_bmp *bmp_arg )
 
 #else  // #ifdef N_JPG_NO_MEM_API
 
-	u32  byte = 0;
-	u8  *ptr  = NULL;
+	size_t  byte = 0;
+	u8     *ptr  = NULL;
 
 	jpeg_mem_dest       ( &jcs, &ptr, &byte );
 
