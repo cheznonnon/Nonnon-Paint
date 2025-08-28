@@ -1179,7 +1179,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	return;
 }
 
-- (void) NonnonTxtboxDoubleclickDetect:(BOOL)smart_selection_onoff
+- (void) NonnonTxtboxDoubleclickDetect:(BOOL)smart_selection_onoff tab_patch:(BOOL)tab_patch
 {
 //return;
 
@@ -1260,12 +1260,20 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		||
 		( line[ caret_fr.cch.x ] == '\t' )
 		||
-		( ( caret_fr.cch.x > 0 )&&( line[ caret_fr.cch.x - 1 ] == '\t' ) )
+		(
+			( tab_patch )
+			&&
+			( ( caret_fr.cch.x > 0 )&&( line[ caret_fr.cch.x - 1 ] == '\t' ) )
+		)
 	)
 	{
 //NSLog( @"blank" );
 
-		if ( ( caret_fr.cch.x > 0 )&&( line[ caret_fr.cch.x - 1 ] == '\t' ) )
+		if (
+			( tab_patch )
+			&&
+			( ( caret_fr.cch.x > 0 )&&( line[ caret_fr.cch.x - 1 ] == '\t' ) )
+		)
 		{
 			caret_fr.cch.x--;
 		}

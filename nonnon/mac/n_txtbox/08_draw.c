@@ -341,13 +341,13 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 	double d;
 
-	if ( [self window].keyWindow == FALSE )
+	if (
+		( [self window].keyWindow == FALSE )
+		||
+		( n_txtbox_first_responder != self )
+	)
 	{
-		d = 0.9;
-	} else
-	if ( n_txtbox_first_responder != self )
-	{
-		d = 0.9;
+		d = 0.1;
 	} else
 	if ( caret_blink_force_onoff )
 	{
@@ -383,18 +383,18 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	{
 		color_caret = n_bmp_white;
 	} else {
-		color_caret = n_bmp_black + 1;
+		color_caret = n_bmp_black;
 	}
 
 	//u32 color_caret = n_mac_nscolor2argb( [NSColor controlAccentColor] );
 
 
-	// [Needed] : 1.0 - d : invert needs re-reverse
+	rect.size.width = 1;
 
-	color = n_bmp_blend_pixel( color, color_caret, (double) 1.0 - d );
+	color = n_bmp_blend_pixel( color, color_caret, d );
 
 	NSColor *clr = n_mac_argb2nscolor( color );
-	n_mac_draw_box_invert( clr, rect );
+	n_mac_draw_box( clr, rect );
 
 }
 
@@ -420,7 +420,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 		{
 			//
 		} else {
-			NSRect rect = NSMakeRect( caret_pt.x, caret_pt.y - caret_centered_offset, 2, font_size.height );
+			NSRect rect = NSMakeRect( caret_pt.x, caret_pt.y - caret_centered_offset, 1, font_size.height );
 			[self NonnonTxtboxDrawCaretDraw:nil rect:rect color_bg:color_bg color_stripe:color_stripe focus:n_focus];
 		}
 	}
@@ -1359,7 +1359,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 					n_type_gfx oy = (n_type_gfx) scroll * font_size.height;
 					n_type_gfx  x = (n_type_gfx) padding + (n_type_gfx) ime_sx;
 					n_type_gfx  y = (n_type_gfx) offset_y + ime_caret_fr.pxl.y - oy - caret_centered_offset;
-					n_type_gfx sx = (n_type_gfx) 2;
+					n_type_gfx sx = (n_type_gfx) 1;
 					n_type_gfx sy = (n_type_gfx) font_size.height;
 
 					NSRect rect = NSMakeRect( x,y,sx,sy );

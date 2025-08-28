@@ -88,7 +88,7 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 			} else
 			if ( ( [theEvent clickCount] == 2 )&&( prev == [theEvent buttonNumber] ) )
 			{
-				[self NonnonTxtboxDoubleclickDetect:onoff];
+				[self NonnonTxtboxDoubleclickDetect:onoff tab_patch:YES];
 			} else
 			if ( [theEvent clickCount] == 1 )
 			{
@@ -133,7 +133,7 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 			} else
 			if ( ( [theEvent clickCount] == 2 )&&( prev == [theEvent buttonNumber] ) )
 			{
-				[self NonnonTxtboxDoubleclickDetect:onoff];
+				[self NonnonTxtboxDoubleclickDetect:onoff tab_patch:YES];
 			} else
 			if ( [theEvent clickCount] == 1 )
 			{
@@ -154,7 +154,7 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 		} else
 		if ( ( [theEvent clickCount] == 2 )&&( prev == [theEvent buttonNumber] ) )
 		{
-			[self NonnonTxtboxDoubleclickDetect:onoff];
+			[self NonnonTxtboxDoubleclickDetect:onoff tab_patch:YES];
 		} else
 		if ( [theEvent clickCount] == 1 )
 		{

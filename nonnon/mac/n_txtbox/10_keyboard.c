@@ -534,7 +534,7 @@
 		} else
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
-			[self NonnonTxtboxDoubleclickDetect:NO];
+			[self NonnonTxtboxDoubleclickDetect:NO tab_patch:NO];
 			caret_to = caret_fr;
 
 			n_posix_char *line = n_txt_get( n_txt_data, n_focus );
@@ -563,7 +563,7 @@
 		} else
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
-			[self NonnonTxtboxDoubleclickDetect:NO];
+			[self NonnonTxtboxDoubleclickDetect:NO tab_patch:NO];
 			caret_fr = caret_to;
 		} else {
 			[self NonnonTxtboxKeyboardMoveDetect:nil ud:0 lr:1 oneline:FALSE];

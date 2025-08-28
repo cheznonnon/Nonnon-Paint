@@ -39,13 +39,11 @@ n_mac_draw_box_invert( NSColor *color, NSRect rect )
 	// [x] : no change at all
 	//NSRectFillUsingOperation( rect, NSCompositingOperationXOR );
 
-	//n_mac_draw_box( color, rect );
+	n_mac_draw_box( color, rect );
 
 
-	// [!] Thx : DeepSeek AI
-
-	// [!] : black/white only works
-
+	// [x] : DeepSeek AI : something wrong
+/*
 	CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
 
 	CGContextSaveGState( context );
@@ -55,7 +53,7 @@ n_mac_draw_box_invert( NSColor *color, NSRect rect )
 	CGContextFillRect( context, rect );
 
 	CGContextRestoreGState( context );
-
+*/
 
 	return;
 }
