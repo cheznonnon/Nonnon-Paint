@@ -71,6 +71,9 @@
 #define N_MAC_TXTBOX_MODE_ONELINE ( 3 )
 
 
+#define N_MAC_TXTBOX_CARET_SIZE   ( 2 )
+
+
 
 
 #define N_MAC_TXTBOX_DRAW_LINENUMBER_NONE            ( 0 << 0 )
@@ -249,6 +252,7 @@ n_mac_txtbox_draw_linenumber
 
 @interface NonnonTxtbox ()
 
+
 @property n_type_int  n_focus;
 @property n_txt      *n_txt_data;
 @property n_txt      *n_txt_deco;
@@ -263,6 +267,7 @@ n_mac_txtbox_draw_linenumber
 
 @property BOOL        n_listbox_no_selection_onoff;
 @property BOOL        n_listbox_edit_onoff;
+@property BOOL        n_listbox_no_edit;
 
 @property n_bmp      *n_findbox_bmp_icon;
 
@@ -305,7 +310,6 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	BOOL        thumb_is_hovered;
 	BOOL        shaft_is_hovered;
 	CGFloat     thumb_offset;
-	BOOL        redraw_caret_only;
 	n_type_int  redraw_fy;
 	n_type_int  redraw_ty;
 	BOOL        is_grayed;
@@ -395,6 +399,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 @synthesize n_listbox_no_selection_onoff;
 @synthesize n_listbox_edit_onoff;
+@synthesize n_listbox_no_edit;
 
 @synthesize n_findbox_bmp_icon;
 
@@ -550,6 +555,101 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		if ( redraw ) { [self NonnonTxtboxRedraw]; }
 	}
 
+}
+
+
+
+
+- (void) NonnonTxtboxCaretCalculate
+{
+
+	// [!] : caret on the current screen
+
+	n_caret pt = caret_fr;
+
+	if ( caret_fr.cch.y == caret_to.cch.y )
+	{
+		if ( caret_fr.cch.y == n_focus )
+		{
+			if ( caret_fr.pxl.x == caret_to.pxl.x )
+			{
+//NSLog( @"==" );
+				//
+			} else
+			if ( caret_fr.pxl.x < caret_to.pxl.x )
+			{
+//NSLog( @"< : %0.2f %0.2f", caret_fr.pxl.x, caret_to.x );
+				pt = caret_to;
+			} else {
+//NSLog( @"> : %0.2f %0.2f", caret_fr.pxl.x, caret_to.x );
+				pt = caret_to;
+			}
+		}
+	} else
+	if ( caret_fr.cch.y < caret_to.cch.y )
+	{
+		if ( caret_to.cch.y == n_focus ) { pt = caret_to; }
+	} else
+	if ( caret_fr.cch.y > caret_to.cch.y )
+	{
+		if ( caret_to.cch.y == n_focus ) { pt = caret_to; }
+	}
+
+	caret_pt.x = padding + pt.pxl.x - 1;
+	caret_pt.y = offset_y + ( ( pt.cch.y - trunc( scroll ) ) * font_size.height );
+
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+	// [!] : Sonoma : popup indicator is implemented : this is used in the first time
+
+	ime_caret_fr = caret_fr;
+	ime_caret_to = caret_to;
+
+#endif
+
+
+	return;
+}
+
+- (BOOL) NonnonTxtboxCaretIsOnScreen
+{
+#ifdef N_TXTBOX_IME_ENABLE
+
+	if ( ime_onoff )
+	{
+		return FALSE;
+	}
+
+#endif
+
+
+	[self NonnonTxtboxCaretCalculate];
+
+
+	if ( n_focus < ( scroll - 1 ) ) { return FALSE; }
+
+
+	BOOL ret = FALSE;
+
+	if ( caret_fr.cch.y == caret_to.cch.y )
+	{
+		if ( caret_fr.cch.y == n_focus ) { ret = TRUE; }
+	} else
+	if ( caret_fr.cch.y < caret_to.cch.y )
+	{
+		if ( caret_to.cch.y == n_focus ) { ret = TRUE; }
+	} else
+	if ( caret_fr.cch.y > caret_to.cch.y )
+	{
+		if ( caret_to.cch.y == n_focus ) { ret = TRUE; }
+	}
+
+
+//NSLog( @"%lld : %d", n_focus, ret );
+
+
+	return ret;
 }
 
 
@@ -814,38 +914,40 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 //return;
 
-	if ( 1 )
-	{
-		// [!] : whole
+//NSLog( @"!" );
 
+	if ( smooth_wheel_delta )
+	{
 		[self NonnonTxtboxRedraw];
 	} else
 	if ( drag_timer_queue )
 	{
-		//
+		[self NonnonTxtboxRedraw];
 	} else
 	if ( is_key_input )
 	{
-		//
+		[self NonnonTxtboxRedraw];
 	} else
 	if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
 	{
 		[self NonnonTxtboxRedraw];
-	} else {
+	} else
+	if ( [self NonnonTxtboxCaretIsOnScreen] )
+	{
 		// [!] : partial
-
-		redraw_caret_only = TRUE;
 
 		redraw_fy = caret_to.cch.y;
 		redraw_ty = redraw_fy + 1;
 
 		CGFloat  x = caret_pt.x;
 		CGFloat  y = caret_pt.y - caret_centered_offset;
-		CGFloat sx = 1;
+		CGFloat sx = N_MAC_TXTBOX_CARET_SIZE;
 		CGFloat sy = font_size.height;
 //NSLog( @"%0.2f", caret_to.pxl.y );
 
 		[self NonnonTxtboxRedrawRect:NSMakeRect( x,y,sx,sy )];
+	} else {
+		[self NonnonTxtboxRedraw];
 	}
 
 }

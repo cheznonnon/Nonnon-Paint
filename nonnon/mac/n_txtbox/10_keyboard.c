@@ -255,9 +255,11 @@
 			}
 
 			[self NonnonTxtboxRedraw];
+
 		} else
 		if ( ( event.keyCode == N_MAC_KEYCODE_RETURN )||( event.keyCode == N_MAC_KEYCODE_ENTER ) )
 		{
+//NSLog( @"return 1" );
 			if ( ime_is_first == FALSE )
 			{
 				[self NonnonTxtboxInsert:ime_nsstr];
@@ -265,8 +267,8 @@
 
 			[ime discardMarkedText];
 			ime_nsstr = @"";
-			ime_onoff = FALSE;
 			ime_delay = FALSE;
+			ime_onoff = FALSE;
 
 			[self NonnonTxtboxUndo:N_TXTBOX_UNDO_REGISTER];
 			[self NonnonTxtboxRedraw];
@@ -293,10 +295,15 @@
 	{
 		if ( ( event.keyCode == N_MAC_KEYCODE_RETURN )||( event.keyCode == N_MAC_KEYCODE_ENTER ) )
 		{
+//NSLog( @"return 2" );
+
 			[ime discardMarkedText];
 			ime_nsstr = @"";
-			ime_onoff = FALSE;
 			ime_delay = FALSE;
+			ime_onoff = FALSE;
+
+			caret_blink_force_onoff = FALSE;
+			n_bmp_fade_init( &caret_blink_fade, n_bmp_black );
 
 			[self NonnonTxtboxRedraw];
 
@@ -443,10 +450,6 @@
 			[self NonnonTxtboxKeyboardMoveDetect:nil ud:-1 lr:0 oneline:FALSE];
 
 		}
-
-		// [!] : [self NonnonTxtboxRedraw] paints gray on all contents(client) area
-		//redraw_fy = caret_fr.cch.y;
-		//redraw_ty = redraw_fy + 2;
 
 		[self NonnonTxtboxCaretOutOfCanvasUpDown];
 		[self NonnonTxtboxRedraw];
@@ -596,6 +599,8 @@
 		if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
 		{
 			if ( n_txt_data->readonly ) { break; }
+
+			if ( self.n_listbox_no_edit ) { break; }
 
 			//[delegate NonnonTxtbox_delegate_listbox_rename:n_focus];
 

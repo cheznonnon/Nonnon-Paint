@@ -243,99 +243,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 
 
-- (void) NonnonTxtboxDrawCaretCalculate
-{
-
-	// [!] : caret on the current screen
-
-	n_caret pt = caret_fr;
-
-	if ( caret_fr.cch.y == caret_to.cch.y )
-	{
-		if ( caret_fr.cch.y == n_focus )
-		{
-			if ( caret_fr.pxl.x == caret_to.pxl.x )
-			{
-//NSLog( @"==" );
-				//
-			} else
-			if ( caret_fr.pxl.x < caret_to.pxl.x )
-			{
-//NSLog( @"< : %0.2f %0.2f", caret_fr.pxl.x, caret_to.x );
-				pt = caret_to;
-			} else {
-//NSLog( @"> : %0.2f %0.2f", caret_fr.pxl.x, caret_to.x );
-				pt = caret_to;
-			}
-		}
-	} else
-	if ( caret_fr.cch.y < caret_to.cch.y )
-	{
-		if ( caret_to.cch.y == n_focus ) { pt = caret_to; }
-	} else
-	if ( caret_fr.cch.y > caret_to.cch.y )
-	{
-		if ( caret_to.cch.y == n_focus ) { pt = caret_to; }
-	}
-
-	caret_pt.x = padding + pt.pxl.x - 1;
-	caret_pt.y = offset_y + ( ( pt.cch.y - trunc( scroll ) ) * font_size.height );
-
-
-#ifdef N_TXTBOX_IME_ENABLE
-
-	// [!] : Sonoma : popup indicator is implemented : this is used in the first time
-
-	ime_caret_fr = caret_fr;
-	ime_caret_to = caret_to;
-
-#endif
-
-
-	return;
-}
-
-- (BOOL) NonnonTxtboxDrawCaretIsOnScreen
-{
-#ifdef N_TXTBOX_IME_ENABLE
-
-	if ( ime_onoff )
-	{
-		return FALSE;
-	}
-
-#endif
-
-
-	[self NonnonTxtboxDrawCaretCalculate];
-
-
-	if ( n_focus < scroll ) { return FALSE; }
-
-
-	BOOL ret = FALSE;
-
-	if ( caret_fr.cch.y == caret_to.cch.y )
-	{
-		if ( caret_fr.cch.y == n_focus ) { ret = TRUE; }
-	} else
-	if ( caret_fr.cch.y < caret_to.cch.y )
-	{
-		if ( caret_to.cch.y == n_focus ) { ret = TRUE; }
-	} else
-	if ( caret_fr.cch.y > caret_to.cch.y )
-	{
-		if ( caret_to.cch.y == n_focus ) { ret = TRUE; }
-	}
-
-
-//NSLog( @"%lld : %d", n_focus, ret );
-
-
-	return ret;
-}
-
-- (void) NonnonTxtboxDrawCaretDraw:(void*)zero rect:(NSRect)rect color_bg:(u32)color_bg color_stripe:(u32)color_stripe focus:(n_type_int)focus
+- (void) NonnonTxtboxCaretDraw:(void*)zero rect:(NSRect)rect color_bg:(u32)color_bg color_stripe:(u32)color_stripe focus:(n_type_int)focus
 {
 //return;
 
@@ -389,41 +297,10 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	//u32 color_caret = n_mac_nscolor2argb( [NSColor controlAccentColor] );
 
 
-	rect.size.width = 1;
-
 	color = n_bmp_blend_pixel( color, color_caret, d );
 
 	NSColor *clr = n_mac_argb2nscolor( color );
 	n_mac_draw_box( clr, rect );
-
-}
-
-- (void) NonnonTxtboxDrawCaret_drawRect:(void*)n_nil
-	             max_sx:(CGFloat)max_sx
-	delete_circle_onoff:(BOOL)   delete_circle_onoff
-	           color_bg:(u32)    color_bg
-	       color_stripe:(u32)    color_stripe
-{
-//return;
-
-	if ( ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )&&( self.n_listbox_edit_onoff == FALSE ) )
-	{
-		//
-	} else
-	if ( delete_circle_fade_pressed_phase )
-	{
-		//
-	} else
-	if ( [self NonnonTxtboxDrawCaretIsOnScreen] )
-	{
-		if ( ( delete_circle_onoff )&&( caret_pt.x > max_sx ) )
-		{
-			//
-		} else {
-			NSRect rect = NSMakeRect( caret_pt.x, caret_pt.y - caret_centered_offset, 1, font_size.height );
-			[self NonnonTxtboxDrawCaretDraw:nil rect:rect color_bg:color_bg color_stripe:color_stripe focus:n_focus];
-		}
-	}
 
 }
 
@@ -520,7 +397,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	return ret;
 }
 
-- (void)drawRect:(NSRect)rect
+- (void)drawRect:(NSRect)dirtyRect
 {
 //NSLog( @"drawRect" );
 
@@ -532,59 +409,31 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	// [x] : Sonoma Xcode 15 : rect has window size at the first run
 
 	{
-		NSRect r = [super bounds];
+		NSRect rect_local = [super bounds];
 		if (
-			( r.size.width  < rect.size.width  )
+			( rect_local.size.width  < dirtyRect.size.width  )
 			||
-			( r.size.height < rect.size.height )
+			( rect_local.size.height < dirtyRect.size.height )
 		)
 		{
-			rect = r;
+			dirtyRect = rect_local;
 		}
 	}
 
 
-	// [!] : redraw
+	// [x] : partial redraw : not supported yet
 
-	BOOL is_whole_redraw;
+	BOOL whole_redraw;
 
-	if (
-		( self.frame.size.width  == rect.size.width  )
-		&&
-		( self.frame.size.height == rect.size.height )
-	)
+	if ( ( redraw_fy == -1 )||( redraw_ty == -1 ) )
 	{
-		is_whole_redraw = TRUE;
-	} else {
-		is_whole_redraw = FALSE;
-	}
+		whole_redraw = TRUE;
 
-	// [x] : partially redraw : too much hard to implement
-	//
-	//	drawRect will be called with as gray-filled image
-/*
-	BOOL debug = FALSE;
-	if ( redraw_fy == 0 )
-	{
-		debug = TRUE;
-	}
-*/
-
-	// [Patch] : not supported yet
-
-	if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
-	{
-		is_whole_redraw = TRUE;
-	}
-
-	if ( is_whole_redraw )
-	{
 		redraw_fy = 0;
 		redraw_ty = n_txt_data->sy;
+	} else {
+		whole_redraw = FALSE;
 	}
-
-	//redraw_fy = 1;
-	//redraw_ty = 2;
 
 
 	BOOL delete_circle_onoff = FALSE;
@@ -690,35 +539,13 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 #endif
 
 
-	// [!] : Fake Caret : Fast Mode
-
-	if ( is_whole_redraw )
-	{
-		//
-	} else
-	if ( ime_onoff )
-	{
-		//
-	} else
-	if ( redraw_caret_only )
-	{
-
-		[self NonnonTxtboxDrawCaret_drawRect:nil
-				     max_sx:( csx - csy + offset_x )
-			delete_circle_onoff:delete_circle_onoff
-				   color_bg:color_bg
-			       color_stripe:color_stripe
-		];
-
-		redraw_caret_only = FALSE;
-
-		return;
-	}
-
-
 	// [!] : Contents
 
-	if ( is_whole_redraw )
+	if (
+		( redraw_fy == 0 )
+		&&
+		( redraw_ty == n_txt_data->sy )
+	)
 	{
 		if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
 		{
@@ -847,8 +674,8 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 				findbox_border_blend = 0.0;
 			}
 
-			NSRect rect = n_mac_rect_resize( find_icon_rect, -2 );
-			[find_icon_cache_nsimage drawInRect:rect];
+			NSRect rect_local = n_mac_rect_resize( find_icon_rect, -2 );
+			[find_icon_cache_nsimage drawInRect:rect_local];
 		}
 	}
 
@@ -872,10 +699,6 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 #endif
 
-	NSRect r = NSMakeRect( padding, offset_y - caret_centered_offset, self.frame.size.width - ( offset_x * 2 ), font_size.height );
-
-	CGFloat max_sy = self.frame.size.height - ( offset_y * 2 );
-
 	NSRect listbox_rect = NSMakeRect( 0,0,0,0 );
 
 #ifdef N_TXTBOX_IME_ENABLE
@@ -887,78 +710,208 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 #endif
 
 
-	// [!] : before text rendering : for some fonts like "g"
+	// [!] : Background : before text rendering : for some fonts like "g"
+
+	NSRect rect_main = NSMakeRect( padding, offset_y - caret_centered_offset, self.frame.size.width - ( offset_x * 2 ), font_size.height );
+
+	CGFloat max_sy = self.frame.size.height - ( offset_y * 2 );
 
 	{
 
-		NSRect rect = r;
+		NSRect rect_local = rect_main;
 
 		n_type_int i = scroll;
 		n_posix_loop
 		{//break;
 
-			if (
-				( is_whole_redraw )
-				||
-				( ( redraw_fy <= i )&&( i < redraw_ty ) )
-			)
+			NSColor *nscolor;
+			if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
 			{
-				NSColor *nscolor;
-				if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
-				{
-					nscolor = nscolor_back;
-				} else
-				if ( i & 1 )
-				{
-					nscolor = nscolor_stripe;
-				} else {
-					nscolor = nscolor_back;
-				}
-
-				nscolor = n_txtbox_thin_highlight( n_txt_data, n_txt_deco, i, nscolor, nscolor_accent );
-
-				if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
-				{
-					n_mac_draw_box( nscolor, self.frame );
-				} else {
-					n_mac_draw_box( nscolor, rect );
-				}
+				nscolor = nscolor_back;
+			} else
+			if ( i & 1 )
+			{
+				nscolor = nscolor_stripe;
+			} else {
+				nscolor = nscolor_back;
 			}
 
-			rect.origin.y += font_size.height;
-			if ( rect.origin.y > max_sy ) { break; }
+			nscolor = n_txtbox_thin_highlight( n_txt_data, n_txt_deco, i, nscolor, nscolor_accent );
+
+			if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
+			{
+				n_mac_draw_box( nscolor, self.frame );
+			} else {
+				n_mac_draw_box( nscolor, rect_local );
+			}
+
+			rect_local.origin.y += font_size.height;
+			if ( rect_local.origin.y > max_sy ) { break; }
 
 			i++;
 		}
+
 	}
 
+
+	// [!] : Background : and calculation for caret
+
+	NSRect ime_caret_rect = NSMakeRect( 0,0,0,0 );
 
 	n_type_int i = scroll;
 //NSLog( @"%f %lld", scroll, n_mac_listbox_txt.sy );
 	n_posix_loop
 	{//break;
 
-		n_posix_char *line = n_txt_get( n_txt_data, i );
-
-		n_posix_char *line_ellipsis = NULL;
-		if ( n_path_ellipsis_onoff )
+		if ( ( redraw_fy <= i )&&( i < redraw_ty )&&( i < n_txt_data->sy ) )
 		{
-			n_type_int cch = n_posix_strlen( line );
-			if ( ( cch >= n_path_ellipsis_offset )&&( line[ n_path_ellipsis_offset ] == '/' ) )
+
+			n_posix_char *line = n_txt_get( n_txt_data, i );
+
+			n_type_int index = 0;
+			CGFloat    sx    = 0;
+			n_type_int tab   = 0;
+			n_posix_loop
+			{//break;
+				if ( line[ index ] == N_STRING_CHAR_NUL ) { break; }
+
+				CGSize     char_size;
+				n_type_int char_index;
+
+				n_posix_char *character;
+				character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
+//NSLog( @"#%lld : %ld", i, strlen( character ) );
+
+//NSLog( @"%lld", char_index );
+				index += char_index;
+				sx    += char_size.width;
+			}
+
+
+			// [!] : End-of-Line Marker
+
+			if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
 			{
-				line_ellipsis = n_mac_txtbox_path_ellipsis( &line[ n_path_ellipsis_offset ], font, (n_type_real) csx * 0.8 );
-//NSLog( @"%s", line_ellipsis );
-				if ( n_path_ellipsis_offset != 0 )
-				{
-					n_posix_char *l = n_string_alloccopy( cch * 10, line );
-					n_posix_sprintf_literal( &l[ n_path_ellipsis_offset ], "%s", line_ellipsis );
-					n_string_path_free( line_ellipsis );
-					line_ellipsis = l;
+				//
+			} else
+			if ( self.n_mode == N_MAC_TXTBOX_MODE_ONELINE )
+			{
+				//
+			} else
+			if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
+			{
+				//
+			} else {
+				NSRect char_rect = rect_main;
+				char_rect.origin.x += sx;
+
+				NSString *crlf = @"\xe2\x86\xa9";
+				[crlf drawInRect:char_rect withAttributes:attr_crlf];
+			}
+
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+			if ( ( ime_onoff )&&( i == n_focus ) )
+			{
+
+				n_posix_char *line = n_mac_nsstring2str( ime_nsstr );
+
+				n_type_int index  = 0;
+				CGFloat    sx     = ime_caret_fr.pxl.x;
+				n_type_int tab    = 0;
+				n_type_int glyph  = 0;
+				n_type_int ime_sx = sx;
+				n_posix_loop
+				{//break;
+					if ( line[ index ] == N_STRING_CHAR_NUL ) { break; }
+
+					CGSize     char_size;
+					n_type_int char_index;
+					NSRect     char_rect = rect_main;
+
+					n_posix_char *character;
+					character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
+//NSLog( @"#%lld : %ld", i, strlen( character ) );
+
+					char_rect.origin.x   += sx;
+					char_rect.origin.x   -= 1;
+					char_rect.size.width  = char_size.width + 1;
+
+
+					index += char_index;
+					sx    += char_size.width;
+					glyph += 1;
+					if ( glyph == ime_caret_offset ) { ime_sx = sx; }
 				}
 
-				line = line_ellipsis;
+				n_string_free( line );
+
+
+				// [!] : Fake Caret : IME version
+
+				{
+					n_type_gfx oy = (n_type_gfx) scroll * font_size.height;
+					n_type_gfx  x = (n_type_gfx) padding + (n_type_gfx) ime_sx;
+					n_type_gfx  y = (n_type_gfx) offset_y + ime_caret_fr.pxl.y - oy - caret_centered_offset;
+					n_type_gfx sx = (n_type_gfx) N_MAC_TXTBOX_CARET_SIZE;
+					n_type_gfx sy = (n_type_gfx) font_size.height;
+
+					ime_caret_rect = NSMakeRect( x,y,sx,sy );
+				}
+
 			}
+#endif
+
 		}
+
+
+		rect_main.origin.y += font_size.height;
+		if ( rect_main.origin.y > max_sy ) { break; }
+
+
+		i++;
+	}
+
+
+	// [!] : Fake Caret #1 : IME is later applied
+
+//NSLog( @"%d %d", ime_onoff, ime_delay );
+
+	if ( ime_onoff )
+	{
+		//[self NonnonTxtboxCaretDraw:nil rect:ime_caret_rect color_bg:color_bg color_stripe:color_stripe focus:n_focus];
+	} else
+	if ( ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )&&( self.n_listbox_edit_onoff == FALSE ) )
+	{
+		//
+	} else
+	if ( delete_circle_fade_pressed_phase )
+	{
+		//
+	} else
+	if ( [self NonnonTxtboxCaretIsOnScreen] )
+	{
+		if ( ( delete_circle_onoff )&&( caret_pt.x > ( csx - csy + offset_x ) ) )
+		{
+			//
+		} else {
+			NSRect rect_local = NSMakeRect( caret_pt.x, caret_pt.y - caret_centered_offset, N_MAC_TXTBOX_CARET_SIZE, font_size.height );
+			[self NonnonTxtboxCaretDraw:nil rect:rect_local color_bg:color_bg color_stripe:color_stripe focus:n_focus];
+		}
+	}
+
+
+	// [!] : Main
+
+	rect_main = NSMakeRect( padding, offset_y - caret_centered_offset, self.frame.size.width - ( offset_x * 2 ), font_size.height );
+
+	max_sy = self.frame.size.height - ( offset_y * 2 );
+
+	i = scroll;
+//NSLog( @"%f %lld", scroll, n_mac_listbox_txt.sy );
+	n_posix_loop
+	{//break;
 
 		if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
 		{
@@ -966,14 +919,14 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 			{
 				if ( self.n_listbox_edit_onoff )
 				{
-					listbox_rect = r;
+					listbox_rect = rect_main;
 					listbox_rect.size.width = csx - padding - offset_x;
 				} else {
 					if ( n_txt_data->readonly )
 					{
-						n_mac_draw_box( nscolor_nofocus, r );
+						n_mac_draw_box( nscolor_nofocus, rect_main );
 					} else {
-						n_mac_draw_box( nscolor_accent , r );
+						n_mac_draw_box( nscolor_accent , rect_main );
 					}
 				}
 			}
@@ -982,6 +935,32 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 		if ( ( redraw_fy <= i )&&( i < redraw_ty )&&( i < n_txt_data->sy ) )
 		{
 //[text drawInRect:r withAttributes:attr];
+
+			n_posix_char *line = n_txt_get( n_txt_data, i );
+
+
+			// [!] : don't use edit : currently not supported
+
+			n_posix_char *line_ellipsis = NULL;
+			if ( n_path_ellipsis_onoff )
+			{
+				n_type_int cch = n_posix_strlen( line );
+				if ( ( cch >= n_path_ellipsis_offset )&&( line[ n_path_ellipsis_offset ] == '/' ) )
+				{
+					line_ellipsis = n_mac_txtbox_path_ellipsis( &line[ n_path_ellipsis_offset ], font, (n_type_real) csx * 0.8 );
+//NSLog( @"%s", line_ellipsis );
+					if ( n_path_ellipsis_offset != 0 )
+					{
+						n_posix_char *l = n_string_alloccopy( cch * 10, line );
+						n_posix_sprintf_literal( &l[ n_path_ellipsis_offset ], "%s", line_ellipsis );
+						n_string_path_free( line_ellipsis );
+						line_ellipsis = l;
+					}
+
+					line = line_ellipsis;
+				}
+			}
+
 
 			if ( ( n_txt_deco != NULL )&&( n_txt_data->sy == n_txt_deco->sy ) )
 			{
@@ -1050,7 +1029,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 					CGSize     char_size;
 					n_type_int char_index;
-					NSRect     char_rect = r;
+					NSRect     char_rect = rect_main;
 
 					n_posix_char *character;
 					character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
@@ -1092,7 +1071,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 					CGSize     char_size;
 					n_type_int char_index;
-					NSRect     char_rect = r;
+					NSRect     char_rect = rect_main;
 
 					n_posix_char *character;
 					character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
@@ -1167,7 +1146,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 				CGSize     char_size;
 				n_type_int char_index;
-				NSRect     char_rect = r;
+				NSRect     char_rect = rect_main;
 
 				n_posix_char *character;
 				character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
@@ -1193,9 +1172,9 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 				if ( line[ index ] == N_STRING_CHAR_TAB )
 				{
 
-					NSRect r = char_rect; r.size.width = 0.5;
+					NSRect rect_local = char_rect; rect_local.size.width = 0.5;
 
-					n_mac_draw_box( nscolor_crlf, r );
+					n_mac_draw_box( nscolor_crlf, rect_local );
 
 				} else
 				//
@@ -1241,26 +1220,6 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 			}
 
-			// [!] : End-of-Line Marker
-
-			if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
-			{
-				//
-			} else
-			if ( self.n_mode == N_MAC_TXTBOX_MODE_ONELINE )
-			{
-				//
-			} else
-			if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
-			{
-				//
-			} else {
-				NSRect char_rect = r;
-				char_rect.origin.x += sx;
-
-				NSString *crlf = @"\xe2\x86\xa9";
-				[crlf drawInRect:char_rect withAttributes:attr_crlf];
-			}
 
 #ifdef N_TXTBOX_IME_ENABLE
 
@@ -1285,7 +1244,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 					CGSize     char_size;
 					n_type_int char_index;
-					NSRect     char_rect = r;
+					NSRect     char_rect = rect_main;
 
 					n_posix_char *character;
 					character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
@@ -1304,31 +1263,127 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 						underline_tx = char_rect.origin.x + char_rect.size.width;
 					}
 
+					[attr_ime setObject:nscolor_text_normal    forKey:NSForegroundColorAttributeName];
+
+
 					if ( i & 1 )
 					{
 						n_mac_draw_box( nscolor_stripe, char_rect );
 					} else {
 						n_mac_draw_box( nscolor_back  , char_rect );
 					}
+
+
+					//NSString *text = n_mac_str2nsstring( character );
+					//char_rect = [self NonnonTxtboxDrawTextAdjust:text rect:char_rect];
+					//[text drawInRect:char_rect withAttributes:attr_ime];
+
+					index += char_index;
+					sx    += char_size.width;
+					glyph += 1;
+					if ( glyph == ime_caret_offset ) { ime_sx = sx; }
+				}
+
+				n_string_free( line );
+
+
+				// [!] : Underline : draw later
+
+				underline_rect = NSMakeRect(
+					padding + ime_caret_fr.pxl.x,
+					rect_main.origin.y + rect_main.size.height - 2,
+					sx - ime_caret_fr.pxl.x,
+					2
+				);
+
+			}
+
+#endif
+
+			n_string_free( line_ellipsis );
+
+		}
+
+		if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
+		{
+			if ( i == self.n_focus )
+			{
+				if ( self.n_listbox_edit_onoff )
+				{
+					NSRect rect_local = listbox_rect;
+
+					rect_local.origin.x--;
+					rect_local.origin.y--;
+					//rect_local.size.width += 2;
+					rect_local.size.height += 2;
+
+					n_mac_draw_frame( nscolor_accent, rect_local );
+				}
+			}
+		}
+
+
+		rect_main.origin.y += font_size.height;
+		if ( rect_main.origin.y > max_sy ) { break; }
+
+
+		i++;
+	}
+
+
+	// [!] : Fake Caret #2 : IME
+
+	if ( ime_onoff )
+	{
+		[self NonnonTxtboxCaretDraw:nil rect:ime_caret_rect color_bg:color_bg color_stripe:color_stripe focus:n_focus];
+	}
+
+
+	// [!] : Main #2
+
+	rect_main = NSMakeRect( padding, offset_y - caret_centered_offset, self.frame.size.width - ( offset_x * 2 ), font_size.height );
+
+	max_sy = self.frame.size.height - ( offset_y * 2 );
+
+	i = scroll;
+//NSLog( @"%f %lld", scroll, n_mac_listbox_txt.sy );
+	n_posix_loop
+	{//break;
+
+		if ( ( redraw_fy <= i )&&( i < redraw_ty )&&( i < n_txt_data->sy ) )
+		{
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+			if ( ( ime_onoff )&&( i == n_focus ) )
+			{
+
+				n_posix_char *line = n_mac_nsstring2str( ime_nsstr );
+
+				n_type_int index  = 0;
+				CGFloat    sx     = ime_caret_fr.pxl.x;
+				n_type_int tab    = 0;
+				n_type_int glyph  = 0;
+				n_type_int ime_sx = sx;
+				n_posix_loop
+				{//break;
+					if ( line[ index ] == N_STRING_CHAR_NUL ) { break; }
+
+					CGSize     char_size;
+					n_type_int char_index;
+					NSRect     char_rect = rect_main;
+
+					n_posix_char *character;
+					character = n_mac_txtbox_character( font, font_size, (u8*) line, index, &char_size, &char_index, &tab );
+//NSLog( @"#%lld : %ld", i, strlen( character ) );
+
+					char_rect.origin.x   += sx;
+					char_rect.origin.x   -= 1;
+					char_rect.size.width  = char_size.width + 1;
+
+
 					[attr_ime setObject:nscolor_text_normal    forKey:NSForegroundColorAttributeName];
 
-/*
-					// [!] : highlight based
-
-					if ( ( glyph >= range_f )&&( glyph < range_t ) )
-					{
-						[attr_ime setObject:nscolor_text_highlight forKey:NSForegroundColorAttributeName];
-						n_mac_draw_box( nscolor_ime, char_rect );
-					} else {
-						if ( i & 1 )
-						{
-							n_mac_draw_box( nscolor_stripe, char_rect );
-						} else {
-							n_mac_draw_box( nscolor_back  , char_rect );
-						}
-						[attr_ime setObject:nscolor_text_normal    forKey:NSForegroundColorAttributeName];
-					}
-*/
 
 					NSString *text = n_mac_str2nsstring( character );
 					char_rect = [self NonnonTxtboxDrawTextAdjust:text rect:char_rect];
@@ -1342,58 +1397,15 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 				n_string_free( line );
 
-
-				// [!] : Underline #1
-
-				underline_rect = NSMakeRect(
-					padding + ime_caret_fr.pxl.x,
-					r.origin.y + r.size.height - 2,
-					sx - ime_caret_fr.pxl.x,
-					2
-				);
-
-
-				// [!] : Fake Caret : IME version
-
-				{
-					n_type_gfx oy = (n_type_gfx) scroll * font_size.height;
-					n_type_gfx  x = (n_type_gfx) padding + (n_type_gfx) ime_sx;
-					n_type_gfx  y = (n_type_gfx) offset_y + ime_caret_fr.pxl.y - oy - caret_centered_offset;
-					n_type_gfx sx = (n_type_gfx) 1;
-					n_type_gfx sy = (n_type_gfx) font_size.height;
-
-					NSRect rect = NSMakeRect( x,y,sx,sy );
-
-					[self NonnonTxtboxDrawCaretDraw:nil rect:rect color_bg:color_bg color_stripe:color_stripe focus:n_focus];
-				}
-
 			}
+
 #endif
 
 		}
 
-		if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
-		{
-			if ( i == self.n_focus )
-			{
-				if ( self.n_listbox_edit_onoff )
-				{
-					NSRect rect = listbox_rect;
-					rect.origin.x--;
-					rect.origin.y--;
-					//rect.size.width += 2;
-					rect.size.height += 2;
-					n_mac_draw_frame( nscolor_accent, rect );
-				}
-			}
-		}
 
-
-		n_string_free( line_ellipsis );
-
-
-		r.origin.y += font_size.height;
-		if ( r.origin.y > max_sy ) { break; }
+		rect_main.origin.y += font_size.height;
+		if ( rect_main.origin.y > max_sy ) { break; }
 
 
 		i++;
@@ -1401,7 +1413,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 
 	// [!] : Underline
-	
+
 	if ( underline_rect.origin.x != -1 )
 	{
 
@@ -1512,20 +1524,6 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	}
 
 
-	// [!] : Fake Caret
-	if ( ime_onoff )
-	{
-		//
-	} else {
-		[self NonnonTxtboxDrawCaret_drawRect:nil
-				     max_sx:( csx - csy + offset_x )
-			delete_circle_onoff:delete_circle_onoff
-				   color_bg:color_bg
-			       color_stripe:color_stripe
-		];
-	}
-
-
 	// [!] : Delete Circle
 
 	if ( delete_circle_onoff )
@@ -1603,10 +1601,10 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 //n_bmp_save( &bmp2, "/Users/nonnon/Desktop/ret.bmp" );
 
-		NSRect rect = n_mac_rect_resize( delete_circle_rect, -2 );
+		NSRect rect_local = n_mac_rect_resize( delete_circle_rect, -2 );
 //NSLog( @"%f %f", rect.origin.y, rect.size.height );
 
-		n_mac_image_nbmp_direct_draw( &bmp2, &rect, NO );
+		n_mac_image_nbmp_direct_draw( &bmp2, &rect_local, NO );
 
 		n_bmp_free_fast( &bmp1 );
 		n_bmp_free_fast( &bmp2 );
@@ -1622,9 +1620,7 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 	if ( self.n_mode == N_MAC_TXTBOX_MODE_ONELINE )
 	{
 		//
-	} else
-	if (1)//( is_whole_redraw )
-	{
+	} else {
 
 		// [!] : Fake Scroller
 
@@ -1699,8 +1695,8 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 					{
 						if ( n_search_marker[ i ] )
 						{
-							NSRect rect = NSMakeRect( scr_x, i * step, scrsx, 1 );
-							n_mac_draw_box( N_TXTBOX_INDICATOR_SEARCH, rect );
+							NSRect rect_local = NSMakeRect( scr_x, i * step, scrsx, 1 );
+							n_mac_draw_box( N_TXTBOX_INDICATOR_SEARCH, rect_local );
 						}
 
 						i++;
@@ -1777,8 +1773,8 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 			// [!] : caret indicator on a shaft
 
-			NSRect rect = NSMakeRect( scr_x, offset_y + ( step * n_focus ), scrsx, 1 );
-			n_mac_draw_box( N_TXTBOX_INDICATOR_CARET, rect );
+			NSRect rect_local = NSMakeRect( scr_x, offset_y + ( step * n_focus ), scrsx, 1 );
+			n_mac_draw_box( N_TXTBOX_INDICATOR_CARET, rect_local );
 
 
 			n_bmp_flip_onoff = n_posix_false;
@@ -1806,62 +1802,12 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 
 	// [!] : Frame
 
-	if ( redraw_caret_only )
+	if ( self.n_mode == N_MAC_TXTBOX_MODE_EDITBOX )
 	{
-		//
-	} else {
-
-		if ( self.n_mode == N_MAC_TXTBOX_MODE_EDITBOX )
+		if ( self.n_border_separator_only )
 		{
-			if ( self.n_border_separator_only )
-			{
-				NSRect rect_separator = NSMakeRect( 0, 0, csx, 2 );
-				n_mac_draw_box( nscolor_frame, rect_separator );
-			} else {
-				[self setWantsLayer:YES];
-				[self.layer setBorderWidth:2];
-
-				CGFloat r = 10;
-
-				[self.layer setBorderColor    :nscolor_frame.CGColor];
-				[self.layer setBackgroundColor:nscolor_back .CGColor];
-
-				[self.layer setCornerRadius:r];
-			}
-		
-		} else
-		if ( self.n_mode == N_MAC_TXTBOX_MODE_ONELINE )
-		{
-			[self setWantsLayer:YES];
-			[self.layer setBorderWidth:2];
-
-			CGFloat r = csy / 4;
-
-			[self.layer setBorderColor    :nscolor_frame.CGColor];
-			[self.layer setBackgroundColor:nscolor_back .CGColor];
-
-			[self.layer setCornerRadius:r];
-		} else
-		if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
-		{
-			[self setWantsLayer:YES];
-			[self.layer setBorderWidth:2];
-
-			CGFloat r = csy / 2;
-
-			NSColor *nscolor_bg = nscolor_frame;
-			NSColor *nscolor_fg = [NSColor controlAccentColor];
-			NSColor *nscolor    = n_mac_nscolor_blend( nscolor_bg, nscolor_fg, findbox_border_blend );
-
-			if ( n_txtbox_first_responder == self )
-			{
-				[self.layer setBorderColor    :nscolor       .CGColor];
-				[self.layer setBackgroundColor:nscolor_back  .CGColor];
-			} else {
-				[self.layer setBorderColor    :nscolor       .CGColor];
-				[self.layer setBackgroundColor:nscolor_stripe.CGColor];
-			}
-			[self.layer setCornerRadius:r];
+			NSRect rect_separator = NSMakeRect( 0, 0, csx, 2 );
+			n_mac_draw_box( nscolor_frame, rect_separator );
 		} else {
 			[self setWantsLayer:YES];
 			[self.layer setBorderWidth:2];
@@ -1874,7 +1820,49 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 			[self.layer setCornerRadius:r];
 		}
 	
+	} else
+	if ( self.n_mode == N_MAC_TXTBOX_MODE_ONELINE )
+	{
+		[self setWantsLayer:YES];
+		[self.layer setBorderWidth:2];
 
+		CGFloat r = csy / 4;
+
+		[self.layer setBorderColor    :nscolor_frame.CGColor];
+		[self.layer setBackgroundColor:nscolor_back .CGColor];
+
+		[self.layer setCornerRadius:r];
+	} else
+	if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
+	{
+		[self setWantsLayer:YES];
+		[self.layer setBorderWidth:2];
+
+		CGFloat r = csy / 2;
+
+		NSColor *nscolor_bg = nscolor_frame;
+		NSColor *nscolor_fg = [NSColor controlAccentColor];
+		NSColor *nscolor    = n_mac_nscolor_blend( nscolor_bg, nscolor_fg, findbox_border_blend );
+
+		if ( n_txtbox_first_responder == self )
+		{
+			[self.layer setBorderColor    :nscolor       .CGColor];
+			[self.layer setBackgroundColor:nscolor_back  .CGColor];
+		} else {
+			[self.layer setBorderColor    :nscolor       .CGColor];
+			[self.layer setBackgroundColor:nscolor_stripe.CGColor];
+		}
+		[self.layer setCornerRadius:r];
+	} else {
+		[self setWantsLayer:YES];
+		[self.layer setBorderWidth:2];
+
+		CGFloat r = 10;
+
+		[self.layer setBorderColor    :nscolor_frame.CGColor];
+		[self.layer setBackgroundColor:nscolor_back .CGColor];
+
+		[self.layer setCornerRadius:r];
 	}
 
 /*
@@ -1883,8 +1871,6 @@ n_mac_txtbox_path_ellipsis( n_posix_char *path, NSFont *font, CGFloat width_limi
 		n_mac_draw_box( [NSColor blackColor], self.frame );
 	}
 */
-
-	redraw_caret_only = FALSE;
 
 	redraw_fy = -1;
 	redraw_ty = -1;
