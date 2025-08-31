@@ -934,6 +934,11 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	} else
 	if ( [self NonnonTxtboxCaretIsOnScreen] )
 	{
+		// [!] : CPU Usage is high
+		[self NonnonTxtboxRedraw];
+/*
+		// [x] : blink sometimes
+
 		// [!] : partial
 
 		redraw_fy = caret_to.cch.y;
@@ -946,6 +951,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 //NSLog( @"%0.2f", caret_to.pxl.y );
 
 		[self NonnonTxtboxRedrawRect:NSMakeRect( x,y,sx,sy )];
+*/
 	} else {
 		[self NonnonTxtboxRedraw];
 	}
