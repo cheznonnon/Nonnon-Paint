@@ -214,6 +214,40 @@ n_bmp_line_dot( n_bmp *bmp, n_type_gfx fx, n_type_gfx fy, n_type_gfx tx, n_type_
 	return;
 }
 
+void
+n_bmp_frame( n_bmp *bmp, n_type_gfx x, n_type_gfx y, n_type_gfx sx, n_type_gfx sy, int size, u32 color )
+{
+
+	if ( n_bmp_error( bmp ) ) { return; }
+
+
+	s32 fx = x;
+	s32 fy = y;
+	s32 tx = fx + sx - 1;
+	s32 ty = fy + sy - 1;
+
+	int i = 0;
+	n_posix_loop
+	{
+
+		n_bmp_line( bmp, fx,fy,tx,fy, color );
+		n_bmp_line( bmp, fx,fy,fx,ty, color );
+		n_bmp_line( bmp, tx,fy,tx,ty, color );
+		n_bmp_line( bmp, fx,ty,tx,ty, color );
+
+		fx++;
+		fy++;
+		tx--;
+		ty--;
+
+		i++;
+		if ( i >= size ) { break; }
+	}
+
+
+	return;
+}
+
 typedef struct {
 
 	n_bmp      *bmp;

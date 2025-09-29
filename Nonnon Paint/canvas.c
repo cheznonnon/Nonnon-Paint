@@ -14,13 +14,13 @@
 
 
 
-#import <Cocoa/Cocoa.h>
+//#import <Cocoa/Cocoa.h>
 
 
 
 
-#include "../nonnon/mac/_mac.c"
-#include "../nonnon/mac/image.c"
+//#include "../../nonnon/mac/_mac.c"
+//#include "../../nonnon/mac/image.c"
 
 
 
@@ -31,6 +31,12 @@
 
 
 #define N_PAINT_CANVAS_MULTITHREAD
+
+
+
+
+static n_bmp  n_paint_target;
+static n_bmp *n_paint_canvas = NULL;
 
 
 
@@ -75,35 +81,6 @@
 
 
 static NonnonPaintCanvas *n_paint_global;
-
-
-
-
-void
-n_paint_image_nbmp_direct_draw( const n_bmp *bmp, NSRect *rect, n_posix_bool flip )
-{
-
-
-	NSImage *img = n_mac_image_nbmp2nsimage( bmp );
-
-
-	NSGraphicsContext *context = [NSGraphicsContext currentContext];
-	CGImageRef         ref     = [img CGImageForProposedRect:rect context:context hints:nil];
-	CGContextRef       cg_ctx  = [context CGContext];
-
-	if ( flip )
-	{
-		CGContextTranslateCTM( cg_ctx, 0, img.size.height );
-		CGContextScaleCTM( cg_ctx, 1.0, -1.0 );
-	}
-
-	CGContextSetBlendMode( cg_ctx, kCGBlendModeCopy );
-
-	CGContextDrawImage( cg_ctx, NSRectToCGRect( *rect ), ref );
-
-
-	return;
-}
 
 
 
@@ -186,6 +163,8 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 
 @implementation NonnonPaintCanvas {
+
+	NSBitmapImageRep *rep;
 
 }
 
@@ -459,14 +438,14 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		// [!] : Centering
 
-		n_type_gfx bmpsx = N_BMP_SX( &bmp_canvas );
-		n_type_gfx bmpsy = N_BMP_SY( &bmp_canvas );
+		n_type_gfx bmpsx = N_BMP_SX( n_paint_canvas );
+		n_type_gfx bmpsy = N_BMP_SY( n_paint_canvas );
 
 		cx = ( ( bmpsx - gdi.sx ) / 2 );
 		cy = ( ( bmpsy - gdi.sy ) / 2 );
 
 
-		n_bmp_transcopy( &bmp, &bmp_canvas, 0,0,gdi.sx,gdi.sy, cx,cy );
+		n_bmp_transcopy( &bmp, n_paint_canvas, 0,0,gdi.sx,gdi.sy, cx,cy );
 
 		paint->grabber_tooltip_rect_drawn = NSMakeRect( cx, cy, gdi.sx, gdi.sy );
 
@@ -562,7 +541,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 //NSLog( @"%d %d %d %d", x, y, sx, sy );
 
-		n_bmp_box( &bmp_canvas, x,y,sx,sy, n_bmp_rgb_mac( 111,111,111 ) );
+		n_bmp_box( n_paint_canvas, x,y,sx,sy, n_bmp_rgb_mac( 111,111,111 ) );
 	}
 
 
@@ -1002,7 +981,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 				}
 
 				c = n_bmp_alpha_visible_pixel( c );
-				n_bmp_ptr_set( &self->bmp_canvas, tx + x + bx, ty + y + by, c );
+				n_bmp_ptr_set( n_paint_canvas, tx + x + bx, ty + y + by, c );
 
 				bx++;
 				if ( bx >= zoom_ui )
@@ -1115,16 +1094,29 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	if ( NULL == N_BMP_PTR( &bmp_canvas ) )
 	{
 		n_bmp_new_fast( &bmp_canvas, sx,sy );
+		rep = n_mac_image_NSBitmapImageRep( &bmp_canvas );
+
+		n_mac_image_imagerep_alias( rep, &n_paint_target );
 
 		is_flushed = TRUE;
 		n_bmp_flush( &bmp_canvas, N_PAINT_CANVAS_COLOR );
+
+		//n_paint_canvas = &bmp_canvas;
+
+//NSLog( @"alloc : %x", [rep bitmapData] );
 	}
+
+
+	// [Needed] : make everytime
+
+	n_paint_canvas = &n_paint_target;
+
 
 	if ( ( prv_sx != sx )||( prv_sy != sy ) )
 	{
 		if ( is_flushed == FALSE )
 		{
-			n_bmp_flush( &bmp_canvas, N_PAINT_CANVAS_COLOR );
+			n_bmp_flush( n_paint_canvas, N_PAINT_CANVAS_COLOR );
 		}
 	}
 
@@ -1132,7 +1124,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	if ( paint->init == FALSE )
 	{
 		NSRect rect_canvas = NSMakeRect( 0,0,sx,sy );
-		n_paint_image_nbmp_direct_draw( &bmp_canvas, &rect_canvas, NO );
+		//n_mac_image_nbmp_direct_draw_fast( n_paint_canvas, &rect_canvas, NO );
+
+		//n_mac_image_imagerep_sync( rep, n_paint_canvas );
+		n_mac_image_nbmp_direct_draw_faster( rep, &rect_canvas, NO );
 
 		return;
 	}
@@ -1227,7 +1222,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	{
 		if ( is_flushed == FALSE )
 		{
-			n_bmp_flush( &bmp_canvas, N_PAINT_CANVAS_COLOR );
+			n_bmp_flush( n_paint_canvas, N_PAINT_CANVAS_COLOR );
 		}
 	}
 
@@ -1241,19 +1236,19 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
 	{
-		n_paint_grabber_frame_edge_draw( paint, &bmp_canvas );
+		n_paint_grabber_frame_edge_draw( paint, n_paint_canvas );
 
-		n_paint_grabber_frame_edge_resize_dot_draw( paint, &bmp_canvas );
+		n_paint_grabber_frame_edge_resize_dot_draw( paint, n_paint_canvas );
 
 		[self n_paint_draw_tooltip];
 	} else
 	if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
 	{
 		int zoom_unit = [self n_paint_zoom_get_int_ui:paint->zoom];
-		n_paint_grabber_frame_pixel_draw( paint, &bmp_canvas, zoom_unit );
+		n_paint_grabber_frame_pixel_draw( paint, n_paint_canvas, zoom_unit );
 
 		n_type_gfx size = n_paint_grabber_frame_pixel_redraw_area_get( paint );
-		n_paint_grabber_frame_pixel_resize_dot_draw( paint, &bmp_canvas, size );
+		n_paint_grabber_frame_pixel_resize_dot_draw( paint, n_paint_canvas, size );
 
 		[self n_paint_draw_tooltip];
 	}
@@ -1276,7 +1271,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //NSLog( @"Shaft : %d %d %d %d", x,y,sx,sy );
 
 			u32 color_shaft = n_bmp_rgb_mac( 244,244,244 );
-			n_bmp_roundrect( &bmp_canvas, x,y,sx,sy, color_shaft, 50 );
+			n_bmp_roundrect( n_paint_canvas, x,y,sx,sy, color_shaft, 50 );
 		}
 
 
@@ -1304,7 +1299,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 			u32 color       = n_bmp_rgb_mac( 200,200,200 );
 			u32 color_thumb = n_bmp_alpha_replace_pixel( color, alpha );
-			n_bmp_roundrect( &bmp_canvas, x,y,sx,sy, color_thumb, 50 );
+			n_bmp_roundrect( n_paint_canvas, x,y,sx,sy, color_thumb, 50 );
 		}
 
 	}
@@ -1324,7 +1319,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 			n_type_gfx sy = paint->scroller_y_rect_shaft.size.height;
 
 			u32 color_shaft = n_bmp_rgb_mac( 244,244,244 );
-			n_bmp_roundrect( &bmp_canvas, x,y,sx,sy, color_shaft, 50 );
+			n_bmp_roundrect( n_paint_canvas, x,y,sx,sy, color_shaft, 50 );
 		}
 
 
@@ -1351,7 +1346,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 			u32 color       = n_bmp_rgb_mac( 200,200,200 );
 			u32 color_thumb = n_bmp_alpha_replace_pixel( color, alpha );
-			n_bmp_roundrect( &bmp_canvas, x,y,sx,sy, color_thumb, 50 );
+			n_bmp_roundrect( n_paint_canvas, x,y,sx,sy, color_thumb, 50 );
 		}
 
 	}
@@ -1362,7 +1357,14 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	{
 		NSRect rect_canvas = NSMakeRect( 0,0,sx,sy );
-		n_paint_image_nbmp_direct_draw( &bmp_canvas, &rect_canvas, NO );
+		//n_mac_image_nbmp_direct_draw_fast( n_paint_canvas, &rect_canvas, NO );
+
+//NSLog( @"sync : %x", [rep bitmapData] );
+		//n_mac_image_imagerep_sync( rep, n_paint_canvas );
+
+		n_mac_image_imagerep_alias_fast( rep, &n_paint_target );
+
+		n_mac_image_nbmp_direct_draw_faster( rep, &rect_canvas, NO );
 	}
 
 }

@@ -66,7 +66,7 @@ n_bmp_ui_rectframe_drawedge( n_bmp *bmp, int scale, u32 color[ 8 ] )
 	n_posix_loop
 	{
 
-		n_bmp_line( bmp, fx,fy,tx,fx, color[ 0 ] );
+		n_bmp_line( bmp, fx,fy,tx,fy, color[ 0 ] );
 		n_bmp_line( bmp, fx,fy,fx,ty, color[ 2 ] );
 		n_bmp_line( bmp, tx,fy,tx,ty, color[ 3 ] );
 		n_bmp_line( bmp, fx,ty,tx,ty, color[ 1 ] );
@@ -92,7 +92,7 @@ n_bmp_ui_rectframe_drawedge( n_bmp *bmp, int scale, u32 color[ 8 ] )
 	n_posix_loop
 	{
 
-		n_bmp_line( bmp, fx,fy,tx,fx, color[ 4 ] );
+		n_bmp_line( bmp, fx,fy,tx,fy, color[ 4 ] );
 		n_bmp_line( bmp, fx,fy,fx,ty, color[ 6 ] );
 		n_bmp_line( bmp, tx,fy,tx,ty, color[ 7 ] );
 		n_bmp_line( bmp, fx,ty,tx,ty, color[ 5 ] );

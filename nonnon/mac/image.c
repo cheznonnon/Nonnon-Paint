@@ -159,18 +159,25 @@ n_mac_image_NSBitmapImageRep( const n_bmp *bmp )
 }
 
 NSImage*
+n_mac_image_imagerep2nsimage( NSBitmapImageRep *rep )
+{
+
+	NSImage *nsimage = [[NSImage alloc] initWithSize:rep.size];
+	[nsimage addRepresentation:rep];
+
+//if ( nsimage == nil ) { NSLog( @"NSImage : nil" ); }
+
+
+	return nsimage;
+}
+
+NSImage*
 n_mac_image_nbmp2nsimage( const n_bmp *bmp )
 {
 
-	NSBitmapImageRep *n_rep = n_mac_image_NSBitmapImageRep( bmp );
+	NSBitmapImageRep *rep = n_mac_image_NSBitmapImageRep( bmp );
 
-	NSImage *n_nsimage = [NSImage.alloc initWithSize:n_rep.size];
-	[n_nsimage addRepresentation:n_rep];
-
-//if ( n_nsimage == nil ) { NSLog( @"NSImage : nil" ); }
-
-
-	return n_nsimage;
+	return n_mac_image_imagerep2nsimage( rep );
 }
 
 #define N_MAC_IMAGE_SAVE_PNG ( 1 )
@@ -290,6 +297,58 @@ n_mac_image_load( n_posix_char *path, n_bmp *bmp )
 }
 
 void
+n_mac_image_nsimage_draw( NSImage *image, NSRect *rect, BOOL flip, BOOL fast )
+{
+
+	NSGraphicsContext *context = [NSGraphicsContext currentContext];
+	CGImageRef         ref     = [image CGImageForProposedRect:rect context:context hints:nil];
+	CGContextRef       cg_ctx  = [context CGContext];
+
+	if ( flip )
+	{
+		CGContextTranslateCTM( cg_ctx, 0, image.size.height );
+		CGContextScaleCTM( cg_ctx, 1.0, -1.0 );
+	}
+
+	// [x] : CatPad : Search Field : delete "x" : not drawn
+	if ( fast )
+	{
+		CGContextSetBlendMode( cg_ctx, kCGBlendModeCopy );
+	}
+
+	CGContextDrawImage( cg_ctx, NSRectToCGRect( *rect ), ref );
+
+
+	return;
+}
+
+void
+n_mac_image_imagerep_draw( NSBitmapImageRep *rep, NSRect *rect, BOOL flip, BOOL fast )
+{
+
+	NSGraphicsContext *context = [NSGraphicsContext currentContext];
+	CGImageRef         ref     = [rep CGImage];
+	CGContextRef       cg_ctx  = [context CGContext];
+
+	if ( flip )
+	{
+		CGContextTranslateCTM( cg_ctx, 0, rep.size.height );
+		CGContextScaleCTM( cg_ctx, 1.0, -1.0 );
+	}
+
+	// [x] : CatPad : Search Field : delete "x" : not drawn
+	if ( fast )
+	{
+		CGContextSetBlendMode( cg_ctx, kCGBlendModeCopy );
+	}
+
+	CGContextDrawImage( cg_ctx, NSRectToCGRect( *rect ), ref );
+
+
+	return;
+}
+
+void
 n_mac_image_nbmp_direct_draw( const n_bmp *bmp, NSRect *rect, n_posix_bool flip )
 {
 
@@ -324,20 +383,7 @@ n_mac_image_nbmp_direct_draw( const n_bmp *bmp, NSRect *rect, n_posix_bool flip 
 
 	// [!] : fastest
 
-	NSGraphicsContext *context = [NSGraphicsContext currentContext];
-	CGImageRef         ref     = [img CGImageForProposedRect:rect context:context hints:nil];
-	CGContextRef       cg_ctx  = [context CGContext];
-
-	if ( flip )
-	{
-		CGContextTranslateCTM( cg_ctx, 0, img.size.height );
-		CGContextScaleCTM( cg_ctx, 1.0, -1.0 );
-	}
-
-	// [x] : CatPad : Search Field : delete "x" : not drawn
-	//CGContextSetBlendMode( cg_ctx, kCGBlendModeCopy );
-
-	CGContextDrawImage( cg_ctx, NSRectToCGRect( *rect ), ref );
+	n_mac_image_nsimage_draw( img, rect, flip, NO );
 
 
 //u32 tick_cur = n_posix_tickcount();
@@ -356,19 +402,64 @@ n_mac_image_nbmp_direct_draw_fast( const n_bmp *bmp, NSRect *rect, n_posix_bool 
 
 	NSImage *img = n_mac_image_nbmp2nsimage( bmp );
 
-	NSGraphicsContext *context = [NSGraphicsContext currentContext];
-	CGImageRef         ref     = [img CGImageForProposedRect:rect context:context hints:nil];
-	CGContextRef       cg_ctx  = [context CGContext];
+	n_mac_image_nsimage_draw( img, rect, flip, YES );
 
-	if ( flip )
-	{
-		CGContextTranslateCTM( cg_ctx, 0, img.size.height );
-		CGContextScaleCTM( cg_ctx, 1.0, -1.0 );
-	}
 
-	CGContextSetBlendMode( cg_ctx, kCGBlendModeCopy );
+	return;
+}
 
-	CGContextDrawImage( cg_ctx, NSRectToCGRect( *rect ), ref );
+void
+n_mac_image_imagerep_alias_fast( NSBitmapImageRep *rep, n_bmp *bmp )
+{
+
+	// [!] : use when width and height are the same
+
+	// [!] : don't n_bmp_free()
+
+	N_BMP_PTR( bmp ) = (void*) [rep bitmapData];
+
+
+	return;
+}
+
+void
+n_mac_image_imagerep_alias( NSBitmapImageRep *rep, n_bmp *bmp )
+{
+
+	// [!] : don't n_bmp_free()
+
+	n_type_gfx sx = (n_type_gfx) [rep pixelsWide];
+	n_type_gfx sy = (n_type_gfx) [rep pixelsHigh];
+
+	n_bmp_header( bmp, sx,sy );
+
+	n_mac_image_imagerep_alias_fast( rep, bmp );
+
+
+	return;
+}
+
+void
+n_mac_image_imagerep_sync( NSBitmapImageRep *rep, n_bmp *bmp )
+{
+
+	n_bmp tmp; n_mac_image_imagerep_alias( rep, &tmp );
+
+	n_bmp_flush_fastcopy( bmp, &tmp );
+
+
+	return;
+}
+
+void
+n_mac_image_nbmp_direct_draw_faster( NSBitmapImageRep *rep, NSRect *rect, n_posix_bool flip )
+{
+
+	//NSImage *img = n_mac_image_imagerep2nsimage( rep );
+
+	//n_mac_image_nsimage_draw( img, rect, flip, YES );
+
+	n_mac_image_imagerep_draw( rep, rect, flip, YES );
 
 
 	return;
@@ -610,6 +701,55 @@ n_mac_image_bmp_gray( n_bmp *bmp )
 
 
 	n_bmp_flush_grayscale( bmp );
+
+
+	return;
+}
+
+
+
+
+void
+n_mac_image_debug_save( n_bmp *bmp_save )
+{
+
+	if ( n_bmp_error( bmp_save ) ) 
+	{
+NSLog( @"n_mac_debug_save() : Error" );
+		return;
+	}
+
+
+	static int i = 0;
+
+	NSArray      *paths   = NSSearchPathForDirectoriesInDomains( NSDesktopDirectory, NSUserDomainMask, YES );
+	NSString     *desktop = [paths objectAtIndex:0];
+	n_posix_char  tmpname[ 100 ]; n_string_path_tmpname( tmpname );
+	NSString     *name    = [NSString stringWithFormat:@"%@/%s_%d.png", desktop, tmpname, i ];
+//NSLog( @"%@", name );
+
+	i++;
+
+
+	n_bmp bmp; n_bmp_carboncopy( bmp_save, &bmp );
+
+
+	n_bmp_mac_color( &bmp );
+
+
+	n_posix_char *str = n_mac_nsstring2str( name );
+
+	n_png png = n_png_template;
+
+	n_png_compress( &png, &bmp );
+	n_png_save( &png, str );
+
+	n_png_free( &png );
+
+	n_memory_free( str );
+
+
+	n_bmp_free( &bmp );
 
 
 	return;

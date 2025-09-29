@@ -8,11 +8,6 @@
 
 
 
-#include "../nonnon/mac/n_txtbox.c"
-
-
-
-
 #define N_PAINT_LAYER_INI_FILENAME n_posix_literal( "nonnon_paint.ini" )
 #define N_PAINT_LAYER_INI_SECTION  n_posix_literal( "[Nonnon Paint Layer]" )
 #define N_PAINT_LAYER_INI_INDEX    n_posix_literal( "index  " )
@@ -329,22 +324,23 @@ n_paint_layer_load( n_paint *paint, const n_posix_char *cmdline )
 		n_type_real step = 100.0 / paint->layer_count;
 		n_type_real pc   = 0;
 
+		/* throttle UI updates to avoid excessive redraws while loading many layers */
+		u32 wait;
 
 		n_type_int i = 0;
+		wait = n_posix_tickcount();
 		n_posix_loop
 		{
 
 			n_posix_char str_oy[ N_STRING_INT2STR_CCH_MAX ]; n_string_int2str( str_oy, i );
 
 			n_posix_char str[ 100 ]; n_posix_sprintf_literal( str, "%s.png", str_oy );
-			n_posix_char *name_img = n_string_path_make_new( name, str );
-//NSLog( @"%s", name_img );
+			/* avoid heap alloc/free each iteration by building path on the stack */
+			n_posix_char name_img_buf[ 1024 ];
+			n_posix_sprintf_literal( name_img_buf, "%s/%s", name, str );
 
 			n_bmp_free_fast( &paint->layer_data[ i ].bmp_data );
-			n_png_png2bmp( name_img, &paint->layer_data[ i ].bmp_data );
-
-//n_posix_bool png_ret = n_png_png2bmp( name_img, &paint->layer_data[ i ].bmp_data );
-//NSLog( @"%d", png_ret );
+			n_png_png2bmp( name_img_buf, &paint->layer_data[ i ].bmp_data );
 
 			if ( n_bmp_error( &paint->layer_data[ i ].bmp_data ) )
 			{
@@ -357,39 +353,33 @@ n_paint_layer_load( n_paint *paint, const n_posix_char *cmdline )
 				n_bmp_mac_color( &paint->layer_data[ i ].bmp_data );
 			}
 
-			n_string_path_free( name_img );
-
-
 			n_posix_char sec[ N_PAINT_LAYER_CCH ]; n_posix_sprintf_literal( sec, "[%lld]", i );
-
 
 			BOOL visible = n_ini_value_int( &paint->layer_ini, sec, N_PAINT_LAYER_INI_VISIBLE, TRUE );
 			int  percent = n_ini_value_int( &paint->layer_ini, sec, N_PAINT_LAYER_INI_PERCENT,  100 );
 			int     blur = n_ini_value_int( &paint->layer_ini, sec, N_PAINT_LAYER_INI_BLUR   ,    0 );
-//NSLog( @"%s : %s : %d %d %d", sec, nam, visible, percent, blur );
 
 			paint->layer_data[ i ].visible = visible;
 			paint->layer_data[ i ].percent = percent;
 			paint->layer_data[ i ].blend   = (n_type_real) percent * 0.01;
 			paint->layer_data[ i ].blur    = blur;
 
-
 			n_posix_char nam[ N_PAINT_LAYER_CCH ];
 			n_ini_value_str( &paint->layer_ini, sec, N_PAINT_LAYER_INI_NAME, N_STRING_EMPTY, nam, N_PAINT_LAYER_CCH );
 
 			n_paint_layer_text_set( paint, i, nam );
 
-
-			// [!] : progress indicator
-
+			/* update progress and throttle UI updates */
 			pc += step;
 			if ( pc >= 100 ) { pc = 100; }
 
 			paint->layer_load_onoff   = TRUE;
 			paint->layer_load_percent = pc;
-			[n_paint_global display];
-			[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate date]];
-
+			if ( n_game_timer_once( &wait, 100 ) )
+			{
+				[n_paint_global display];
+				[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate date]];
+			}
 
 			i++;
 			if ( i >= paint->layer_count ) { break; }

@@ -1167,6 +1167,8 @@ n_posix_loop
 				}
 
 
+				n_type_int p_focus = caret_fr.cch.y;
+
 				n_focus = n_focus + i;
 
 				caret_fr = caret_to = n_txtbox_caret_detect_cch2pixel
@@ -1181,10 +1183,20 @@ n_posix_loop
 
 				CGFloat csy              = self.frame.size.height - ( offset_y * 2 );
 				CGFloat items_per_canvas = csy / font_size.height;
+				CGFloat edge             = trunc( scroll + items_per_canvas );
+//NSLog( @"Focus %lld : Edge %0.2f : Scroll %0.2f", n_focus, edge, scroll );
 
-				if ( n_focus > ( scroll + items_per_canvas ) )
+				if ( p_focus < scroll )
 				{
-					scroll = n_focus - items_per_canvas + 1 + 1; // [!] : fmod() may be needed
+					scroll = p_focus;
+					[self NonnonTxtboxDrawScrollClamp];
+					edge = trunc( scroll + items_per_canvas );
+				}
+
+				if ( n_focus >= edge )
+				{
+					scroll = scroll + ( n_focus - edge );
+					scroll = ceil( scroll ) + 1;
 				}
 
 

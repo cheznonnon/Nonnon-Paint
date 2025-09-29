@@ -166,6 +166,7 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 
 		caret_blink_force_onoff = TRUE;
 
+
 		[self NonnonTxtboxRedraw];
 
 	}
@@ -444,19 +445,9 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 		drag_timer_queue = TRUE;
 
 
-		// [x] : partially redraw : too much hard to implement
+		// [x] : partially redraw : impossible
 
-		if ( 0 )
-		{
-			[self NonnonTxtboxRedraw];
-		} else {
-			CGFloat  x = 0;
-			CGFloat  y = 0;//n_posix_min_n_type_real( caret_fr.pxl.y, caret_to.pxl.y );
-			CGFloat sx = self.frame.size.width;
-			CGFloat sy = self.frame.size.height;//n_posix_max_n_type_real( caret_fr.pxl.y, caret_to.pxl.y );
-
-			[self NonnonTxtboxRedrawRect:NSMakeRect( x,y,sx,sy )];
-		}
+		[self NonnonTxtboxRedraw];
 
 	}
 
@@ -544,8 +535,6 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 			smooth_wheel_mutex = TRUE;
 		}
 
-		smooth_wheel_timer = n_posix_tickcount();
-
 	}
 
 }
@@ -623,6 +612,8 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 
 		// [!] : middle button
 
+		grab_n_drag_onoff = FALSE;
+
 		[[NSCursor arrowCursor] set];
 
 	}
@@ -639,6 +630,8 @@ n_mac_txtbox_focus_calculate( NSPoint local_point )
 	{
 
 		// [!] : middle button
+
+		grab_n_drag_onoff = TRUE;
 
 		pt             = [NSEvent mouseLocation];
 		pt_grag_n_drag = [theEvent locationInWindow];

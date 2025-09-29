@@ -74,128 +74,9 @@
 #define N_MAC_TXTBOX_CARET_SIZE   ( 2 )
 
 
-
-
 #define N_MAC_TXTBOX_DRAW_LINENUMBER_NONE            ( 0 << 0 )
 #define N_MAC_TXTBOX_DRAW_LINENUMBER_ONEBASED_INDEX  ( 1 << 0 )
 #define N_MAC_TXTBOX_DRAW_LINENUMBER_ZEROBASED_INDEX ( 1 << 1 )
-
-// internal
-void
-n_mac_txtbox_draw_linenumber
-(
-	      NSFont *font,
-	  n_type_int  index,
-	  n_type_int  offset,
-	  n_type_int  txt_sy,
-	  n_type_int  focus_f,
-	  n_type_int  focus_t,
-	  n_type_gfx   x,
-	  n_type_gfx   y,
-	  n_type_gfx  sx,
-	  n_type_gfx  sy,
-	     NSColor *color_back,
-	     NSColor *color_text,
-	     NSColor *color_main,
-	         int  option,
-	        BOOL  semi_indicator
-)
-{
-//return;
-
-	if ( option == N_MAC_TXTBOX_DRAW_LINENUMBER_NONE ) { return; }
-
-
-	n_type_int cch_y = index + offset;
-
-	if ( option & N_MAC_TXTBOX_DRAW_LINENUMBER_ZEROBASED_INDEX )
-	{
-		//
-	} else {
-		cch_y++;
-	}
-
-	n_posix_bool over_ten_thousand = n_posix_false;
-	if ( cch_y >= 10000 ) { over_ten_thousand = n_posix_true; }
-
-	if ( cch_y >= 10000 ) { cch_y = cch_y % 10000; }
-
-	//n_posix_char str[ 6 + 1 ];
-	NSString *nsstr;
-
-	// [Patch] : not working accurately
-
-	if ( cch_y < 1000 )
-	{
-		if ( over_ten_thousand )
-		{
-			//n_posix_sprintf_literal( str, " %04d ", (int) cch_y );
-			nsstr = [[NSString alloc] initWithFormat:@" %04d ", (int) cch_y];
-		} else {
-			//n_posix_sprintf_literal( str, " % 4d ", (int) cch_y );
-			nsstr = [[NSString alloc] initWithFormat:@" % 4d ", (int) cch_y];
-		}
-	} else {
-		//n_posix_sprintf_literal( str, " %d "  , (int) cch_y );
-		nsstr = [[NSString alloc] initWithFormat:@" %d ", (int) cch_y];
-	}
-
-
-	NSColor *color_stripe;
-	if ( ( index + offset ) & 1 )
-	{
-		color_stripe = n_mac_nscolor_blend( color_text, color_main, 0.90 );
-	} else {
-		color_stripe = n_mac_nscolor_blend( color_text, color_main, 0.95 );
-	}
-
-	NSRect rect = NSMakeRect( x,y,sx,sy );
-
-	n_mac_draw_box( color_stripe, rect );
-
-	if ( ( index + offset ) < txt_sy )
-	{
-
-		NSColor *color_txt;
-		if ( ( ( index + offset ) >= focus_f )&&( ( index + offset ) <= focus_t ) )
-		{
-			// [!] : indicator
-
-			n_type_gfx size = 2;
-
-			NSRect r = NSMakeRect( x,y,size,sy );
-
-			n_mac_draw_box( [NSColor controlAccentColor], r );
-
-			color_txt = n_mac_nscolor_blend( color_text, color_back, 0.33 );
-		} else {
-			color_txt = n_mac_nscolor_blend( color_text, color_back, 0.66 );
-		}
-
-		if ( semi_indicator )
-		{
-			n_type_gfx size = 2;
-
-			NSRect r = NSMakeRect( x + sx - size, y, size, sy );
-
-			NSColor *color = n_mac_nscolor_blend( color_text, color_back, 0.66 );
-
-			n_mac_draw_box( color, r );
-		}
-
-		NSMutableDictionary *attr = [NSMutableDictionary dictionary];
-		[attr setObject:font      forKey:NSFontAttributeName           ];
-		[attr setObject:color_txt forKey:NSForegroundColorAttributeName];
-
-		[nsstr drawInRect:rect withAttributes:attr];
-
-	}
-
-
-	return;
-}
-
-
 
 
 #define N_MAC_TXTBOX_DELEGATE_MOUSEDOWN_LEFT  ( 1 <<  0 )
@@ -315,6 +196,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	BOOL        is_grayed;
 	BOOL        is_darkmode;
 	BOOL        is_key_input;
+	BOOL        grab_n_drag_onoff;
 
 	BOOL        drag_timer_queue;
 
@@ -358,9 +240,30 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 	BOOL        smooth_wheel_is_mos;
 	BOOL        smooth_wheel_onoff;
-	u32         smooth_wheel_timer;
 	CGFloat     smooth_wheel_delta;
 	BOOL        smooth_wheel_mutex;
+
+	BOOL        smooth_wheel_animation_onoff;
+	u32         smooth_wheel_animation_msec;
+	int         smooth_wheel_animation_count;
+	u32         smooth_wheel_animation_timer;
+
+	NSColor    *nscolor_white;
+	NSColor    *nscolor_black;
+	NSColor    *nscolor_text;
+	NSColor    *nscolor_back;
+	NSColor    *nscolor_text_highlight;
+	NSColor    *nscolor_crlf;
+	NSColor    *nscolor_accent;
+	NSColor    *nscolor_nofocus;
+	NSColor    *nscolor_ime;
+	NSColor    *nscolor_stripe;
+	NSColor    *nscolor_frame;
+	NSColor    *nscolor_text_normal;
+
+	NSMutableDictionary *attr;
+	NSMutableDictionary *attr_crlf;
+	NSMutableDictionary *attr_ime;
 
 #ifdef N_TXTBOX_IME_ENABLE
 
@@ -374,6 +277,11 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	BOOL                ime_delay;
 	BOOL                ime_is_first;
 	n_type_int          ime_caret_offset;
+	NSRect              ime_caret_rect;
+
+	NSRect              underline_rect;
+	CGFloat             underline_fx;
+	CGFloat             underline_tx;
 
 #endif
 
@@ -468,6 +376,22 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		[self addTrackingArea:trackingArea];
 */
 
+		// [!] : accent color
+		[[NSDistributedNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector( accentColorChanged: )
+			       name: @"AppleColorPreferencesChangedNotification"
+			     object: nil
+		];
+
+		// [!] : dark mode
+		[[NSDistributedNotificationCenter defaultCenter]
+			addObserver: self
+			   selector: @selector( darkModeChanged: )
+			       name: @"AppleInterfaceThemeChangedNotification"
+			     object: nil
+		];
+
 		n_findbox_bmp_icon = NULL;
 
 
@@ -489,12 +413,18 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		linenumber_font = [NSFont userFixedPitchFontOfSize:14];
 		linenumber_size = n_mac_image_text_pixelsize( @"000000", font );
 
+		[self NonnonTxtboxFontChangeAttr];
+
+
 		offset = 6;
 		margin = 3;
 
 		offset_x = offset_y = offset;
 
 		[self NonnonTxtboxReset];
+
+		is_darkmode = n_mac_is_darkmode();
+		[self NonnonTxtBoxColorScheme];
 
 		n_bmp_fade_init( &scrollbar_fade, n_bmp_black );
 
@@ -504,13 +434,12 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 		smooth_wheel_is_mos = FALSE;
 		smooth_wheel_onoff  = FALSE;
-		smooth_wheel_timer  = 0;
 
-		n_mac_timer_init( self, @selector( _NonnonTxtboxScrollTimer       ),  33 );
+		n_mac_timer_init( self, @selector( _NonnonTxtboxScrollbarTimer    ),  33 );
 		n_mac_timer_init( self, @selector( _NonnonTxtboxCaretBlinkTimer   ),  66 );
 		n_mac_timer_init( self, @selector( _NonnonTxtboxDeleteCircleTimer ),  33 );
 		n_mac_timer_init( self, @selector( _NonnonTxtboxDragTimer         ),  33 );
-		n_mac_timer_init( self, @selector( _NonnonTxtboxSmoothWheelTimer  ),   6 );
+		n_mac_timer_init( self, @selector( _NonnonTxtboxSmoothWheelTimer  ),   1 );
 //n_mac_timer_init( self, @selector( _NonnonTxtboxTestTimer         ),  33 );
 
 	}
@@ -521,21 +450,116 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 
 
+- (void) accentColorChanged:(NSNotification *)notification
+{
+//NSLog( @"accentColorChanged" );
+
+	// [x] : Sonoma : buggy : old value is set
+
+	n_mac_timer_init_once( self, @selector( n_timer_method_color ), 200 );
+
+}
+
+- (void) darkModeChanged:(NSNotification *)notification
+{
+//NSLog( @"darkModeChanged" );
+
+	// [x] : Sonoma : buggy : old value is set
+
+	n_mac_timer_init_once( self, @selector( n_timer_method_color ), 200 );
+
+}
+
+- (void) n_timer_method_color
+{
+//NSLog( @"n_timer_method_color" );
+
+	is_darkmode = n_mac_is_darkmode();
+
+	[self NonnonTxtBoxColorScheme];
+
+	[self NonnonTxtboxRedraw];
+
+}
+
+- (void) NonnonTxtBoxColorScheme
+{
+
+	if ( is_darkmode )
+	{
+		nscolor_text = n_mac_nscolor_argb( 255,222,222,222 );
+	} else {
+		nscolor_text = [NSColor textColor];
+	}
+
+	nscolor_back = [NSColor textBackgroundColor];
+	if ( is_grayed )
+	{
+		nscolor_text = n_mac_nscolor_blend( nscolor_back, nscolor_text, 0.55 );
+		nscolor_back = n_mac_nscolor_blend( nscolor_back, nscolor_text, 0.05 );
+	}
+
+	nscolor_text_normal = nscolor_text;
+
+	if ( is_darkmode )
+	{
+		nscolor_text_highlight = nscolor_text;
+	} else {
+		nscolor_text_highlight = nscolor_back;
+	}
+
+	if ( is_darkmode )
+	{
+		nscolor_nofocus = n_mac_nscolor_argb( 255,100,100,100 );
+	} else {
+		nscolor_nofocus = n_mac_nscolor_argb( 255,200,200,200 );
+	}
+
+	nscolor_accent = [NSColor controlAccentColor];
+
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+	nscolor_ime = nscolor_accent;
+
+#endif
+
+}
+
+
+
 
 - (void) NonnonTxtboxRedraw
 {
 
-	//[self display];
-	[self setNeedsDisplay:YES];
+	// [x] : setNeedsDisplay is heavier by approx. 1%
+
+	[self display];
+	//[self setNeedsDisplay:YES];
 
 }
 
-- (void) NonnonTxtboxRedrawRect:(NSRect) rect
+- (void) NonnonTxtboxRedrawPartial
 {
+//return;
 
-	//[self displayRect:rect];
-	[self setNeedsDisplayInRect:rect];
+	// [!] : efficient mode : unimplementable : macOS is too buggy
 
+	[self display];
+
+/*
+	redraw_fy = n_focus;
+	redraw_ty = redraw_fy + 1;
+
+	n_type_int i = scroll;
+
+	NSRect _rect_main = NSMakeRect( padding - margin, offset_y - caret_centered_offset, self.frame.size.width - ( offset_x * 2 ), font_size.height );
+
+	_rect_main.origin.y -= font_size.height * i;
+	_rect_main.origin.y += font_size.height * redraw_fy;
+
+	[self displayRect:_rect_main];
+*/
 }
 
 
@@ -655,10 +679,25 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 
 
+- (void) NonnonTxtboxFontChangeAttr
+{
+
+	attr = [NSMutableDictionary dictionary];
+	[attr setObject:font forKey:NSFontAttributeName];
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+	attr_ime = [NSMutableDictionary dictionary];
+	[attr_ime setObject:font forKey:NSFontAttributeName];
+
+#endif
+}
+
 - (void) NonnonTxtboxFontChange:(NSFont*)font_new
 {
 
 	font = font_new;
+	[self NonnonTxtboxFontChangeAttr];
 
 }
 
@@ -797,7 +836,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 
 
-- (void) _NonnonTxtboxScrollTimer
+- (void) _NonnonTxtboxScrollbarTimer
 {
 
 	if ( smooth_wheel_mutex ) { return; }
@@ -887,7 +926,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 {
 //return;
 
-	if ( smooth_wheel_mutex ) { return; }
+	if ( FALSE == n_mac_window_is_keywindow( self.window ) ) { return; }
 
 
 	if ( self.n_mode == N_MAC_TXTBOX_MODE_LISTBOX )
@@ -915,45 +954,39 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 //return;
 
 //NSLog( @"!" );
-
-	if ( smooth_wheel_delta )
+	if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
 	{
+//NSLog( @"N_MAC_TXTBOX_MODE_FINDBOX" );
+		[self NonnonTxtboxRedraw];
+	} else
+	if ( grab_n_drag_onoff )
+	{
+//NSLog( @"grab_n_drag_onoff" );
 		[self NonnonTxtboxRedraw];
 	} else
 	if ( drag_timer_queue )
 	{
+//NSLog( @"drag_timer_queue" );
 		[self NonnonTxtboxRedraw];
 	} else
 	if ( is_key_input )
 	{
-		[self NonnonTxtboxRedraw];
-	} else
-	if ( self.n_mode == N_MAC_TXTBOX_MODE_FINDBOX )
-	{
+//NSLog( @"is_key_input" );
 		[self NonnonTxtboxRedraw];
 	} else
 	if ( [self NonnonTxtboxCaretIsOnScreen] )
 	{
-		// [!] : CPU Usage is high
-		[self NonnonTxtboxRedraw];
-/*
-		// [x] : blink sometimes
-
-		// [!] : partial
-
-		redraw_fy = caret_to.cch.y;
-		redraw_ty = redraw_fy + 1;
-
-		CGFloat  x = caret_pt.x;
-		CGFloat  y = caret_pt.y - caret_centered_offset;
-		CGFloat sx = N_MAC_TXTBOX_CARET_SIZE;
-		CGFloat sy = font_size.height;
-//NSLog( @"%0.2f", caret_to.pxl.y );
-
-		[self NonnonTxtboxRedrawRect:NSMakeRect( x,y,sx,sy )];
-*/
-	} else {
-		[self NonnonTxtboxRedraw];
+//NSLog( @"caret" );
+		[self NonnonTxtboxRedrawPartial];
+	} else
+	if ( ime_onoff )
+	{
+//NSLog( @"IME" );
+		[self NonnonTxtboxRedrawPartial];
+	} else
+	//
+	{
+//NSLog( @"N/A" );
 	}
 
 }
@@ -1043,94 +1076,71 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	if ( smooth_wheel_onoff )
 	{
 		CGFloat delta = fabs( smooth_wheel_delta );
-
-		{
-			static CGFloat avr[ 3 ] = { 0,0,0 };
-
-			avr[ 0 ] = avr[ 1 ];
-			avr[ 1 ] = avr[ 2 ];
-			avr[ 2 ] = delta;
-
-			delta = ( avr[ 0 ] + avr[ 1 ] + avr[ 2 ] ) / 3;
-		}
-
 		if ( delta == 0 ) { return; }
 //NSLog( @"%0.2f", delta );
 
-		static BOOL animation_onoff = FALSE;
-		static u32  animation_timer = 0;
-		static int  animation_count = 0;
-		static int  animation_lines = 0;
-		static int  animation_step  = 0;
-		static u32  animation_msec  = 0;
+		// [!] : small amount support : Mos hasn't this feature
 
-		if ( delta <= 0.5 )
+		static BOOL slow = FALSE;
+
+		if ( smooth_wheel_animation_onoff == FALSE )
 		{
-			if ( animation_onoff == FALSE )
+			smooth_wheel_animation_onoff = TRUE;
+			smooth_wheel_animation_timer = n_posix_tickcount();
+			smooth_wheel_animation_count = 0;
+			smooth_wheel_animation_msec  = 0;
+
+//NSLog( @"%0.2f", delta );
+			if ( delta <= 3 )
 			{
-				animation_onoff = TRUE;
-				animation_timer = 0;
-				animation_count = 0;
-				animation_lines = 3;
-				animation_step  = 1;
-				animation_msec  = 33 / animation_lines;
+				slow = TRUE;
 			}
-		} else {
-			animation_onoff = FALSE;
 		}
 
-		if ( animation_onoff )
+		if ( smooth_wheel_animation_onoff )
 		{
-			if ( n_posix_false == n_game_timer( &animation_timer, animation_msec ) ) { return; }
+			smooth_wheel_animation_msec = n_posix_min( pow( delta, 3 ), 300 );
+		}
+//NSLog( @"slow %d : %d msec : delta %0.2f", slow, smooth_wheel_animation_msec, delta );
 
+		if ( smooth_wheel_animation_onoff )
+		{
 			if ( smooth_wheel_delta < 0 )
 			{
-				scroll += animation_step;
+				scroll += 1;
 			} else {
-				scroll -= animation_step;
+				scroll -= 1;
 			}
 
 			[self NonnonTxtboxRedraw];
 
-			animation_count++;
-			if ( animation_count >= animation_lines )
+			BOOL go = FALSE;
+			if ( slow )
 			{
-				animation_onoff = FALSE;
+//NSLog( @"slow" );
+				smooth_wheel_animation_count++;
+				if ( smooth_wheel_animation_count >= 3 )
+				{
+					go = TRUE;
+				}
+			} else
+			if ( n_game_timer( &smooth_wheel_animation_timer, smooth_wheel_animation_msec ) )
+			{
+//NSLog( @"fast" );
+				go = TRUE;
+			}
+
+			if ( go )
+			{
+				smooth_wheel_animation_onoff = FALSE;
 
 				smooth_wheel_onoff = FALSE;
 				smooth_wheel_mutex = FALSE;
+
+				slow = FALSE;
 			}
-
-			return;
 		}
 
-		u32 msec = 250;
-		if ( n_game_timer( &smooth_wheel_timer, msec ) )
-		{
-			smooth_wheel_onoff = FALSE;
-			smooth_wheel_mutex = FALSE;
-
-			return;
-		}
-
-
-		static u32 slice = 0;
-		if ( n_posix_false == n_game_timer( &slice, 11 ) )
-		{
-			return;
-		}
-
-		CGFloat step = n_posix_minmax_n_type_real( 1.0, 2.0, pow( delta / 3, 2.0 ) );
-//NSLog( @"%0.2f", step );
-
-		if ( smooth_wheel_delta < 0 )
-		{
-			scroll += step;
-		} else {
-			scroll -= step;
-		}
-
-		[self NonnonTxtboxRedraw];
 	}
 
 }
@@ -1828,7 +1838,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 
 
-
+/*
 - (void) applicationWillBecomeActive:(NSNotification *)notification
 {
 //NSLog( @"applicationWillBecomeActive" );
@@ -1846,7 +1856,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	[self NonnonTxtboxRedraw];
 
 }
-
+*/
 
 
 

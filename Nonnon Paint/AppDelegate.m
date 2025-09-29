@@ -86,48 +86,6 @@ n_paint_memory_limit( void )
 
 
 
-void
-n_paint_debug_save( n_bmp *bmp_save )
-{
-
-	if ( n_bmp_error( bmp_save ) ) 
-	{
-NSLog( @"n_paint_debug_save() : Error" );
-		return;
-	}
-
-
-	NSArray      *paths   = NSSearchPathForDirectoriesInDomains( NSDesktopDirectory, NSUserDomainMask, YES );
-	NSString     *desktop = [paths objectAtIndex:0];
-	n_posix_char  tmpname[ 100 ]; n_string_path_tmpname( tmpname );
-	NSString     *name    = [NSString stringWithFormat:@"%@/%s.png", desktop, tmpname];
-//NSLog( @"%@", name );
-
-
-	n_bmp bmp; n_bmp_carboncopy( bmp_save, &bmp );
-
-
-	n_bmp_mac_color( &bmp );
-
-
-	n_posix_char *str = n_mac_nsstring2str( name );
-
-	n_png png = n_png_template;
-
-	n_png_compress( &png, &bmp );
-	n_png_save( &png, str );
-
-	n_png_free( &png );
-
-	n_memory_free( str );
-
-
-	n_bmp_free( &bmp );
-
-
-	return;
-}
-
 n_posix_bool
 n_paint_load_ini2gdi( n_posix_char *path, n_bmp *bmp )
 {
@@ -2333,9 +2291,32 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 }
 
+
+
+
 - (void) accentColorChanged:(NSNotification *)notification
 {
 //NSLog( @"accentColorChanged" );
+
+	// [x] : Sonoma : buggy : old value is set
+
+	n_mac_timer_init_once( self, @selector( n_timer_method_color ), 200 );
+
+}
+
+- (void) darkModeChanged:(NSNotification *)notification
+{
+//NSLog( @"darkModeChanged" );
+
+	// [x] : Sonoma : buggy : old value is set
+
+	n_mac_timer_init_once( self, @selector( n_timer_method_color ), 200 );
+
+}
+
+- (void) n_timer_method_color
+{
+//NSLog( @"n_timer_method_color" );
 
 	[self NonnonPaintIconSet:@"rc/small"        button:_n_button_0_0];
 	[self NonnonPaintIconSet:@"rc/large"        button:_n_button_1_0];
@@ -2350,12 +2331,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[self NonnonPaintIconSet:@"rc/brush"        button:_n_button_1_2];
 	[self NonnonPaintIconSet:@"rc/grabber"      button:_n_button_2_2];
 	[self NonnonPaintIconSet:@"rc/color"        button:_n_button_4_2];
-
-}
-
-- (void) darkModeChanged:(NSNotification *)notification
-{
-//NSLog( @"darkModeChanged" );
 
 	n_win_scrollbar_on_settingchange( [_n_size_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
 	n_win_scrollbar_on_settingchange( [_n_mix_scrollbar   n_scrollbar_struct_get], 0, n_posix_true );
@@ -2398,6 +2373,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_win_scrollbar_on_settingchange( [_n_replacer_to_b_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
 
 }
+
+
+
 
 - (void) WindowWillMiniaturize:(NSNotification *)notification
 {
@@ -4094,12 +4072,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( paint.layer_onoff )
 	{
 		paint.resizer_layer_data = n_bmp_layer_raw_copy( paint.layer_data, paint.layer_count );
-//n_paint_debug_save( &paint.resizer_layer_data[ paint.layer_index ].bmp_data );
+//n_mac_image_debug_save( &paint.resizer_layer_data[ paint.layer_index ].bmp_data );
 	} else {
 		n_paint_bmp_carboncopy( &paint.bmp_data, &paint.resizer_bmp_data );
 		n_paint_bmp_carboncopy( &paint.bmp_grab, &paint.resizer_bmp_grab );
-//n_paint_debug_save( &paint.bmp_data );
-//n_paint_debug_save( &paint.resizer_bmp_data );
+//n_mac_image_debug_save( &paint.bmp_data );
+//n_mac_image_debug_save( &paint.resizer_bmp_data );
 	}
 
 //NSLog( @"!" );
@@ -4138,7 +4116,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		{
 			n_bmp_layer_raw_free( paint.layer_data, paint.layer_count );
 			paint.layer_data = paint.resizer_layer_data;
-//n_paint_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
+//n_mac_image_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
 		} else {
 			n_paint_bmp_carboncopy( &paint.resizer_bmp_data, &paint.bmp_data );
 			n_paint_bmp_carboncopy( &paint.resizer_bmp_grab, &paint.bmp_grab );
@@ -4247,7 +4225,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 			n_paint_grabber_system_set( &gx,&gy, &gsx,&gsy, &gfx,&gfy );
 		}
 
-//n_paint_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
+//n_mac_image_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
 	} else {
 
 		n_bmp *bmp_target;
@@ -4255,7 +4233,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			n_paint_bmp_carboncopy( &paint.resizer_bmp_data, &paint.bmp_data );
-//n_paint_debug_save( &paint.resizer_bmp_data );
+//n_mac_image_debug_save( &paint.resizer_bmp_data );
 			bmp_target = &paint.bmp_data;
 		} else {
 			n_paint_bmp_carboncopy( &paint.resizer_bmp_grab, &paint.bmp_grab );
