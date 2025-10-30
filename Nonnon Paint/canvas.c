@@ -1943,6 +1943,20 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 
 
+- (void) n_paint_pressure_set:(NSEvent*) theEvent
+{
+
+	// [x] : WACOM Driver : latest version : zero while side button is pressed
+
+	if ( paint->pressure_onoff )
+	{
+		pressure = [theEvent pressure];
+	} else {
+		pressure = 1.0;
+	}
+
+}
+
 - (void) mouseUp:(NSEvent*) theEvent
 {
 //NSLog( @"mouseUp" );
@@ -2051,7 +2065,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		}
 
 
-		pressure = [theEvent pressure];
+		[self n_paint_pressure_set:theEvent];
 
 		NonnonPaintPen_mouseDown( paint, theEvent );
 		NonnonPaintGrabber_mouseDown( paint, theEvent );
@@ -2094,7 +2108,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	} else {
 		if ( paint->readonly ) { return; }
 
-		pressure = [theEvent pressure];
+		[self n_paint_pressure_set:theEvent];
 
 		NonnonPaintPen_mouseDragged( paint );
 		NonnonPaintGrabber_mouseDragged( paint );

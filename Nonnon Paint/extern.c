@@ -1,5 +1,4 @@
 // Nonnon Paint
-// Nonnon Paint
 // copyright (c) nonnon all rights reserved
 // License : GPL http://www.gnu.org/copyleft/gpl.html
 
@@ -140,6 +139,7 @@ typedef struct {
 	BOOL       grid_onoff;
 	BOOL       pixel_grid_onoff;
 	BOOL       alpha_emphasizer_onoff;
+	BOOL       pressure_onoff;
 
 
 	// [!] : Canvas

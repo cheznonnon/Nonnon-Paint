@@ -181,6 +181,37 @@ n_mac_stdfont( void )
 
 
 
+/*
+// [x] : usage is unclear
+
+#define n_type_timer CFTimeInterval
+
+#define n_mac_tickcount CACurrentMediaTime
+
+BOOL
+n_mac_game_timer( n_type_timer *prv, n_type_timer interval )
+{
+
+	// [!] : interval : msec / 1000
+
+
+	n_type_timer cur = n_mac_tickcount();
+	n_type_timer usc = cur - (*prv);
+
+
+	if ( usc >= interval )
+	{
+		(*prv) = cur;
+
+		return TRUE;
+	}
+
+
+	return FALSE;
+}
+*/
+
+
 
 NSTimer*
 n_mac_timer_init( id self, SEL selector, NSTimeInterval msec )

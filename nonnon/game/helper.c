@@ -27,7 +27,7 @@ n_game_timer( u32 *prv, u32 interval )
 
 	if ( (*prv) > cur )
 	{
-		msec = cur + ( 0xffff - (*prv) );
+		msec = cur + ( 0xffffffff - (*prv) );
 	} else {
 		msec = cur - (*prv);
 	}
@@ -53,7 +53,7 @@ n_game_timer_once( u32 *prv, u32 interval )
 
 	if ( (*prv) > cur )
 	{
-		msec = cur + ( 0xffff - (*prv) );
+		msec = cur + ( 0xffffffff - (*prv) );
 	} else {
 		msec = cur - (*prv);
 	}
@@ -68,6 +68,9 @@ n_game_timer_once( u32 *prv, u32 interval )
 
 	return n_posix_false;
 }
+
+
+
 
 #define n_game_random( range ) n_random_range( range )
 
@@ -85,6 +88,9 @@ n_game_randomcolor( void )
 
 	return color;
 }
+
+
+
 
 n_posix_inline n_type_gfx
 n_game_centering( n_type_gfx a, n_type_gfx b )

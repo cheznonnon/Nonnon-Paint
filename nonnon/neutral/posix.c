@@ -518,7 +518,7 @@ n_posix_tickcount( void )
 	// [x] : run on Win95 but slow
 
 	LARGE_INTEGER li_frq; QueryPerformanceFrequency( &li_frq );
-        LARGE_INTEGER li_now; QueryPerformanceCounter  ( &li_now );
+	LARGE_INTEGER li_now; QueryPerformanceCounter  ( &li_now );
 
 	ret = (u32) ( ( 1000LL * li_now.QuadPart ) / li_frq.QuadPart );
 */

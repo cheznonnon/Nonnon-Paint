@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24128" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24128"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -90,6 +90,7 @@
                 <outlet property="n_menu_color_replacer" destination="MgF-hv-wqx" id="ZNm-i6-fBs"/>
                 <outlet property="n_menu_grid" destination="qxb-7c-Dd6" id="0Ad-sA-2DS"/>
                 <outlet property="n_menu_pixelgrid" destination="iMn-r9-Poh" id="BsQ-qi-JB8"/>
+                <outlet property="n_menu_pressure" destination="8jZ-rK-vKk" id="aY7-5Y-7t2"/>
                 <outlet property="n_mix_scrollbar" destination="5yv-gh-NPU" id="85j-kV-bZg"/>
                 <outlet property="n_mix_value" destination="r3t-Hc-RJY" id="T5n-4N-0ak"/>
                 <outlet property="n_paint_canvas" destination="hlJ-PY-hWk" id="EKd-gd-1Sn"/>
@@ -179,6 +180,12 @@
                                     <action selector="n_menu_alpha_emphasizer_method:" target="Voe-Tx-rLC" id="UQf-Zk-R3o"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Pressure On/Off" id="8jZ-rK-vKk">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="n_menu_pressure_method:" target="Voe-Tx-rLC" id="5DP-x8-urG"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Clear Canvas" id="Wuv-1D-zh4">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -227,7 +234,7 @@
         <window title="Nonnon Paint" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="335" y="390" width="256" height="256"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="256" height="256"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -244,7 +251,7 @@
             <windowStyleMask key="styleMask" titled="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="207" width="244" height="474"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="Tbu-TZ-vDU">
                 <rect key="frame" x="0.0" y="0.0" width="244" height="474"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -587,7 +594,7 @@
         <window title="Resizer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="7SX-3o-U54">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="500" height="294"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="uKM-NO-rdh">
                 <rect key="frame" x="0.0" y="0.0" width="500" height="294"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -845,7 +852,7 @@
             <windowStyleMask key="styleMask" titled="YES"/>
             <windowPositionMask key="initialPositionMask" rightStrut="YES"/>
             <rect key="contentRect" x="1400" y="207" width="244" height="445"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="8gV-vO-MLu">
                 <rect key="frame" x="0.0" y="0.0" width="244" height="445"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -938,7 +945,7 @@
         <window title="Clear Canvas" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="jlQ-8W-d8T">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="244" height="132"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="8GC-39-ye3">
                 <rect key="frame" x="0.0" y="0.0" width="244" height="132"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1053,7 +1060,7 @@
         <window title="Color Replacer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="Ghg-hF-3Hp">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="244" height="279"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="T46-t5-ecW">
                 <rect key="frame" x="0.0" y="0.0" width="244" height="279"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1286,7 +1293,7 @@
         <window title="Formatter" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="0DW-fm-9yN">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="254" height="93"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="7B1-KX-0af">
                 <rect key="frame" x="0.0" y="0.0" width="254" height="93"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1371,7 +1378,7 @@ Gw
         <window title="Formatter" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="owa-U5-a47">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="254" height="93"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="Buj-b7-Dna">
                 <rect key="frame" x="0.0" y="0.0" width="254" height="93"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1421,7 +1428,7 @@ Gw
         <window title="Alpha Tweeker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="Epp-QL-6xd">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="254" height="93"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="GgK-eq-ek0">
                 <rect key="frame" x="0.0" y="0.0" width="254" height="93"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1531,7 +1538,7 @@ DQ
         <window title="Preview" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="fd4-li-ze5">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" resizable="YES"/>
             <rect key="contentRect" x="196" y="206" width="256" height="256"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="oxp-Qb-Bam">
                 <rect key="frame" x="0.0" y="0.0" width="256" height="256"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1547,7 +1554,7 @@ DQ
         <window title="Renamer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="VbW-he-1FL">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="207" width="254" height="93"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="1Wc-VP-bgS">
                 <rect key="frame" x="0.0" y="0.0" width="254" height="93"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -1579,7 +1586,7 @@ DQ
         <window title="Color History" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="Hzb-Np-hKV">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="206" width="250" height="250"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1710" height="1069"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="iEm-d0-J27">
                 <rect key="frame" x="0.0" y="0.0" width="250" height="250"/>
                 <autoresizingMask key="autoresizingMask"/>

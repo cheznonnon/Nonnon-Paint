@@ -306,6 +306,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 @property (weak) IBOutlet NSMenuItem *n_menu_grid;
 @property (weak) IBOutlet NSMenuItem *n_menu_pixelgrid;
 @property (weak) IBOutlet NSMenuItem *n_menu_alpha_emphasizer;
+@property (weak) IBOutlet NSMenuItem *n_menu_pressure;
 
 @property (weak) IBOutlet NSMenuItem *n_menu_clear_canvas;
 @property (weak) IBOutlet NSMenuItem *n_menu_color_replacer;
@@ -566,6 +567,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		paint.alpha_emphasizer_onoff = [str intValue];
 		if ( paint.alpha_emphasizer_onoff ) { [_n_menu_alpha_emphasizer setState:NSControlStateValueOn]; }
 
+		str = n_mac_settings_read( @"pressure_onoff" );
+		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"1"]; }
+		paint.pressure_onoff = [str intValue];
+		if ( paint.pressure_onoff ) { [_n_menu_pressure setState:NSControlStateValueOn]; }
+
 
 		str = n_mac_settings_read( @"grabber_frame_mode" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
@@ -608,6 +614,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		str = [NSString stringWithFormat:@"%d", paint.alpha_emphasizer_onoff];
 		n_mac_settings_write( @"alpha_emphasizer_onoff", str );
+
+		str = [NSString stringWithFormat:@"%d", paint.pressure_onoff];
+		n_mac_settings_write( @"pressure_onoff", str );
 
 
 		str = [NSString stringWithFormat:@"%d", paint.grabber_frame_mode];
@@ -2650,6 +2659,20 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	}
 
 	[_n_paint_canvas display_optimized];
+
+}
+
+- (IBAction)n_menu_pressure_method:(id)sender {
+
+	NSControlStateValue s = [_n_menu_pressure state];
+	if ( s == NSControlStateValueOff )
+	{
+		[_n_menu_pressure setState:NSControlStateValueOn];
+		paint.pressure_onoff = TRUE;
+	} else {
+		[_n_menu_pressure setState:NSControlStateValueOff];
+		paint.pressure_onoff = FALSE;
+	}
 
 }
 

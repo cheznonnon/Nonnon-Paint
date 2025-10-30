@@ -25,6 +25,21 @@ n_paint_average( u32 color )
 
 
 
+u32
+n_paint_blend_pixel( u32 f, u32 t, n_type_real blend )
+{
+
+	u32 prv = f;
+	u32 ret = n_bmp_blend_pixel_no_force_move( f, t, blend );
+
+	if ( prv == ret ) { ret = n_bmp_blend_pixel_force_move( f, t, blend ); }
+
+	return ret;
+}
+
+
+
+
 n_type_real
 n_paint_pen_air( n_paint *paint, n_type_gfx x, n_type_gfx y, n_type_gfx radius, n_type_real coeff, n_type_real blend )
 {
@@ -130,7 +145,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 		n_paint_grabber_pixel_get( tx,ty, color, &color_f, &color_t, 0.00 );
 
 
-		u32 color_ret = n_bmp_blend_pixel_force_move( color_f, color_t, blend );
+		u32 color_ret = n_paint_blend_pixel( color_f, color_t, blend );
 
 
 		n_paint_grabber_pixel_set( tx,ty, color_f, color_ret );
@@ -187,29 +202,32 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 				n_type_gfx orig_x = tx;
 				n_type_gfx orig_y = ty;
 
-				n_type_int i = 0;
-				n_posix_loop
+				if ( n_bmp_ptr_is_accessible( &paint->layer_data[ 0 ].bmp_data, orig_x,orig_y ) )
 				{
-
-					if ( n_posix_false == n_paint_layer_is_locked( i ) )
+					n_type_int i = 0;
+					n_posix_loop
 					{
-						n_bmp *bmp_data = &paint->layer_data[ i ].bmp_data;
 
-						u32 c1 = n_bmp_white_invisible;
-						u32 c2; n_bmp_ptr_get( bmp_data, orig_x,orig_y, &c2 );
+						if ( n_posix_false == n_paint_layer_is_locked( i ) )
+						{
+							n_bmp *bmp_data = &paint->layer_data[ i ].bmp_data;
 
-						n_type_real d = n_paint_pen_air( paint, x,y, radius, coeff, blend );
+							u32 c_f = n_bmp_antialias_pixel( bmp_data, orig_x,orig_y, 1.0 );
+							u32 c_t = n_bmp_white_invisible;
 
-						c1 = n_bmp_blend_pixel_force_move( c2, c1, d );
-						n_bmp_ptr_set( bmp_data, orig_x,orig_y, c1 );
+							n_type_real d = n_paint_pen_air( paint, x,y, radius, coeff, blend * 0.01 );
 
-						n_bmp_ptr_set( &paint->layer_cache_bmp_data, orig_x,orig_y, 0 );
-						n_bmp_ptr_set( &paint->layer_cache_bmp_pre , orig_x,orig_y, 0 );
-						n_bmp_ptr_set( &paint->layer_cache_bmp_pst , orig_x,orig_y, 0 );
+							u32 c = n_paint_blend_pixel( c_f, c_t, d );
+							n_bmp_ptr_set_fast( bmp_data, orig_x,orig_y, c );
+
+							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_data, orig_x,orig_y, 0 );
+							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_pre , orig_x,orig_y, 0 );
+							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_pst , orig_x,orig_y, 0 );
+						}
+
+						i++;
+						if ( i >= paint->layer_count ) { break; }
 					}
-
-					i++;
-					if ( i >= paint->layer_count ) { break; }
 				}
 
 			} else
@@ -239,7 +257,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 
 					n_type_real d = n_paint_pen_air( paint, x,y, radius, coeff, blend );
 
-					c1 = n_bmp_blend_pixel_force_move( c2, c1, d );
+					c1 = n_paint_blend_pixel( c2, c1, d );
 					n_bmp_ptr_set( bmp_grab, grab_x,grab_y,  c1 );
 
 					i++;
@@ -341,7 +359,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 
 						coeff = n_paint_pen_air( paint, x,y, radius, coeff, blend );
 
-						u32 color_ret = n_bmp_blend_pixel_force_move( color_f, color_t, coeff );
+						u32 color_ret = n_paint_blend_pixel( color_f, color_t, coeff );
 						n_paint_grabber_pixel_set( tx,ty, color_f, color_ret );
 					}
 
