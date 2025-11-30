@@ -463,6 +463,9 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_draw:(void*) zero sx:(n_type_gfx)sx sy:(n_type_gfx)sy
 {
 
+	BOOL is_zoom_in = ( paint->zoom > 0 );
+//NSLog( @"Is Zoom In %d : %d", is_zoom_in, paint->zoom );
+
 	int zoom    = [self n_paint_zoom_get_int   :paint->zoom];
 	int zoom_ui = [self n_paint_zoom_get_int_ui:paint->zoom];
 //NSLog( @"Zoom %d : Zoom UI %d", zoom, zoom_ui );
@@ -470,13 +473,13 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_gfx bmpsx = N_BMP_SX( paint->pen_bmp_data );
 	n_type_gfx bmpsy = N_BMP_SY( paint->pen_bmp_data );
 
-	if ( paint->zoom < 0 )
+	if ( is_zoom_in )
 	{
-		bmpsx /= zoom;
-		bmpsy /= zoom;
-	} else {
 		bmpsx *= zoom;
 		bmpsy *= zoom;
+	} else {
+		bmpsx /= zoom;
+		bmpsy /= zoom;
 	}
 
 	n_type_gfx fx  = 0;
@@ -521,15 +524,13 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		n_type_gfx sx = gsx;
 		n_type_gfx sy = gsy;
 
-		if ( paint->zoom > 0 )
+		if ( is_zoom_in )
 		{
 			 x *= paint->zoom;
 			 y *= paint->zoom;
 			sx *= paint->zoom;
 			sy *= paint->zoom;
-		} else
-		if ( paint->zoom < 0 )
-		{
+		} else {
 			 x /= paint->zoom * -1;
 			 y /= paint->zoom * -1;
 			sx /= paint->zoom * -1;
@@ -567,31 +568,23 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : Grid
 
-	n_type_gfx center_x = bmpsx / 2;
-	n_type_gfx center_y = bmpsy / 2;
+	n_type_gfx grid_bmpsx = N_BMP_SX( paint->pen_bmp_data );
+	n_type_gfx grid_bmpsy = N_BMP_SY( paint->pen_bmp_data );
 
-	if ( paint->zoom < 0 )
-	{
-		center_x *= zoom;
-		center_y *= zoom;
-	} else {
-		center_x /= zoom_ui;
-		center_y /= zoom_ui;
-	}
 
-	n_type_gfx grid_size = n_posix_max( bmpsx, bmpsy ) / 8;
+	BOOL grid_is_odd_x = ( grid_bmpsx % 2 );
+	BOOL grid_is_odd_y = ( grid_bmpsy % 2 );
+
+
+	n_type_gfx center_x = grid_bmpsx / 2;
+	n_type_gfx center_y = grid_bmpsy / 2;
+
+
+	n_type_gfx grid_size = n_posix_max( grid_bmpsx, grid_bmpsy ) / 8;
 
 	n_type_gfx grid_x = grid_size;
 	n_type_gfx grid_y = grid_size;
 
-	if ( paint->zoom < 0 )
-	{
-		grid_x *= zoom;
-		grid_y *= zoom;
-	} else {
-		grid_x /= zoom_ui;
-		grid_y /= zoom_ui;
-	}
 
 	// [!] : multithread : array is not available
 
@@ -603,6 +596,14 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_gfx grid_check_x_5 = center_x + ( grid_x * 2 );
 	n_type_gfx grid_check_x_6 = center_x + ( grid_x * 3 );
 	n_type_gfx grid_check_x_7 = center_x + ( grid_x * 4 );
+
+	if ( grid_is_odd_x )
+	{
+		grid_check_x_0++;
+		grid_check_x_1++;
+		grid_check_x_2++;
+		grid_check_x_3++;
+	}
 
 	n_type_gfx grid_check_xx_0 = grid_check_x_0 - 1;
 	n_type_gfx grid_check_xx_1 = grid_check_x_1 - 1;
@@ -622,6 +623,14 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_gfx grid_check_y_6 = center_y + ( grid_y * 3 );
 	n_type_gfx grid_check_y_7 = center_y + ( grid_y * 4 );
 
+	if ( grid_is_odd_y )
+	{
+		grid_check_y_0++;
+		grid_check_y_1++;
+		grid_check_y_2++;
+		grid_check_y_3++;
+	}
+
 	n_type_gfx grid_check_yy_0 = grid_check_y_0 - 1;
 	n_type_gfx grid_check_yy_1 = grid_check_y_1 - 1;
 	n_type_gfx grid_check_yy_2 = grid_check_y_2 - 1;
@@ -634,13 +643,13 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : optimization
 
-	if ( paint->zoom < 0 )
+	if ( is_zoom_in )
 	{
-		fx = ( fx * zoom );
-		fy = ( fy * zoom );
-	} else {
 		fx = ( fx / zoom );
 		fy = ( fy / zoom );
+	} else {
+		fx = ( fx * zoom );
+		fy = ( fy * zoom );
 	}
 
 
@@ -691,13 +700,13 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 			n_type_gfx xx,yy;
 
-			if ( self->paint->zoom < 0 )
+			if ( is_zoom_in )
 			{
-				xx = fx + ( x * zoom );
-				yy = fy + ( y * zoom );
-			} else {
 				xx = fx + zx;
 				yy = fy + zy;
+			} else {
+				xx = fx + ( x * zoom );
+				yy = fy + ( y * zoom );
 			}
 
 			u32 color; //n_bmp_ptr_get_fast( paint->pen_bmp_data, xx,yy, &color );
@@ -771,105 +780,54 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 				if ( self->paint->grid_onoff )
 				{
-					if ( self->paint->zoom > 0 )
+					u32 redraw_color = 0;
+
+					if ( is_zoom_in )
 					{
-						if ( ( xx == center_x )||( yy == center_y )||( xx == ( center_x - 1 ) )||( yy == ( center_y - 1 ) ) )
+						if ( grid_is_odd_x )
 						{
-							if ( ( bx == 0 )||( by == 0 )||( bx == ( zoom_ui - 1 ) )||( by == ( zoom_ui - 1 ) ) )
+							if ( xx == center_x )
 							{
-								c = n_bmp_blend_pixel( c, n_bmp_rgb_mac( 255,0,128 ), 0.25 );
+								redraw_color = n_bmp_rgb_mac( 255,0,128 );
 							}
 						} else
-						if (
-							( xx == grid_check_x_0 )
-							||
-							( xx == grid_check_x_1 )
-							||
-							( xx == grid_check_x_2 )
-							||
-							( xx == grid_check_x_3 )
-							||
-							( xx == grid_check_x_4 )
-							||
-							( xx == grid_check_x_5 )
-							||
-							( xx == grid_check_x_6 )
-							||
-							( xx == grid_check_x_7 )
-
-							||
-
-							( xx == grid_check_xx_0 )
-							||
-							( xx == grid_check_xx_1 )
-							||
-							( xx == grid_check_xx_2 )
-							||
-							( xx == grid_check_xx_3 )
-							||
-							( xx == grid_check_xx_4 )
-							||
-							( xx == grid_check_xx_5 )
-							||
-							( xx == grid_check_xx_6 )
-							||
-							( xx == grid_check_xx_7 )
-
-							||
-
-							( yy == grid_check_y_0 )
-							||
-							( yy == grid_check_y_1 )
-							||
-							( yy == grid_check_y_2 )
-							||
-							( yy == grid_check_y_3 )
-							||
-							( yy == grid_check_y_4 )
-							||
-							( yy == grid_check_y_5 )
-							||
-							( yy == grid_check_y_6 )
-							||
-							( yy == grid_check_y_7 )
-
-							||
-
-							( yy == grid_check_yy_0 )
-							||
-							( yy == grid_check_yy_1 )
-							||
-							( yy == grid_check_yy_2 )
-							||
-							( yy == grid_check_yy_3 )
-							||
-							( yy == grid_check_yy_4 )
-							||
-							( yy == grid_check_yy_5 )
-							||
-							( yy == grid_check_yy_6 )
-							||
-							( yy == grid_check_yy_7 )
-						)
+						if ( ( xx == center_x )||( xx == ( center_x - 1 ) ) )
 						{
-							if (
-								( bx == 0 )
-								||
-								( by == 0 )
-								||
-								( bx == ( zoom_ui - 1 ) )
-								||
-								( by == ( zoom_ui - 1 ) )
-							)
+							redraw_color = n_bmp_rgb_mac( 255,0,128 );
+						}
+
+						if ( redraw_color != 0 )
+						{
+							//
+						} else
+						if ( grid_is_odd_y )
+						{
+							if ( yy == center_y )
 							{
-								c = n_bmp_blend_pixel( c, n_bmp_rgb_mac( 0,200,255 ), 0.25 );
+								redraw_color = n_bmp_rgb_mac( 255,0,128 );
 							}
+						} else
+						if ( ( yy == center_y )||( yy == ( center_y - 1 ) ) )
+						{
+							redraw_color = n_bmp_rgb_mac( 255,0,128 );
 						}
 					} else {
-						if ( ( xx == center_x )||( yy == center_y )||( xx == ( center_x - 1 ) )||( yy == ( center_y - 1 ) ) )
+						if ( ( xx >= ( center_x - zoom ) )&&( xx <= ( center_x + zoom ) ) )
 						{
-							c = n_bmp_blend_pixel( c, n_bmp_rgb_mac( 255,0,128 ), 0.25 );
+							redraw_color = n_bmp_rgb_mac( 255,0,128 );
 						} else
+						if ( ( yy >= ( center_x - zoom ) )&&( yy <= ( center_x + zoom ) ) )
+						{
+							redraw_color = n_bmp_rgb_mac( 255,0,128 );
+						}
+					}
+
+					if ( redraw_color != 0 )
+					{
+						//
+					} else
+					if ( is_zoom_in )
+					{
 						if (
 							( xx == grid_check_x_0 )
 							||
@@ -942,7 +900,54 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 							( yy == grid_check_yy_7 )
 						)
 						{
-							c = n_bmp_blend_pixel( c, n_bmp_rgb_mac( 0,200,255 ), 0.25 );
+							redraw_color = n_bmp_rgb_mac( 0,200,255 );
+						}
+					} else {
+						if (
+							( ( xx > ( grid_check_x_0 - zoom ) )&&( xx < ( grid_check_x_0 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_1 - zoom ) )&&( xx < ( grid_check_x_1 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_2 - zoom ) )&&( xx < ( grid_check_x_2 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_3 - zoom ) )&&( xx < ( grid_check_x_3 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_4 - zoom ) )&&( xx < ( grid_check_x_4 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_5 - zoom ) )&&( xx < ( grid_check_x_5 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_6 - zoom ) )&&( xx < ( grid_check_x_6 + zoom ) ) )
+							||
+							( ( xx > ( grid_check_x_7 - zoom ) )&&( xx < ( grid_check_x_7 + zoom ) ) )
+
+							||
+
+							( ( yy > ( grid_check_y_0 - zoom ) )&&( yy < ( grid_check_y_0 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_1 - zoom ) )&&( yy < ( grid_check_y_1 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_2 - zoom ) )&&( yy < ( grid_check_y_2 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_3 - zoom ) )&&( yy < ( grid_check_y_3 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_4 - zoom ) )&&( yy < ( grid_check_y_4 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_5 - zoom ) )&&( yy < ( grid_check_y_5 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_6 - zoom ) )&&( yy < ( grid_check_y_6 + zoom ) ) )
+							||
+							( ( yy > ( grid_check_y_7 - zoom ) )&&( yy < ( grid_check_y_7 + zoom ) ) )
+						)
+						{
+							redraw_color = n_bmp_rgb_mac( 0,200,255 );
+						}
+					}
+
+					if ( redraw_color != 0 )
+					{
+						if ( ( bx == 0 )||( by == 0 )||( bx == ( zoom_ui - 1 ) )||( by == ( zoom_ui - 1 ) ) )
+						{
+							c = n_bmp_blend_pixel( c, redraw_color, 0.25 );
 						}
 					}
 				}
@@ -1253,6 +1258,37 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		[self n_paint_draw_tooltip];
 	}
 
+/*
+	if ( paint->grid_onoff )
+	{
+		n_type_gfx grid_size = n_posix_max( sx, sy ) / 16;
+
+		n_type_gfx cx = sx / 2;
+		n_type_gfx gx = 0;
+		n_posix_loop
+		{
+			gx += grid_size;
+			if ( gx >= sx ) { break; }
+
+			n_bmp_line( n_paint_canvas, cx + gx, 0, cx + gx, sy, n_bmp_rgb_mac( 0,200,255 ) );
+			n_bmp_line( n_paint_canvas, cx - gx, 0, cx - gx, sy, n_bmp_rgb_mac( 0,200,255 ) );
+		}
+
+		n_type_gfx cy = sy / 2;
+		n_type_gfx gy = 0;
+		n_posix_loop
+		{
+			gy += grid_size;
+			if ( gy >= sy ) { break; }
+
+			n_bmp_line( n_paint_canvas, 0, cy + gy, sx, cy + gy, n_bmp_rgb_mac( 0,200,255 ) );
+			n_bmp_line( n_paint_canvas, 0, cy - gy, sx, cy - gy, n_bmp_rgb_mac( 0,200,255 ) );
+		}
+
+		n_bmp_line( n_paint_canvas, sx / 2, 0, sx / 2, sy, n_bmp_rgb_mac( 255,0,128 ) );
+		n_bmp_line( n_paint_canvas, 0, sy / 2, sx, sy / 2, n_bmp_rgb_mac( 255,0,128 ) );
+	}
+*/
 
 	if ( paint->scroller_x_onoff )
 	{
