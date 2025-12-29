@@ -183,15 +183,31 @@ void
 n_memory_limit( int error_number, long long byte )
 {
 
-	if (0)//( n_memory_limit_callback_func != NULL )
+#ifdef DEBUG
+
+	if ( n_memory_limit_callback_func != NULL )
+	{
+		(*n_memory_limit_callback_func)();
+	}
+
+	char str[ 100 ];
+	sprintf( str, "Memory limit is over : %d byte  No. %lld", error_number, byte );
+
+	n_memory_dialog( str );
+
+#else
+
+	if ( n_memory_limit_callback_func != NULL )
 	{
 		(*n_memory_limit_callback_func)();
 	} else {
 		char str[ 100 ];
-		sprintf( str, "Memory limit is over : %d byte  No. %lld", error_number, byte);
+		sprintf( str, "Memory limit is over : %d byte  No. %lld", error_number, byte );
 
 		n_memory_dialog( str );
 	}
+
+#endif
 
 	exit( 0 );
 

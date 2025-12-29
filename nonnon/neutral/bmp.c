@@ -253,16 +253,6 @@ static n_posix_bool n_bmp_is_multithread = n_posix_false;
 #define N_BMP_LIMIT_SIZE SHRT_MAX
 
 n_posix_bool
-n_bmp_is_overflow( n_type_gfx sx, n_type_gfx sy )
-{
-
-	if ( sx > N_BMP_LIMIT_SIZE ) { return n_posix_true; }
-	if ( sy > N_BMP_LIMIT_SIZE ) { return n_posix_true; }
-
-	return n_posix_false;
-}
-
-n_posix_bool
 n_bmp_size_is_overflow( n_type_index size )
 {
 
@@ -272,6 +262,15 @@ n_bmp_size_is_overflow( n_type_index size )
 	if ( size > limit ) { return n_posix_true; }
 
 	return n_posix_false;
+}
+
+n_posix_bool
+n_bmp_is_overflow( n_type_gfx sx, n_type_gfx sy )
+{
+
+	n_type_index size = sx * sy;
+
+	return n_bmp_size_is_overflow( size );
 }
 
 
@@ -845,12 +844,15 @@ n_bmp_flush( n_bmp *bmp, u32 color )
 	// On macOS, prefer memset_pattern4 which fills with a 4-byte pattern efficiently
 #if defined(__APPLE__)
 	{
-		void *dst = (void*) N_BMP_PTR( bmp );
-		const void *pattern = &color;
-		size_t bytes = (size_t) N_BMP_SIZE( bmp );
+		      void   *dst     = (void*) N_BMP_PTR( bmp );
+		const void   *pattern = &color;
+		      size_t  bytes   = (size_t) N_BMP_SIZE( bmp );
+
 		// memset_pattern4 is optimized in libc on macOS
-		extern void memset_pattern4(void * b, const void *pattern, size_t len);
-		memset_pattern4(dst, pattern, bytes);
+		extern void memset_pattern4( void * b, const void *pattern, size_t len );
+
+		memset_pattern4( dst, pattern, bytes );
+
 		return;
 	}
 #endif

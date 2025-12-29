@@ -97,13 +97,15 @@ n_wav_resampler( n_wav *f, n_wav *t, n_type_real ratio )
 #define N_WAV_RESIZER_RESAMPLE 2
 
 void
-n_wav_resizer( n_wav *wav, u32 msec, int mode )
+n_wav_resizer( n_wav *wav, n_type_real msec, int mode )
 {
 
 	if ( n_wav_error_format( wav ) ) { return; }
 
 
-	if ( msec == 0 ) { return; }
+	if ( msec <=        0 ) { return; }
+	if ( msec >  UINT_MAX ) { return; }
+//NSLog( @"%f : %u", msec, UINT_MAX ); return;
 
 
 	n_posix_bool is_shrink = n_posix_false;

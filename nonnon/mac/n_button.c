@@ -199,7 +199,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 //NSLog( @"Canvas Size %d", sx );
 
 
-	n_bmp bmp_canvas; n_bmp_zero( &bmp_canvas ); n_bmp_1st_fast( &bmp_canvas, sx,sy );
+	n_bmp bmp_canvas; n_bmp_zero( &bmp_canvas ); n_bmp_new_fast( &bmp_canvas, sx,sy );
 	n_bmp_flush( &bmp_canvas, n_mac_nscolor2argb( [NSColor clearColor] ) );
 
 

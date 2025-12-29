@@ -1424,6 +1424,40 @@ n_win_scrollbar_on_drag( n_win_scrollbar *p, int reason )
 
 		n_mac_timer_init( self, @selector( n_fade_timer_method ), 33 );
 
+
+		// [!] : for lack of mouse capture
+		//n_mac_timer_init( self, @selector( n_timer_method ), 100 );
+
+		[NSEvent addLocalMonitorForEventsMatchingMask:
+			NSEventMaskLeftMouseDragged |
+			NSEventMaskLeftMouseUp
+			handler:^NSEvent* _Nullable( NSEvent * _Nonnull event )
+			{
+				switch( event.type )
+				{
+					case NSEventTypeLeftMouseDragged:
+
+						[self mouseDragged:event];
+
+					break;
+
+					case NSEventTypeLeftMouseUp:
+
+						[self mouseUp:event];
+
+					break;
+					
+					default:
+
+						// [Needed]
+
+					break;
+				}
+
+				return event;
+			}
+		];
+
 /*
 		// [x] : gray-out at lost focus : un-implementable : system should do
 		[[NSNotificationCenter defaultCenter]

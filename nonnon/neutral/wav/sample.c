@@ -25,10 +25,28 @@
 
 
 #define N_WAV_2PI ( 2.0 * M_PI )
-#define N_WAV_AMP ( SHRT_MAX   )
 
 
 
+
+n_type_real
+n_wav_sample_amp( n_wav *wav )
+{
+
+	n_type_real ret = 0;
+
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		ret = SHRT_MAX;
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		ret = 1.0;
+	}
+
+
+	return ret;
+}
 
 void
 n_wav_sample_get( n_wav *wav, u32 i, n_type_real *l, n_type_real *r )
@@ -36,12 +54,20 @@ n_wav_sample_get( n_wav *wav, u32 i, n_type_real *l, n_type_real *r )
 
 	const u32 p = i * N_WAV_STEREO( wav );
 
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		s16 *ptr = (s16*) N_WAV_PTR( wav );
 
-	s16 *ptr = (s16*) N_WAV_PTR( wav );
+		if ( l != NULL ) { (*l) = (n_type_real) ptr[ p + 0 ]; }
+		if ( r != NULL ) { (*r) = (n_type_real) ptr[ p + 1 ]; }
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		float *ptr = (float*) N_WAV_PTR( wav );
 
-
-	if ( l != NULL ) { (*l) = (n_type_real) ptr[ p + 0 ]; }
-	if ( r != NULL ) { (*r) = (n_type_real) ptr[ p + 1 ]; }
+		if ( l != NULL ) { (*l) = n_posix_minmax_n_type_real( -1.0, 1.0, ptr[ p + 0 ] ); }
+		if ( r != NULL ) { (*r) = n_posix_minmax_n_type_real( -1.0, 1.0, ptr[ p + 1 ] ); }
+	}
 
 
 	return;
@@ -53,18 +79,24 @@ n_wav_sample_set( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 
 	const u32 p = i * N_WAV_STEREO( wav );
 
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		s16 *ptr = (s16*) N_WAV_PTR( wav );
 
-	s16 *ptr = (s16*) N_WAV_PTR( wav );
+		ptr[ p + 0 ] = (s16) l;
+		ptr[ p + 1 ] = (s16) r;
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		float *ptr = (float*) N_WAV_PTR( wav );
 
-
-	ptr[ p + 0 ] = (s16) l;
-	ptr[ p + 1 ] = (s16) r;
+		ptr[ p + 0 ] = (float) n_posix_minmax_n_type_real( -1.0, 1.0, l );
+		ptr[ p + 1 ] = (float) n_posix_minmax_n_type_real( -1.0, 1.0, r );
+	}
 
 
 	return;
 }
-
-#define n_wav_sample_clamp( n ) n_posix_minmax( SHRT_MIN, SHRT_MAX, n )
 
 void
 n_wav_sample_add( n_wav *wav, u32 i, n_type_real l, n_type_real r )
@@ -72,12 +104,40 @@ n_wav_sample_add( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 
 	const u32 p = i * N_WAV_STEREO( wav );
 
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		s16 *ptr = (s16*) N_WAV_PTR( wav );
 
-	s16 *ptr = (s16*) N_WAV_PTR( wav );
+		n_type_real ll = l + ptr[ p + 0 ];
+		n_type_real rr = r + ptr[ p + 1 ];
 
+		// [!] : don't use SHRT_MIN
 
-	ptr[ p + 0 ] = n_wav_sample_clamp( (int) l + ptr[ p + 0 ] );
-	ptr[ p + 1 ] = n_wav_sample_clamp( (int) r + ptr[ p + 1 ] );
+		if ( ll >  SHRT_MAX ) { ll =  SHRT_MAX; }
+		if ( ll < -SHRT_MAX ) { ll = -SHRT_MAX; }
+
+		if ( rr >  SHRT_MAX ) { rr =  SHRT_MAX; }
+		if ( rr < -SHRT_MAX ) { rr = -SHRT_MAX; }
+
+		ptr[ p + 0 ] = (s16) ll;
+		ptr[ p + 1 ] = (s16) rr;
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		float *ptr = (float*) N_WAV_PTR( wav );
+
+		n_type_real ll = l + ptr[ p + 0 ];
+		n_type_real rr = r + ptr[ p + 1 ];
+
+		if ( ll >  1.0 ) { ll =  1.0; }
+		if ( ll < -1.0 ) { ll = -1.0; }
+
+		if ( rr >  1.0 ) { rr =  1.0; }
+		if ( rr < -1.0 ) { rr = -1.0; }
+
+		ptr[ p + 0 ] = (float) ll;
+		ptr[ p + 1 ] = (float) rr;
+	}
 
 
 	return;
@@ -89,26 +149,39 @@ n_wav_sample_mix( n_wav *wav, u32 i, n_type_real l, n_type_real r, n_type_real r
 
 	const u32 p = i * N_WAV_STEREO( wav );
 
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		s16 *ptr = (s16*) N_WAV_PTR( wav );
 
-	s16 *ptr = (s16*) N_WAV_PTR( wav );
+		l *= ratio_l;
+		r *= ratio_r;
 
+		l += (n_type_real) ptr[ p + 0 ] * ( 1.0 - ratio_l );
+		r += (n_type_real) ptr[ p + 1 ] * ( 1.0 - ratio_r );
 
-	l *= ratio_l;
-	r *= ratio_r;
+		ptr[ p + 0 ] = (s16) l;
+		ptr[ p + 1 ] = (s16) r;
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		float *ptr = (float*) N_WAV_PTR( wav );
 
-	l += (n_type_real) ptr[ p + 0 ] * ( 1.0 - ratio_l );
-	r += (n_type_real) ptr[ p + 1 ] * ( 1.0 - ratio_r );
+		l *= ratio_l;
+		r *= ratio_r;
 
+		l += (n_type_real) ptr[ p + 0 ] * ( 1.0 - ratio_l );
+		r += (n_type_real) ptr[ p + 1 ] * ( 1.0 - ratio_r );
 
-	ptr[ p + 0 ] = (s16) l;
-	ptr[ p + 1 ] = (s16) r;
+		ptr[ p + 0 ] = (float) l;
+		ptr[ p + 1 ] = (float) r;
+	}
 
 
 	return;
 }
 
 n_type_real
-n_wav_sample_hz2sample( n_type_real hz )
+n_wav_sample_hz2sample( n_wav *wav, n_type_real hz )
 {
 
 	// [!] : cache for performance
@@ -123,25 +196,25 @@ n_wav_sample_hz2sample( n_type_real hz )
 }
 
 n_type_real
-n_wav_sample_cosine( n_type_real hz, u32 x )
+n_wav_sample_cosine( n_wav *wav, n_type_real hz, u32 x )
 {
 
 	// [!] : I : <complex.h> complex number
 
-	n_type_real t = n_wav_sample_hz2sample( hz );
+	n_type_real t = n_wav_sample_hz2sample( wav, hz );
 	n_type_real d;
 
 #ifdef _MSC_VER
 
 	d = (n_type_real) x / t;
 	d = cos( N_WAV_2PI * d );
-	d = N_WAV_AMP * d;
+	d = n_wav_sample_amp( wav ) * d;
 
 #else // #ifdef _MSC_VER
 
 	d = (n_type_real) x / t;
 	d = cexp( I * ( N_WAV_2PI * d ) );
-	d = N_WAV_AMP * d;
+	d = n_wav_sample_amp( wav ) * d;
 
 #endif // #ifdef _MSC_VER
 
@@ -149,10 +222,10 @@ n_wav_sample_cosine( n_type_real hz, u32 x )
 }
 
 n_type_real
-n_wav_sample_sine_coeff( n_type_real hz, u32 x )
+n_wav_sample_sine_coeff( n_wav *wav, n_type_real hz, u32 x )
 {
 
-	n_type_real t = n_wav_sample_hz2sample( hz );
+	n_type_real t = n_wav_sample_hz2sample( wav, hz );
 	n_type_real d;
 
 	d = (n_type_real) x / t;
@@ -163,30 +236,30 @@ n_wav_sample_sine_coeff( n_type_real hz, u32 x )
 }
 
 n_type_real
-n_wav_sample_sine( n_type_real hz, u32 x )
+n_wav_sample_sine( n_wav *wav, n_type_real hz, u32 x )
 {
 
-	n_type_real d = n_wav_sample_sine_coeff( hz, x );
+	n_type_real d = n_wav_sample_sine_coeff( wav, hz, x );
 
-	d = N_WAV_AMP * d;
+	d = n_wav_sample_amp( wav ) * d;
 
 
 	return d;
 }
 
 n_type_real
-n_wav_sample_sawtooth( n_type_real hz, u32 x )
+n_wav_sample_sawtooth( n_wav *wav, n_type_real hz, u32 x )
 {
 
 	// [!] : currently cosine compatible curve will generate
 
-	n_type_real t = n_wav_sample_hz2sample( hz );
+	n_type_real t = n_wav_sample_hz2sample( wav, hz );
 	n_type_real d;
 
 	d = fmod( x, t );
 	d = d / t;
-	d = N_WAV_AMP * d;
-	d = d - ( N_WAV_AMP / 2 );
+	d = n_wav_sample_amp( wav ) * d;
+	d = d - ( n_wav_sample_amp( wav ) / 2 );
 	d = d * -1;
 
 
@@ -194,20 +267,20 @@ n_wav_sample_sawtooth( n_type_real hz, u32 x )
 }
 
 n_type_real
-n_wav_sample_square( n_type_real hz, u32 x )
+n_wav_sample_square( n_wav *wav, n_type_real hz, u32 x )
 {
 
-	n_type_real d = n_wav_sample_sine_coeff( hz, x );
+	n_type_real d = n_wav_sample_sine_coeff( wav, hz, x );
 
-	if ( d > 0 ) { d =  N_WAV_AMP; } else
-	if ( d < 0 ) { d = -N_WAV_AMP; }
+	if ( d > 0 ) { d =  n_wav_sample_amp( wav ); } else
+	if ( d < 0 ) { d = -n_wav_sample_amp( wav ); }
 
 
 	return d;
 }
 
 n_type_real
-n_wav_sample_sandstorm( n_type_real hz, u32 x )
+n_wav_sample_sandstorm( n_wav *wav, n_type_real hz, u32 x )
 {
 
 	// [!] : human recognition
@@ -215,7 +288,7 @@ n_wav_sample_sandstorm( n_type_real hz, u32 x )
 	//	20Hz to 20,000Hz
 
 	//n_type_real t = n_wav_sample_hz2sample( hz );
-	n_type_real d = n_wav_sample_sine( n_random_range( (u32) hz ), x );
+	n_type_real d = n_wav_sample_sine( wav, n_random_range( (u32) hz ), x );
 
 
 	return d;
