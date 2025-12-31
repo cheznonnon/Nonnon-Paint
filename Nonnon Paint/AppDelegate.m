@@ -9,22 +9,22 @@
 
 
 
-#include "../../nonnon/neutral/bmp/all.c"
-#include "../../nonnon/neutral/curico.c"
-#include "../../nonnon/neutral/jpg.c"
-#include "../../nonnon/neutral/png.c"
+#include "../nonnon/neutral/bmp/all.c"
+#include "../nonnon/neutral/curico.c"
+#include "../nonnon/neutral/jpg.c"
+#include "../nonnon/neutral/png.c"
 
 
-#include "../../nonnon/mac/_mac.c"
-#include "../../nonnon/mac/draw.c"
-#include "../../nonnon/mac/image.c"
-#include "../../nonnon/mac/window.c"
+#include "../nonnon/mac/_mac.c"
+#include "../nonnon/mac/draw.c"
+#include "../nonnon/mac/image.c"
+#include "../nonnon/mac/window.c"
 
-#include "../../nonnon/mac/n_button.c"
-#include "../../nonnon/mac/n_scrollbar.c"
-#include "../../nonnon/mac/n_txtbox.c"
+#include "../nonnon/mac/n_button.c"
+#include "../nonnon/mac/n_scrollbar.c"
+#include "../nonnon/mac/n_txtbox.c"
 
-#include "../../nonnon/project/ini2gdi.c"
+#include "../nonnon/project/ini2gdi.c"
 
 
 
