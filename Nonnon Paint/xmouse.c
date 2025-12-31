@@ -90,24 +90,11 @@
 
 
 
-/*
-	// [x] : not working
 
 - (BOOL) acceptsFirstMouse:(NSEvent *)event
 {
 	return YES;
 }
-
-- (void) mouseDown:(NSEvent *)theEvent
-{
-//NSLog(@"XMouse : mouseDown");
-
-	[self.delegate mouseDown:theEvent];
-
-	[super mouseDown:theEvent];
-
-}
-*/
 
 
 

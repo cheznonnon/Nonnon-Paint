@@ -9,27 +9,25 @@
 
 
 
-#include "../nonnon/neutral/bmp/all.c"
-#include "../nonnon/neutral/curico.c"
-#include "../nonnon/neutral/jpg.c"
-#include "../nonnon/neutral/png.c"
+#include "../../nonnon/neutral/bmp/all.c"
+#include "../../nonnon/neutral/curico.c"
+#include "../../nonnon/neutral/jpg.c"
+#include "../../nonnon/neutral/png.c"
 
 
-#include "../nonnon/mac/_mac.c"
-#include "../nonnon/mac/draw.c"
-#include "../nonnon/mac/image.c"
-#include "../nonnon/mac/window.c"
+#include "../../nonnon/mac/_mac.c"
+#include "../../nonnon/mac/draw.c"
+#include "../../nonnon/mac/image.c"
+#include "../../nonnon/mac/window.c"
 
-#include "../nonnon/mac/n_button.c"
-#include "../nonnon/mac/n_scrollbar.c"
-#include "../nonnon/mac/n_txtbox.c"
+#include "../../nonnon/mac/n_button.c"
+#include "../../nonnon/mac/n_scrollbar.c"
+#include "../../nonnon/mac/n_txtbox.c"
 
-#include "../nonnon/project/ini2gdi.c"
-
-
+#include "../../nonnon/project/ini2gdi.c"
 
 
-#define N_PAINT_LIMIT_SIZE ( 20000 )//N_BMP_LIMIT_SIZE
+
 
 void
 n_paint_memory_limit( void )
@@ -484,12 +482,15 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	u32     delayed_apply_timer;
 	BOOL    delayed_apply_queue;
 
+	n_type_gfx resizer_sx;
+	n_type_gfx resizer_sy;
+
+
 	// Resizer
 
 	int  resizer_rotate;
 	int  resizer_gamma;
 	BOOL resizer_is_ok;
-
 
 
 	// Layer
@@ -498,6 +499,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	int  layer_click_phase;
 	u32  layer_click_msec;
+
 
 	// Renamer
 
@@ -1276,17 +1278,14 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_resizer_combo selectItemAtIndex:2];
 
 
-	n_type_gfx bmpsx;
-	n_type_gfx bmpsy;
-
 //NSLog( @"%d", n_paint_global.paint->grabber_mode );
 	if ( n_paint_global.paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		bmpsx = N_BMP_SX( paint.pen_bmp_data );
-		bmpsy = N_BMP_SY( paint.pen_bmp_data );
+		resizer_sx = N_BMP_SX( paint.pen_bmp_data );
+		resizer_sy = N_BMP_SY( paint.pen_bmp_data );
 	} else {
-		bmpsx = N_BMP_SX( paint.pen_bmp_grab );
-		bmpsy = N_BMP_SY( paint.pen_bmp_grab );
+		resizer_sx = N_BMP_SX( paint.pen_bmp_grab );
+		resizer_sy = N_BMP_SY( paint.pen_bmp_grab );
 	}
 
 	[_n_resizer_sx setEnabled:TRUE];
@@ -1298,8 +1297,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_resizer_sx setFormatter:formatter];
 	[_n_resizer_sy setFormatter:formatter];
 
-	[_n_resizer_sx setStringValue:[NSString stringWithFormat:@"%d", bmpsx]];
-	[_n_resizer_sy setStringValue:[NSString stringWithFormat:@"%d", bmpsy]];
+	[_n_resizer_sx setStringValue:[NSString stringWithFormat:@"%d", resizer_sx]];
+	[_n_resizer_sy setStringValue:[NSString stringWithFormat:@"%d", resizer_sy]];
 
 
 	resizer_rotate = 360;
@@ -3660,7 +3659,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[self n_toolwindow_mouseUp:theEvent];
 
 //return;
-
+/*
 	[_n_size_scrollbar  mouseUp:theEvent];
 	[_n_mix_scrollbar   mouseUp:theEvent];
 	[_n_boost_scrollbar mouseUp:theEvent];
@@ -3700,7 +3699,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_replacer_to_r_scrollbar mouseUp:theEvent];
 	[_n_replacer_to_g_scrollbar mouseUp:theEvent];
 	[_n_replacer_to_b_scrollbar mouseUp:theEvent];
-
+*/
 
 	if ( n_mac_window_is_keywindow( _n_preview_window ) )
 	{
@@ -4318,9 +4317,19 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 //NSLog( @"%ld", [sender integerValue] );
 
-	if ( N_PAINT_LIMIT_SIZE < [sender integerValue] )
+	n_type_gfx prv = resizer_sx;
+
+	NSUInteger size = [sender integerValue];
+	if ( size > N_BMP_LIMIT_SIZE )
 	{
-		[_n_resizer_sx setStringValue:[NSString stringWithFormat:@"%d", N_PAINT_LIMIT_SIZE]];
+		[_n_resizer_sx setStringValue:[NSString stringWithFormat:@"%d", prv]];
+	} else {
+		resizer_sx = (n_type_gfx) size;
+
+		if ( n_bmp_is_overflow( resizer_sx, resizer_sy ) )
+		{
+			[_n_resizer_sx setStringValue:[NSString stringWithFormat:@"%d", prv]];
+		}
 	}
 
 	[self n_resizer_go];
@@ -4331,9 +4340,19 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 //NSLog( @"%ld", [sender integerValue] );
 
-	if ( N_PAINT_LIMIT_SIZE < [sender integerValue] )
+	n_type_gfx prv = resizer_sy;
+
+	NSUInteger size = [sender integerValue];
+	if ( size > N_BMP_LIMIT_SIZE )
 	{
-		[_n_resizer_sy setStringValue:[NSString stringWithFormat:@"%d", N_PAINT_LIMIT_SIZE]];
+		[_n_resizer_sy setStringValue:[NSString stringWithFormat:@"%d", prv]];
+	} else {
+		resizer_sy = (n_type_gfx) size;
+
+		if ( n_bmp_is_overflow( resizer_sx, resizer_sy ) )
+		{
+			[_n_resizer_sy setStringValue:[NSString stringWithFormat:@"%d", prv]];
+		}
 	}
 
 	[self n_resizer_go];
