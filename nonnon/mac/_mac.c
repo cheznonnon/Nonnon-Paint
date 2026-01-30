@@ -20,7 +20,7 @@
 #include "../neutral/string_path.c"
 #include "../neutral/txt.c"
 
-#include "../game/helper.c"
+#include "../neutral/bmp/ui/timer.c"
 
 
 
@@ -499,7 +499,7 @@ n_mac_doubleclick_detect( int *phase, u32 *msec )
 	} else
 	if ( (*phase) == 1 )
 	{
-		if ( n_posix_false == n_game_timer_once( msec, 500 ) )
+		if ( FALSE == n_bmp_ui_timer_once( msec, 500 ) )
 		{
 			onoff = TRUE;
 			(*phase) = 0;
@@ -513,6 +513,48 @@ n_mac_doubleclick_detect( int *phase, u32 *msec )
 }
 
 
+
+
+NSString*
+n_mac_fork_rename( NSString *path )
+{
+/*
+	n_posix_char *str = n_mac_nsstring2str( paint.filename );
+	n_posix_char *dir = n_string_path_upperfolder_new( str );
+	n_posix_char *ext = n_string_path_ext_get_new( str );
+	n_posix_char *nam = n_string_path_tmpname_new( ext );
+	n_posix_char *tmp = n_string_path_make_new( dir, nam );
+
+//NSLog( @"str %@", paint.filename );
+//NSLog( @"str %s", str );
+//NSLog( @"dir %s", dir );
+//NSLog( @"ext %s", ext );
+//NSLog( @"nam %s", nam );
+//NSLog( @"tmp %s", tmp );
+
+	NSString *ret = n_mac_str2nsstring( tmp );
+
+	n_string_free( str );
+	n_string_free( dir );
+	n_string_free( ext );
+	n_string_free( nam );
+	n_string_free( tmp );
+
+	return ret;
+*/
+
+	n_posix_char tmp[ 100 ]; n_string_path_tmpname( tmp );
+
+	NSString *dir = [path stringByDeletingLastPathComponent];
+	NSString *ext = [path pathExtension];
+	NSString *nam = n_mac_str2nsstring( tmp );
+//NSLog( @"%@ : %@ : %@", dir, ext, nam );
+
+	nam = [nam stringByAppendingPathExtension:ext];
+
+
+	return [dir stringByAppendingPathComponent:nam];
+}
 
 
 #endif // _H_NONNON_MAC

@@ -13,10 +13,10 @@ static n_type_gfx n_paint_preview_default_sy = -1;
 
 
 void
-n_n_paint_preview_grid( n_paint *paint )
+n_paint_preview_grid( void )
 {
 
-	if ( paint->grid_onoff == n_posix_false ) { return; }
+	if ( n_paint->grid_onoff == FALSE ) { return; }
 
 
 	n_type_gfx sx = N_BMP_SX( &n_paint_preview_bmp );
@@ -73,7 +73,7 @@ n_n_paint_preview_grid( n_paint *paint )
 
 // internal
 void
-n_paint_preview_cache_exit( n_paint *paint )
+n_paint_preview_cache_exit( void )
 {
 
 	n_bmp_free( &n_paint_preview_bmp );
@@ -84,18 +84,18 @@ n_paint_preview_cache_exit( n_paint *paint )
 
 // internal
 void
-n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
+n_paint_preview_cache_init( NSWindow *window, NSView *view )
 {
 
 	n_bmp_zero( &n_paint_preview_bmp );
 
 
-	if ( paint->layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		n_paint_layer_save_as_one( paint, &n_paint_preview_bmp );
+		n_paint_layer_save_as_one( &n_paint_preview_bmp );
 	} else {
-		n_bmp_carboncopy( paint->pen_bmp_data, &n_paint_preview_bmp );
-		n_paint_grabber_composition( paint->pen_bmp_grab, &n_paint_preview_bmp, n_posix_true, n_posix_true );
+		n_bmp_carboncopy( n_paint->pen_bmp_data, &n_paint_preview_bmp );
+		n_paint_grabber_composition( n_paint->pen_bmp_grab, &n_paint_preview_bmp, TRUE, TRUE );
 	}
 
 	n_bmp_flush_mirror( &n_paint_preview_bmp, N_BMP_MIRROR_UPSIDE_DOWN );
@@ -108,8 +108,8 @@ n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
 	n_type_gfx csy = (n_type_gfx) ( (n_type_real) desktop_sy * 0.9 );
 
 
-	n_type_gfx bmpsx = N_BMP_SX( paint->pen_bmp_data );
-	n_type_gfx bmpsy = N_BMP_SY( paint->pen_bmp_data );
+	n_type_gfx bmpsx = N_BMP_SX( n_paint->pen_bmp_data );
+	n_type_gfx bmpsy = N_BMP_SY( n_paint->pen_bmp_data );
 
 
 	n_type_gfx cs  = n_posix_min( csx, csy );
@@ -118,7 +118,7 @@ n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
 	{
 //NSLog( @"Black Margin" );
 
-		n_n_paint_preview_grid( paint );
+		n_paint_preview_grid();
 		n_bmp_resizer( &n_paint_preview_bmp, cs, cs, n_bmp_black, N_BMP_RESIZER_CENTER );
 
 	} else
@@ -131,7 +131,7 @@ n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
 			n_type_real ratio_y = (n_type_real) cs / bmpsy;
 
 			n_bmp_resampler( &n_paint_preview_bmp, ratio_x, ratio_y );
-			n_n_paint_preview_grid( paint );
+			n_paint_preview_grid();
 		}
 
 	} else
@@ -144,7 +144,7 @@ n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
 			n_type_real ratio = (n_type_real) csy / bmpsy;
 
 			n_bmp_resampler( &n_paint_preview_bmp, ratio, ratio );
-			n_n_paint_preview_grid( paint );
+			n_paint_preview_grid();
 		}
 
 	} else
@@ -156,7 +156,7 @@ n_paint_preview_cache_init( n_paint *paint, NSWindow *window, NSView *view )
 			n_type_real ratio = (n_type_real) csx / bmpsx;
 
 			n_bmp_resampler( &n_paint_preview_bmp, ratio, ratio );
-			n_n_paint_preview_grid( paint );
+			n_paint_preview_grid();
 		}
 
 	}

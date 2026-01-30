@@ -57,7 +57,6 @@ static n_bmp *n_paint_canvas = NULL;
 
 @property (nonatomic,assign) id delegate;
 
-@property n_paint *paint;
 @property n_bmp    bmp_canvas;
 @property CGFloat  pressure;
 
@@ -85,16 +84,16 @@ static NonnonPaintCanvas *n_paint_global;
 
 
 
-n_posix_bool
+BOOL
 n_paint_layer_is_locked( n_type_int i )
 {
 
-	n_paint *p = n_paint_global.paint;
+	n_paint_struct *p = n_paint;
 
 
-	if ( p->layer_onoff == n_posix_false ) { return n_posix_false; }
+	if ( p->layer_onoff == FALSE ) { return FALSE; }
 
-	if ( p->layer_data[ i ].visible == n_posix_false ) { return n_posix_true; }
+	if ( p->layer_data[ i ].visible == FALSE ) { return TRUE; }
 
 
 	n_posix_char *str = n_txt_get( &p->layer_txt, i );
@@ -111,19 +110,19 @@ n_paint_indicator( void )
 {
 
 	u32 color;// = n_mac_nscolor2argb( [NSColor controlAccentColor] );
-	if ( n_paint_global.paint->grabber_mode )
+	if ( n_paint->grabber_mode )
 	{
 		color = n_bmp_rgb_mac( 255,0,128 );
 	} else
-	if ( n_paint_global.paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 		color = N_PAINT_CANVAS_COLOR;
 	} else
-	if ( n_paint_global.paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 		color = n_bmp_rgb_mac( 255,255,0 );
 	} else
-	if ( n_paint_global.paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 	{
 		color = n_bmp_rgb_mac( 0,200,255 );
 	} else {
@@ -146,8 +145,8 @@ n_paint_indicator( void )
 
 #define N_PAINT_GRABBER_FRAME_ANIM_INTERVAL ( 50 )
 
-static NSTimer      *n_paint_grabber_frame_anim_timer =           nil;
-static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
+static NSTimer *n_paint_grabber_frame_anim_timer =   nil;
+static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 
 
 
@@ -171,7 +170,6 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 @synthesize delegate;
 
-@synthesize paint;
 @synthesize bmp_canvas;
 @synthesize pressure;
 
@@ -195,6 +193,39 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		n_mac_timer_init( n_paint_global, @selector( n_paint_cursor_apply_timer_method ), 100 );
 
+
+		// [!] : for lack of mouse capture
+
+		[NSEvent addLocalMonitorForEventsMatchingMask:
+			NSEventMaskLeftMouseDragged |
+			NSEventMaskLeftMouseUp
+			handler:^NSEvent* _Nullable( NSEvent * _Nonnull event )
+			{
+				switch( event.type )
+				{
+					case NSEventTypeLeftMouseDragged:
+
+						[self mouseDragged:event];
+
+					break;
+
+					case NSEventTypeLeftMouseUp:
+
+						[self mouseUp:event];
+
+					break;
+
+					default:
+
+						// [Needed]
+
+					break;
+				}
+
+				return event;
+			}
+		];
+
 	}
 
 	return self;
@@ -206,36 +237,36 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_cursor_apply_timer_method
 {
 
-	if ( paint->pen_quick_eraser_onoff )
+	if ( n_paint->pen_quick_eraser_onoff )
 	{
 		if ( FALSE == n_mac_keystate_get( N_MAC_KEYCODE_UNDO ) )
 		{
-			paint->pen_quick_eraser_onoff = FALSE;
-			paint->pen_start              = n_posix_false;
+			n_paint->pen_quick_eraser_onoff = FALSE;
+			n_paint->pen_start              = FALSE;
 		}
 	}
 
-	if ( paint->pen_quick_blur_onoff )
+	if ( n_paint->pen_quick_blur_onoff )
 	{
 		if ( FALSE == n_mac_keystate_get( N_MAC_KEYCODE_CUT ) )
 		{
-			paint->pen_quick_blur_onoff = FALSE;
+			n_paint->pen_quick_blur_onoff = FALSE;
 		}
 	}
 
-	if ( paint->pen_quick_eraser_whole_layer_onoff )
+	if ( n_paint->pen_quick_eraser_whole_layer_onoff )
 	{
 		if ( FALSE == n_mac_keystate_get( N_MAC_KEYCODE_COPY ) )
 		{
-			paint->pen_quick_eraser_whole_layer_onoff = FALSE;
+			n_paint->pen_quick_eraser_whole_layer_onoff = FALSE;
 		}
 	}
 
-	if ( paint->grabber_frame_hide )
+	if ( n_paint->grabber_frame_hide )
 	{
 		if ( FALSE == n_mac_keystate_get( N_MAC_KEYCODE_UNDO ) )
 		{
-			paint->grabber_frame_hide = FALSE;
+			n_paint->grabber_frame_hide = FALSE;
 		}
 	}
 
@@ -269,7 +300,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 - (void) n_paint_picked_color_set:(u32) color
 {
-	paint->color = color;
+	n_paint->color = color;
 
 	[self.delegate NonnonPaintColorSet];
 }
@@ -279,17 +310,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	if ( onoff )
 	{
-		paint->layer_txt.readonly = FALSE;
+		n_paint->layer_txt.readonly = FALSE;
 		[self.txtbox display];
 
-		[paint->whole_preview_checkbox setEnabled:YES];
-		[paint->whole_grab_checkbox    setEnabled:YES];
+		[n_paint->whole_preview_checkbox setEnabled:YES];
+		[n_paint->whole_grab_checkbox    setEnabled:YES];
 	} else {
-		paint->layer_txt.readonly = TRUE;
+		n_paint->layer_txt.readonly = TRUE;
 		[self.txtbox display];
 
-		[paint->whole_preview_checkbox setEnabled:NO];
-		[paint->whole_grab_checkbox    setEnabled:NO];
+		[n_paint->whole_preview_checkbox setEnabled:NO];
+		[n_paint->whole_grab_checkbox    setEnabled:NO];
 	}
 
 }
@@ -300,40 +331,40 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_canvas_reset_cache
 {
 
-	if ( paint->layer_data == NULL ) { return; }
-	if ( n_bmp_error( &paint->layer_data[ 0 ].bmp_data ) ) { return; }
+	if ( n_paint->layer_data == NULL ) { return; }
+	if ( n_bmp_error( &n_paint->layer_data[ 0 ].bmp_data ) ) { return; }
 
 
 	static n_type_gfx psx = -1;
 	static n_type_gfx psy = -1;
 
-	n_type_gfx bmpsx = N_BMP_SX( &paint->layer_data[ 0 ].bmp_data );
-	n_type_gfx bmpsy = N_BMP_SY( &paint->layer_data[ 0 ].bmp_data );
+	n_type_gfx bmpsx = N_BMP_SX( &n_paint->layer_data[ 0 ].bmp_data );
+	n_type_gfx bmpsy = N_BMP_SY( &n_paint->layer_data[ 0 ].bmp_data );
 
 	if ( ( psx != bmpsx )||( psy != bmpsy ) )
 	{
-		n_bmp_new_fast( &paint->layer_cache_bmp_data, bmpsx, bmpsy );
+		n_bmp_new_fast( &n_paint->layer_cache_bmp_data, bmpsx, bmpsy );
 
-		n_bmp_new_fast( &paint->layer_cache_bmp_pre, bmpsx, bmpsy );
-		n_bmp_new_fast( &paint->layer_cache_bmp_pst, bmpsx, bmpsy );
+		n_bmp_new_fast( &n_paint->layer_cache_bmp_pre, bmpsx, bmpsy );
+		n_bmp_new_fast( &n_paint->layer_cache_bmp_pst, bmpsx, bmpsy );
 	}
 
 	psx = bmpsx;
 	psy = bmpsy;
 
 
-	n_bmp_flush( &paint->layer_cache_bmp_data, 0 );
+	n_bmp_flush( &n_paint->layer_cache_bmp_data, 0 );
 
-	n_bmp_flush( &paint->layer_cache_bmp_pre, 0 );
-	n_bmp_flush( &paint->layer_cache_bmp_pst, 0 );
+	n_bmp_flush( &n_paint->layer_cache_bmp_pre, 0 );
+	n_bmp_flush( &n_paint->layer_cache_bmp_pst, 0 );
 
 }
 
 - (void) n_paint_canvas_reset_cache_layer
 {
 
-	n_bmp_flush( &paint->layer_cache_bmp_pre, 0 );
-	n_bmp_flush( &paint->layer_cache_bmp_pst, 0 );
+	n_bmp_flush( &n_paint->layer_cache_bmp_pre, 0 );
+	n_bmp_flush( &n_paint->layer_cache_bmp_pst, 0 );
 
 }
 
@@ -355,17 +386,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 //static int i = 0;
 	if (
-		( paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 		||
-		( paint->grabber_is_key_input )
+		( n_paint->grabber_is_key_input )
 		||
-		( paint->grabber_is_key_input_fade )
+		( n_paint->grabber_is_key_input_fade )
 	)
 	{
 //NSLog( @"%d", i ); i++;
@@ -375,31 +406,31 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 			n_type_gfx x,y,sx,sy; n_paint_grabber_system_get( &x,&y, &sx,&sy, NULL,NULL );
 //NSLog( @"%d %d %d %d", gx, gy, gsx, gsy );
 
-			if ( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
 			{
-				n_type_real ratio = (n_type_real) sx / paint->grabber_stretch_sx;
+				n_type_real ratio = (n_type_real) sx / n_paint->grabber_stretch_sx;
 
 				n_posix_sprintf_literal( str, "%0.0f%%", ratio * 100 );
 			} else
-			if ( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 			{
-				n_type_real ratio_x = (n_type_real) sx / paint->grabber_stretch_sx;
-				n_type_real ratio_y = (n_type_real) sy / paint->grabber_stretch_sy;
+				n_type_real ratio_x = (n_type_real) sx / n_paint->grabber_stretch_sx;
+				n_type_real ratio_y = (n_type_real) sy / n_paint->grabber_stretch_sy;
 
 				n_posix_sprintf_literal( str, "%0.0f%% %0.0f%%", ratio_x * 100, ratio_y * 100 );
 			} else
-			if ( paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
 			{
 				n_posix_sprintf_literal( str, "%d x %d", sx,sy );
 			} else
-			if ( paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 			{
 				n_posix_sprintf_literal( str, "X %d, Y %d", x,y );
 			} else
 			if (
-				( paint->grabber_is_key_input )
+				( n_paint->grabber_is_key_input )
 				||
-				( paint->grabber_is_key_input_fade )
+				( n_paint->grabber_is_key_input_fade )
 			)
 			{
 				n_posix_sprintf_literal( str, "X %d, Y %d", x,y );
@@ -447,7 +478,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		n_bmp_transcopy( &bmp, n_paint_canvas, 0,0,gdi.sx,gdi.sy, cx,cy );
 
-		paint->grabber_tooltip_rect_drawn = NSMakeRect( cx, cy, gdi.sx, gdi.sy );
+		n_paint->grabber_tooltip_rect_drawn = NSMakeRect( cx, cy, gdi.sx, gdi.sy );
 
 
 		n_bmp_free_fast( &bmp );
@@ -463,15 +494,15 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_draw:(void*) zero sx:(n_type_gfx)sx sy:(n_type_gfx)sy
 {
 
-	BOOL is_zoom_in = ( paint->zoom > 0 );
+	BOOL is_zoom_in = ( n_paint->zoom > 0 );
 //NSLog( @"Is Zoom In %d : %d", is_zoom_in, paint->zoom );
 
-	int zoom    = [self n_paint_zoom_get_int   :paint->zoom];
-	int zoom_ui = [self n_paint_zoom_get_int_ui:paint->zoom];
+	int zoom    = [self n_paint_zoom_get_int   :n_paint->zoom];
+	int zoom_ui = [self n_paint_zoom_get_int_ui:n_paint->zoom];
 //NSLog( @"Zoom %d : Zoom UI %d", zoom, zoom_ui );
 
-	n_type_gfx bmpsx = N_BMP_SX( paint->pen_bmp_data );
-	n_type_gfx bmpsy = N_BMP_SY( paint->pen_bmp_data );
+	n_type_gfx bmpsx = N_BMP_SX( n_paint->pen_bmp_data );
+	n_type_gfx bmpsy = N_BMP_SY( n_paint->pen_bmp_data );
 
 	if ( is_zoom_in )
 	{
@@ -489,25 +520,25 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_gfx tx  = 0;
 	n_type_gfx ty  = 0;
 
-	if ( fsx > paint->inner_sx )
+	if ( fsx > n_paint->inner_sx )
 	{
-		fx  = paint->scroll.x;
-		fsx = paint->inner_sx;
+		fx  = n_paint->scroll.x;
+		fsx = n_paint->inner_sx;
 	}
 
-	if ( fsy > paint->inner_sy )
+	if ( fsy > n_paint->inner_sy )
 	{
-		fy  = paint->scroll.y;
-		fsy = paint->inner_sy;
+		fy  = n_paint->scroll.y;
+		fsy = n_paint->inner_sy;
 	}
 
-	if ( paint->margin_onoff )
+	if ( n_paint->margin_onoff )
 	{
-		paint->canvas_offset_x = tx = ( sx - fsx ) / 2;
-		paint->canvas_offset_y = ty = ( sy - fsy ) / 2;
+		n_paint->canvas_offset_x = tx = ( sx - fsx ) / 2;
+		n_paint->canvas_offset_y = ty = ( sy - fsy ) / 2;
 
-		paint->canvas_offset_sx = (CGFloat) fsx;
-		paint->canvas_offset_sy = (CGFloat) fsy;
+		n_paint->canvas_offset_sx = (CGFloat) fsx;
+		n_paint->canvas_offset_sy = (CGFloat) fsy;
 	}
 
 
@@ -517,7 +548,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : Grabber : out-of-bound shadow
 
-	if ( paint->grabber_mode )
+	if ( n_paint->grabber_mode )
 	{
 		n_type_gfx  x = gx;
 		n_type_gfx  y = gy;
@@ -526,19 +557,19 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		if ( is_zoom_in )
 		{
-			 x *= paint->zoom;
-			 y *= paint->zoom;
-			sx *= paint->zoom;
-			sy *= paint->zoom;
+			 x *= n_paint->zoom;
+			 y *= n_paint->zoom;
+			sx *= n_paint->zoom;
+			sy *= n_paint->zoom;
 		} else {
-			 x /= paint->zoom * -1;
-			 y /= paint->zoom * -1;
-			sx /= paint->zoom * -1;
-			sy /= paint->zoom * -1;
+			 x /= n_paint->zoom * -1;
+			 y /= n_paint->zoom * -1;
+			sx /= n_paint->zoom * -1;
+			sy /= n_paint->zoom * -1;
 		}
 
-		x += tx; x -= paint->scroll.x;
-		y += ty; y -= paint->scroll.y;
+		x += tx; x -= n_paint->scroll.x;
+		y += ty; y -= n_paint->scroll.y;
 
 //NSLog( @"%d %d %d %d", x, y, sx, sy );
 
@@ -553,7 +584,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_gfx rsx;
 	n_type_gfx rsy;
 
-	n_mac_rect_expand_size( paint->rect_redraw, &rx, &ry, &rsx, &rsy );
+	n_mac_rect_expand_size( n_paint->rect_redraw, &rx, &ry, &rsx, &rsy );
 
 	rx  -= zoom_ui * 1;
 	ry  -= zoom_ui * 1;
@@ -568,8 +599,8 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : Grid
 
-	n_type_gfx grid_bmpsx = N_BMP_SX( paint->pen_bmp_data );
-	n_type_gfx grid_bmpsy = N_BMP_SY( paint->pen_bmp_data );
+	n_type_gfx grid_bmpsx = N_BMP_SX( n_paint->pen_bmp_data );
+	n_type_gfx grid_bmpsy = N_BMP_SY( n_paint->pen_bmp_data );
 
 
 	BOOL grid_is_odd_x = ( grid_bmpsx % 2 );
@@ -657,8 +688,8 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : multi-thread
 
-	n_posix_bool prv = n_bmp_is_multithread;
-	n_bmp_is_multithread = n_posix_true;
+	BOOL prv = n_bmp_is_multithread;
+	n_bmp_is_multithread = TRUE;
 
 #endif // #ifdef N_PAINT_CANVAS_MULTITHREAD
 
@@ -711,44 +742,44 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 			u32 color; //n_bmp_ptr_get_fast( paint->pen_bmp_data, xx,yy, &color );
 
-			BOOL is_accessible = n_bmp_ptr_is_accessible( self->paint->pen_bmp_data, xx,yy );
+			BOOL is_accessible = n_bmp_ptr_is_accessible( n_paint->pen_bmp_data, xx,yy );
 
-			if ( is_accessible == n_posix_false )
+			if ( is_accessible == FALSE )
 			{
 //NSLog( @"is_accessible : false" );
 				// [!] : never come
 				color = N_PAINT_CANVAS_COLOR;
 			} else
-			if ( self->paint->layer_onoff )
+			if ( n_paint->layer_onoff )
 			{
-				color = n_bmp_layer_ptr_get( self->paint->layer_data, xx,yy, n_posix_false, 0, n_posix_true );
+				color = n_bmp_layer_ptr_get( n_paint->layer_data, xx,yy, FALSE, 0, TRUE );
 			} else {
-				n_paint_grabber_pixel_get( xx,yy, self->paint->color, &color, NULL, 0.00 );
+				n_paint_grabber_pixel_get( xx,yy, n_paint->color, &color, NULL, 0.00 );
 			}
 //color = n_bmp_rgb_mac( 0,200,255 );
 
 
 			// [!] : grabber
 
-			if ( self->paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL )
+			if ( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL )
 			{
 
 				// [x] : don't use n_bmp_ptr_get_fast() : crash sometimes
 
-				if ( self->paint->grabber_per_pixel_alpha_onoff )
+				if ( n_paint->grabber_per_pixel_alpha_onoff )
 				{
 					int alpha = n_bmp_a( color );
 
-					u32 c; n_bmp_ptr_get( self->paint->pen_bmp_data, xx,yy, &c );
+					u32 c; n_bmp_ptr_get( n_paint->pen_bmp_data, xx,yy, &c );
 					color = n_bmp_blend_pixel( color, c, n_bmp_blend_alpha2ratio( alpha ) );
 				}
 
-				if ( self->paint->layer_onoff == FALSE )
+				if ( n_paint->layer_onoff == FALSE )
 				{
-					if ( self->paint->grabber_blend )
+					if ( n_paint->grabber_blend )
 					{
-						u32 c; n_bmp_ptr_get( self->paint->pen_bmp_data, xx,yy, &c );
-						color = n_bmp_blend_pixel( color, c, self->paint->grabber_blend_ratio );
+						u32 c; n_bmp_ptr_get( n_paint->pen_bmp_data, xx,yy, &c );
+						color = n_bmp_blend_pixel( color, c, n_paint->grabber_blend_ratio );
 					}
 				}
 
@@ -761,7 +792,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 			if ( N_BMP_ALPHA_CHANNEL_VISIBLE != alpha )
 			{
-				u32 c = n_paint_bmp_checker_pixel( xx, yy, N_BMP_SX( self->paint->pen_bmp_data ), N_BMP_SY( self->paint->pen_bmp_data ), N_PAINT_CANVAS_COLOR );
+				u32 c = n_paint_bmp_checker_pixel( xx, yy, N_BMP_SX( n_paint->pen_bmp_data ), N_BMP_SY( n_paint->pen_bmp_data ), N_PAINT_CANVAS_COLOR );
 				color = n_bmp_blend_pixel( color, c, n_bmp_blend_alpha2ratio( alpha ) );
 			}
 
@@ -778,7 +809,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 				// [!] : grid
 
-				if ( self->paint->grid_onoff )
+				if ( n_paint->grid_onoff )
 				{
 					u32 redraw_color = 0;
 
@@ -955,7 +986,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 				// [!] : pixel grid
 
-				if ( ( self->paint->pixel_grid_onoff )&&( zoom_ui >= 3 ) )
+				if ( ( n_paint->pixel_grid_onoff )&&( zoom_ui >= 3 ) )
 				{
 					if ( ( bx == 0 )||( by == 0 )||( bx == ( zoom_ui - 1 ) )||( by == ( zoom_ui - 1 ) ) )
 					{
@@ -966,7 +997,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 				// [!] : alpha emphasizer
 
-				if ( self->paint->alpha_emphasizer_onoff )
+				if ( n_paint->alpha_emphasizer_onoff )
 				{
 					u32 emphasize_color = n_bmp_rgb_mac( 255,255,0 );
 
@@ -1009,7 +1040,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	// [!] : multi-thread
 
 	}];
-	[paint->queue addOperation:o];
+	[n_paint->queue addOperation:o];
 
 #endif // #ifdef N_PAINT_CANVAS_MULTITHREAD
 
@@ -1025,7 +1056,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [!] : multi-thread
 
-	[paint->queue waitUntilAllOperationsAreFinished];
+	[n_paint->queue waitUntilAllOperationsAreFinished];
 
 	n_bmp_is_multithread = prv;
 
@@ -1050,11 +1081,11 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	[self n_paint_scroll_clamp];
 
 
-	if ( paint->layer_load_onoff )
+	if ( n_paint->layer_load_onoff )
 	{
-		paint->layer_load_onoff = FALSE;
+		n_paint->layer_load_onoff = FALSE;
 
-		NSString *text = [NSString stringWithFormat:@"%0.0f%%", paint->layer_load_percent];
+		NSString *text = [NSString stringWithFormat:@"%0.0f%%", n_paint->layer_load_percent];
 
 		NSMutableDictionary *attr = [NSMutableDictionary dictionary];
 
@@ -1085,7 +1116,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	}
 
 
-	paint->rect_redraw = rect;
+	n_paint->rect_redraw = rect;
 
 
 	BOOL is_flushed = FALSE;
@@ -1126,7 +1157,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	}
 
 
-	if ( paint->init == FALSE )
+	if ( n_paint->init == FALSE )
 	{
 		NSRect rect_canvas = NSMakeRect( 0,0,sx,sy );
 		//n_mac_image_nbmp_direct_draw_fast( n_paint_canvas, &rect_canvas, NO );
@@ -1138,44 +1169,44 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	}
 
 
-	BOOL prv_scroller_x_onoff = paint->scroller_x_onoff;
-	BOOL prv_scroller_y_onoff = paint->scroller_y_onoff;
+	BOOL prv_scroller_x_onoff = n_paint->scroller_x_onoff;
+	BOOL prv_scroller_y_onoff = n_paint->scroller_y_onoff;
 
 	{
 
 		// [!] : Fake Scroller : Calc Only : Horizontal
 
-		CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+		CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
 		CGFloat csx              = sx;
-		CGFloat items_per_canvas = paint->inner_sx;
-		CGFloat max_count        = (CGFloat) N_BMP_SX( paint->pen_bmp_data ) * zoom;
+		CGFloat items_per_canvas = n_paint->inner_sx;
+		CGFloat max_count        = (CGFloat) N_BMP_SX( n_paint->pen_bmp_data ) * zoom;
 
 		if ( max_count > items_per_canvas )
 		{
 //NSLog( @"%f %f", items_per_canvas, max_count );
 
-			paint->scroller_x_onoff = TRUE;
+			n_paint->scroller_x_onoff = TRUE;
 
-			CGFloat shaft = csx - paint->scroller_size;
+			CGFloat shaft = csx - n_paint->scroller_size;
 			CGFloat page  = max_count / items_per_canvas;
 
-			CGFloat scrsx = n_posix_max_n_type_real( paint->scroller_size, ( items_per_canvas / page ) + paint->margin - paint->scroller_size );
-			CGFloat scrsy = paint->scroller_size;
-			CGFloat scr_x = ( paint->scroll.x / max_count ) * items_per_canvas;
+			CGFloat scrsx = n_posix_max_n_type_real( n_paint->scroller_size, ( items_per_canvas / page ) + n_paint->margin - n_paint->scroller_size );
+			CGFloat scrsy = n_paint->scroller_size;
+			CGFloat scr_x = ( n_paint->scroll.x / max_count ) * items_per_canvas;
 			CGFloat scr_y = sy - scrsy;
 //NSLog( @"%f %f %f %f", scr_x, scr_y, scrsx, scrsy );
 
 
 			// [!] : for hit test
 
-			paint->scroller_x_rect_shaft = NSMakeRect(     0, scr_y, shaft, scrsy );
-			paint->scroller_x_rect_thumb = NSMakeRect( scr_x, scr_y, scrsx, scrsy );
+			n_paint->scroller_x_rect_shaft = NSMakeRect(     0, scr_y, shaft, scrsy );
+			n_paint->scroller_x_rect_thumb = NSMakeRect( scr_x, scr_y, scrsx, scrsy );
 
 		} else {
 //NSLog( @"2" );
-			paint->scroller_x_onoff = FALSE;
-			paint->scroll.x         = 0;
+			n_paint->scroller_x_onoff = FALSE;
+			n_paint->scroll.x         = 0;
 
 		}
 
@@ -1185,44 +1216,44 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		// [!] : Fake Scroller : Calc Only : Vertical
 
-		CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+		CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
 		CGFloat csy              = sy;
-		CGFloat items_per_canvas = paint->inner_sy;
-		CGFloat max_count        = (CGFloat) N_BMP_SY( paint->pen_bmp_data ) * zoom;
+		CGFloat items_per_canvas = n_paint->inner_sy;
+		CGFloat max_count        = (CGFloat) N_BMP_SY( n_paint->pen_bmp_data ) * zoom;
 
 		if ( max_count > items_per_canvas )
 		{
 
-			paint->scroller_y_onoff = TRUE;
+			n_paint->scroller_y_onoff = TRUE;
 
-			CGFloat shaft = csy - paint->scroller_size;
+			CGFloat shaft = csy - n_paint->scroller_size;
 			CGFloat page  = max_count / items_per_canvas;
 
-			CGFloat scrsx = paint->scroller_size;
-			CGFloat scrsy = n_posix_max_n_type_real( paint->scroller_size, ( items_per_canvas / page ) + paint->margin - paint->scroller_size );
+			CGFloat scrsx = n_paint->scroller_size;
+			CGFloat scrsy = n_posix_max_n_type_real( n_paint->scroller_size, ( items_per_canvas / page ) + n_paint->margin - n_paint->scroller_size );
 			CGFloat scr_x = sx - scrsx;
-			CGFloat scr_y = ( paint->scroll.y / max_count ) * items_per_canvas;
+			CGFloat scr_y = ( n_paint->scroll.y / max_count ) * items_per_canvas;
 
 
 			// [!] : for hit test
 
-			paint->scroller_y_rect_shaft = NSMakeRect( scr_x,     0, scrsx, shaft );
-			paint->scroller_y_rect_thumb = NSMakeRect( scr_x, scr_y, scrsx, scrsy );
+			n_paint->scroller_y_rect_shaft = NSMakeRect( scr_x,     0, scrsx, shaft );
+			n_paint->scroller_y_rect_thumb = NSMakeRect( scr_x, scr_y, scrsx, scrsy );
 
 		} else {
 
-			paint->scroller_y_onoff = FALSE;
-			paint->scroll.y         = 0;
+			n_paint->scroller_y_onoff = FALSE;
+			n_paint->scroll.y         = 0;
 
 		}
 
 	}
 
 	if (
-		( prv_scroller_x_onoff != paint->scroller_x_onoff )
+		( prv_scroller_x_onoff != n_paint->scroller_x_onoff )
 		||
-		( prv_scroller_y_onoff != paint->scroller_y_onoff )
+		( prv_scroller_y_onoff != n_paint->scroller_y_onoff )
 	)
 	{
 		if ( is_flushed == FALSE )
@@ -1236,24 +1267,24 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	[self n_paint_draw:nil sx:sx sy:sy];
 
-	paint->redraw_type = N_PAINT_REDRAW_TYPE_ALL;
+	n_paint->redraw_type = N_PAINT_REDRAW_TYPE_ALL;
 
 
-	if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
+	if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
 	{
-		n_paint_grabber_frame_edge_draw( paint, n_paint_canvas );
+		n_paint_grabber_frame_edge_draw( n_paint_canvas );
 
-		n_paint_grabber_frame_edge_resize_dot_draw( paint, n_paint_canvas );
+		n_paint_grabber_frame_edge_resize_dot_draw( n_paint_canvas );
 
 		[self n_paint_draw_tooltip];
 	} else
-	if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
+	if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
 	{
-		int zoom_unit = [self n_paint_zoom_get_int_ui:paint->zoom];
-		n_paint_grabber_frame_pixel_draw( paint, n_paint_canvas, zoom_unit );
+		int zoom_unit = [self n_paint_zoom_get_int_ui:n_paint->zoom];
+		n_paint_grabber_frame_pixel_draw( n_paint_canvas, zoom_unit );
 
-		n_type_gfx size = n_paint_grabber_frame_pixel_redraw_area_get( paint );
-		n_paint_grabber_frame_pixel_resize_dot_draw( paint, n_paint_canvas, size );
+		n_type_gfx size = n_paint_grabber_frame_pixel_redraw_area_get();
+		n_paint_grabber_frame_pixel_resize_dot_draw( n_paint_canvas, size );
 
 		[self n_paint_draw_tooltip];
 	}
@@ -1290,7 +1321,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	}
 */
 
-	if ( paint->scroller_x_onoff )
+	if ( n_paint->scroller_x_onoff )
 	{
 //NSLog( @" 1 " );
 
@@ -1300,10 +1331,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		// [!] : shaft
 
 		{
-			n_type_gfx  x = paint->scroller_x_rect_shaft.origin.x;
-			n_type_gfx  y = paint->scroller_x_rect_shaft.origin.y;
-			n_type_gfx sx = paint->scroller_x_rect_shaft.size.width;
-			n_type_gfx sy = paint->scroller_x_rect_shaft.size.height;
+			n_type_gfx  x = n_paint->scroller_x_rect_shaft.origin.x;
+			n_type_gfx  y = n_paint->scroller_x_rect_shaft.origin.y;
+			n_type_gfx sx = n_paint->scroller_x_rect_shaft.size.width;
+			n_type_gfx sy = n_paint->scroller_x_rect_shaft.size.height;
 //NSLog( @"Shaft : %d %d %d %d", x,y,sx,sy );
 
 			u32 color_shaft = n_bmp_rgb_mac( 244,244,244 );
@@ -1315,7 +1346,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		int alpha_fade_bg;
 		int alpha_fade_fg;
-		if ( paint->scroller_fade.color_fg == n_bmp_white )
+		if ( n_paint->scroller_fade.color_fg == n_bmp_white )
 		{
 			alpha_fade_bg = 64;
 			alpha_fade_fg = 96;
@@ -1327,10 +1358,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //NSLog( @"%d", fade.percent );
 
 		{
-			n_type_gfx  x = paint->scroller_x_rect_thumb.origin.x;
-			n_type_gfx  y = paint->scroller_x_rect_thumb.origin.y;
-			n_type_gfx sx = paint->scroller_x_rect_thumb.size.width;
-			n_type_gfx sy = paint->scroller_x_rect_thumb.size.height;
+			n_type_gfx  x = n_paint->scroller_x_rect_thumb.origin.x;
+			n_type_gfx  y = n_paint->scroller_x_rect_thumb.origin.y;
+			n_type_gfx sx = n_paint->scroller_x_rect_thumb.size.width;
+			n_type_gfx sy = n_paint->scroller_x_rect_thumb.size.height;
 //NSLog( @"Thumb : %d %d %d %d", x,y,sx,sy );
 
 			u32 color       = n_bmp_rgb_mac( 200,200,200 );
@@ -1340,7 +1371,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	}
 
-	if ( paint->scroller_y_onoff )
+	if ( n_paint->scroller_y_onoff )
 	{
 
 		// [!] : Fake Scroller : Draw : Vertical
@@ -1349,10 +1380,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		// [!] : shaft
 
 		{
-			n_type_gfx  x = paint->scroller_y_rect_shaft.origin.x;
-			n_type_gfx  y = paint->scroller_y_rect_shaft.origin.y;
-			n_type_gfx sx = paint->scroller_y_rect_shaft.size.width;
-			n_type_gfx sy = paint->scroller_y_rect_shaft.size.height;
+			n_type_gfx  x = n_paint->scroller_y_rect_shaft.origin.x;
+			n_type_gfx  y = n_paint->scroller_y_rect_shaft.origin.y;
+			n_type_gfx sx = n_paint->scroller_y_rect_shaft.size.width;
+			n_type_gfx sy = n_paint->scroller_y_rect_shaft.size.height;
 
 			u32 color_shaft = n_bmp_rgb_mac( 244,244,244 );
 			n_bmp_roundrect( n_paint_canvas, x,y,sx,sy, color_shaft, 50 );
@@ -1363,7 +1394,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 		int alpha_fade_bg;
 		int alpha_fade_fg;
-		if ( paint->scroller_fade.color_fg == n_bmp_white )
+		if ( n_paint->scroller_fade.color_fg == n_bmp_white )
 		{
 			alpha_fade_bg = 64;
 			alpha_fade_fg = 96;
@@ -1375,10 +1406,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //NSLog( @"%d", fade.percent );
 
 		{
-			n_type_gfx  x = paint->scroller_y_rect_thumb.origin.x;
-			n_type_gfx  y = paint->scroller_y_rect_thumb.origin.y;
-			n_type_gfx sx = paint->scroller_y_rect_thumb.size.width;
-			n_type_gfx sy = paint->scroller_y_rect_thumb.size.height;
+			n_type_gfx  x = n_paint->scroller_y_rect_thumb.origin.x;
+			n_type_gfx  y = n_paint->scroller_y_rect_thumb.origin.y;
+			n_type_gfx sx = n_paint->scroller_y_rect_thumb.size.width;
+			n_type_gfx sy = n_paint->scroller_y_rect_thumb.size.height;
 
 			u32 color       = n_bmp_rgb_mac( 200,200,200 );
 			u32 color_thumb = n_bmp_alpha_replace_pixel( color, alpha );
@@ -1436,30 +1467,30 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// Phase 1
 
-	n_type_real ratio = [self n_paint_zoom_get_ratio:paint->zoom];
+	n_type_real ratio = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
 	NSPoint pt = n_mac_cursor_position_get( self );
 
 
 	// Phase 2
 
-	if ( paint->margin_onoff )
+	if ( n_paint->margin_onoff )
 	{
-		n_type_real bmpsx = N_BMP_SX( paint->pen_bmp_data ) * ratio;
-		n_type_real bmpsy = N_BMP_SY( paint->pen_bmp_data ) * ratio;
+		n_type_real bmpsx = N_BMP_SX( n_paint->pen_bmp_data ) * ratio;
+		n_type_real bmpsy = N_BMP_SY( n_paint->pen_bmp_data ) * ratio;
 
-		if ( paint->inner_sx > bmpsx )
+		if ( n_paint->inner_sx > bmpsx )
 		{
-			pt.x -= ( paint->inner_sx - bmpsx ) / 2;
+			pt.x -= ( n_paint->inner_sx - bmpsx ) / 2;
 		}
 
-		if ( paint->inner_sy > bmpsy )
+		if ( n_paint->inner_sy > bmpsy )
 		{
-			pt.y -= ( paint->inner_sy - bmpsy ) / 2;
+			pt.y -= ( n_paint->inner_sy - bmpsy ) / 2;
 		}
 
-		pt.x -= paint->margin / 2;
-		pt.y -= paint->margin / 2;
+		pt.x -= n_paint->margin / 2;
+		pt.y -= n_paint->margin / 2;
 	}
 
 
@@ -1474,8 +1505,8 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	// Phase 4
 
 	{
-		pt.x += trunc( trunc( paint->scroll.x ) / ratio );
-		pt.y += trunc( trunc( paint->scroll.y ) / ratio );
+		pt.x += trunc( trunc( n_paint->scroll.x ) / ratio );
+		pt.y += trunc( trunc( n_paint->scroll.y ) / ratio );
 	}
 
 
@@ -1491,16 +1522,16 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 {
 //return;
 
-	if ( paint->scroll.x < 0 ) { paint->scroll.x = 0; }
-	if ( paint->scroll.y < 0 ) { paint->scroll.y = 0; }
+	if ( n_paint->scroll.x < 0 ) { n_paint->scroll.x = 0; }
+	if ( n_paint->scroll.y < 0 ) { n_paint->scroll.y = 0; }
 
-	CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+	CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-	CGFloat max_sx = ( N_BMP_SX( paint->pen_bmp_data ) * zoom ) - paint->inner_sx + zoom;
-	CGFloat max_sy = ( N_BMP_SY( paint->pen_bmp_data ) * zoom ) - paint->inner_sy + zoom;;
+	CGFloat max_sx = ( N_BMP_SX( n_paint->pen_bmp_data ) * zoom ) - n_paint->inner_sx + zoom;
+	CGFloat max_sy = ( N_BMP_SY( n_paint->pen_bmp_data ) * zoom ) - n_paint->inner_sy + zoom;;
 
-	if ( paint->scroll.x >= max_sx ) { paint->scroll.x = trunc( max_sx ); }
-	if ( paint->scroll.y >= max_sy ) { paint->scroll.y = trunc( max_sy ); }
+	if ( n_paint->scroll.x >= max_sx ) { n_paint->scroll.x = trunc( max_sx ); }
+	if ( n_paint->scroll.y >= max_sy ) { n_paint->scroll.y = trunc( max_sy ); }
 
 }
 /*
@@ -1525,12 +1556,12 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_convert_bitmap2canvas:(void*) zero x:(n_type_gfx*)x y:(n_type_gfx*)y sx:(n_type_gfx*)sx sy:(n_type_gfx*)sy
 {
 
-	CGFloat ratio = [self n_paint_zoom_get_ratio:paint->zoom];
+	CGFloat ratio = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-	n_type_gfx osetx = paint->canvas_offset_x;
-	n_type_gfx osety = paint->canvas_offset_y;
-	n_type_gfx scr_x = paint->scroll.x;
-	n_type_gfx scr_y = paint->scroll.y;
+	n_type_gfx osetx = n_paint->canvas_offset_x;
+	n_type_gfx osety = n_paint->canvas_offset_y;
+	n_type_gfx scr_x = n_paint->scroll.x;
+	n_type_gfx scr_y = n_paint->scroll.y;
 
 	if (  x != NULL ) { (* x) = osetx + ( (*x) * ratio ) - scr_x; }
 	if (  y != NULL ) { (* y) = osety + ( (*y) * ratio ) - scr_y; }
@@ -1542,15 +1573,15 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) n_paint_convert_bitmap2canvas_grabber_frame:(void*) zero x:(n_type_gfx*)x y:(n_type_gfx*)y sx:(n_type_gfx*)sx sy:(n_type_gfx*)sy
 {
 
-	n_type_gfx zoom_ui = [self n_paint_zoom_get_int_ui:paint->zoom];
+	n_type_gfx zoom_ui = [self n_paint_zoom_get_int_ui:n_paint->zoom];
 
 
-	CGFloat ratio = [self n_paint_zoom_get_ratio:paint->zoom];
+	CGFloat ratio = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-	n_type_gfx osetx = paint->canvas_offset_x;
-	n_type_gfx osety = paint->canvas_offset_y;
-	n_type_gfx scr_x = (n_type_gfx) paint->scroll.x / zoom_ui * zoom_ui;
-	n_type_gfx scr_y = (n_type_gfx) paint->scroll.y / zoom_ui * zoom_ui;
+	n_type_gfx osetx = n_paint->canvas_offset_x;
+	n_type_gfx osety = n_paint->canvas_offset_y;
+	n_type_gfx scr_x = (n_type_gfx) n_paint->scroll.x / zoom_ui * zoom_ui;
+	n_type_gfx scr_y = (n_type_gfx) n_paint->scroll.y / zoom_ui * zoom_ui;
 
 	if (  x != NULL ) { (* x) = osetx + ( (*x) * ratio ) - scr_x; }
 	if (  y != NULL ) { (* y) = osety + ( (*y) * ratio ) - scr_y; }
@@ -1566,17 +1597,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 {
 //NSLog( @"n_paint_grabber_frame_anim_timer_method" );
 
-	if ( paint->resizer_onoff ) { return; }
+	if ( n_paint->resizer_onoff ) { return; }
 
-	if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { return; }
+	if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { return; }
 
 
-	if ( paint->grabber_is_key_input_fade )
+	if ( n_paint->grabber_is_key_input_fade )
 	{
-		if ( n_game_timer( &paint->grabber_is_key_input_tick, 500 ) )
+		if ( n_bmp_ui_timer( &n_paint->grabber_is_key_input_tick, 500 ) )
 		{
-			paint->grabber_is_key_input      = FALSE;
-			paint->grabber_is_key_input_fade = FALSE;
+			n_paint->grabber_is_key_input      = FALSE;
+			n_paint->grabber_is_key_input_fade = FALSE;
 
 			n_paint_grabber_resync_auto();
 
@@ -1587,26 +1618,26 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 //NSLog( @"%d", paint->grabber_mode );
 	if (
-		( paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
 		||
-		( paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
+		( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 	)
 	{
 		//static u32 timer = 0;
-		//if ( n_game_timer( &timer, 200 ) )
+		//if ( n_bmp_ui_timer( &timer, 200 ) )
 		{
 
-			if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
+			if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
 			{
-				paint->grabber_frame_step++;
+				n_paint->grabber_frame_step++;
 			} else
-			if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
+			if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
 			{
-				paint->grabber_frame_step++;
+				n_paint->grabber_frame_step++;
 /*
 				if ( n_paint_grabber_frame_upddown )
 				{
@@ -1626,9 +1657,9 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 			}
 
 			if (
-				( paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
+				( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 				||
-				( paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
+				( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 			)
 			{
 				n_paint_grabber_resync_auto();
@@ -1645,7 +1676,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_mac_timer_exit( n_paint_grabber_frame_anim_timer );
 	n_paint_grabber_frame_anim_timer = nil;
 
-	n_paint_grabber_frame_reset( paint );
+	n_paint_grabber_frame_reset();
 
 }
 
@@ -1655,15 +1686,15 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 //NSLog( @"n_paint_frame_anim_on : %d %d", paint->tooltype, paint->grabber_mode ); return;
 
-	if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { return; }
+	if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { return; }
 
 	if ( n_paint_grabber_frame_anim_timer == nil )
 	{
 		n_paint_grabber_frame_anim_timer = n_mac_timer_init( n_paint_global, @selector( n_paint_grabber_frame_anim_timer_method ), N_PAINT_GRABBER_FRAME_ANIM_INTERVAL );
 	}
 
-	paint->grabber_frame_step        = 0;
-	n_paint_grabber_frame_anim_onoff = n_posix_true;
+	n_paint->grabber_frame_step      = 0;
+	n_paint_grabber_frame_anim_onoff = TRUE;
 
 }
 
@@ -1781,9 +1812,9 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	n_type_int i = 1;
 	n_posix_loop
 	{
-		if ( paint->nswindow[ i ] == nil ) { break; }
+		if ( n_paint->nswindow[ i ] == nil ) { break; }
 
-		if ( n_mac_window_is_keywindow( paint->nswindow[ i ] ) )
+		if ( n_mac_window_is_keywindow( n_paint->nswindow[ i ] ) )
 		{
 			return TRUE;
 		}
@@ -1803,7 +1834,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	NSPoint pt = n_mac_cursor_position_get( self );
 
-	if ( FALSE == n_mac_window_is_keywindow( paint->nswindow[ 0 ] ) )
+	if ( FALSE == n_mac_window_is_keywindow( n_paint->nswindow[ 0 ] ) )
 	{
 		//
 	} else
@@ -1812,137 +1843,137 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //NSLog( @"key window: %d", paint->pen_start );
 		//[paint->cursor_arrow set]; // [x] : resizer X/Y fields
 	} else
-	if ( paint->cursor_grab_n_drag_onoff )
+	if ( n_paint->cursor_grab_n_drag_onoff )
 	{
-		[paint->cursor_hand set];
+		[n_paint->cursor_hand set];
 	} else
 	if (
 		( pt.x < 0 )
 		||
 		( pt.y < 0 )
 		||
-		( pt.x > ( [self frame].size.width  - paint->scroller_size ) )
+		( pt.x > ( [self frame].size.width  - n_paint->scroller_size ) )
 		||
-		( pt.y > ( [self frame].size.height - paint->scroller_size ) )
+		( pt.y > ( [self frame].size.height - n_paint->scroller_size ) )
 	)
 	{
 //NSLog( @"out of canvas : %d", paint->pen_start );
 
-		if ( paint->cursor_grab_n_drag_onoff )
+		if ( n_paint->cursor_grab_n_drag_onoff )
 		{
-			[paint->cursor_hand set];
+			[n_paint->cursor_hand set];
 		} else
-		if ( paint->pen_start )
+		if ( n_paint->pen_start )
 		{
-			[paint->cursor_pen_on set];
+			[n_paint->cursor_pen_on set];
 		} else {
-			[paint->cursor_arrow set];
+			[n_paint->cursor_arrow set];
 		}
 	} else
 	if (
-		( paint->layer_onoff )
+		( n_paint->layer_onoff )
 		&&
 		(
-			( paint->layer_data[ paint->layer_index ].visible == FALSE )
+			( n_paint->layer_data[ n_paint->layer_index ].visible == FALSE )
 			||
-			( n_paint_layer_is_locked( paint->layer_index ) )
+			( n_paint_layer_is_locked( n_paint->layer_index ) )
 		)
 	)
 	{
-		[paint->cursor_no set];
+		[n_paint->cursor_no set];
 	} else
 	if ( n_paint_grabber_frame_anim_onoff )
 	{
 //NSLog( @"type %d : start %d", paint->tooltype, paint->pen_start );
-		if ( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+		if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 		{
-			if ( paint->pen_quick_eraser_whole_layer_onoff )
+			if ( n_paint->pen_quick_eraser_whole_layer_onoff )
 			{
-				[paint->cursor_eraser set];
+				[n_paint->cursor_eraser set];
 			} else
-			if ( paint->pen_quick_eraser_onoff )
+			if ( n_paint->pen_quick_eraser_onoff )
 			{
-				[paint->cursor_eraser set];
+				[n_paint->cursor_eraser set];
 			} else
-			if ( paint->pen_quick_blur_onoff )
+			if ( n_paint->pen_quick_blur_onoff )
 			{
-				[paint->cursor_blur set];
+				[n_paint->cursor_blur set];
 			} else
-			if ( paint->pen_start )
+			if ( n_paint->pen_start )
 			{
-				[paint->cursor_pen_on set];
+				[n_paint->cursor_pen_on set];
 			} else {
-				[paint->cursor_pen_off set];
+				[n_paint->cursor_pen_off set];
 			}
 		} else
-		if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
+		if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
 		{
-			int i = n_paint_grabber_frame_edge_resize_dot_detect( paint );
+			int i = n_paint_grabber_frame_edge_resize_dot_detect();
 //NSLog( @"%d", i );
 			if ( i == -1 )
 			{
-				[paint->cursor_arrow set];
-				paint->cursor_resize_dragging = paint->cursor_arrow;
+				[n_paint->cursor_arrow set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_arrow;
 			} else
 			if ( ( i == 0 )||( i == 2 ) )
 			{
-				[paint->cursor_resize_ne set];
-				paint->cursor_resize_dragging = paint->cursor_resize_ne;
+				[n_paint->cursor_resize_ne set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_resize_ne;
 			} else {
-				[paint->cursor_resize_nw set];
-				paint->cursor_resize_dragging = paint->cursor_resize_nw;
+				[n_paint->cursor_resize_nw set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_resize_nw;
 			}
 		} else
-		if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
+		if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
 		{
 			BOOL top_left, top_right, bottom_left, bottom_right;
-			n_paint_grabber_frame_pixel_resize_dot_is_hit( paint, &top_left, &top_right, &bottom_left, &bottom_right );
+			n_paint_grabber_frame_pixel_resize_dot_is_hit( &top_left, &top_right, &bottom_left, &bottom_right );
 
 			if ( ( top_left )||( bottom_right ) )
 			{
-				[paint->cursor_resize_ne set];
-				paint->cursor_resize_dragging = paint->cursor_resize_ne;
+				[n_paint->cursor_resize_ne set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_resize_ne;
 			} else
 			if ( ( top_right )||( bottom_left ) )
 			{
-				[paint->cursor_resize_nw set];
-				paint->cursor_resize_dragging = paint->cursor_resize_nw;
+				[n_paint->cursor_resize_nw set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_resize_nw;
 			} else {
-				[paint->cursor_arrow set];
-				paint->cursor_resize_dragging = paint->cursor_arrow;
+				[n_paint->cursor_arrow set];
+				n_paint->cursor_resize_dragging = n_paint->cursor_arrow;
 			}
 		}
 	} else
-	if ( paint->readonly )
+	if ( n_paint->readonly )
 	{
 //NSLog( @"read-only" );
-		[paint->cursor_arrow set];
+		[n_paint->cursor_arrow set];
 	} else
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 //NSLog( @"N_PAINT_TOOL_TYPE_PEN" );
-		if ( paint->pen_quick_eraser_whole_layer_onoff )
+		if ( n_paint->pen_quick_eraser_whole_layer_onoff )
 		{
-			[paint->cursor_eraser set];
+			[n_paint->cursor_eraser set];
 		} else
-		if ( paint->pen_quick_eraser_onoff )
+		if ( n_paint->pen_quick_eraser_onoff )
 		{
-			[paint->cursor_eraser set];
+			[n_paint->cursor_eraser set];
 		} else
-		if ( paint->pen_quick_blur_onoff )
+		if ( n_paint->pen_quick_blur_onoff )
 		{
-			[paint->cursor_blur set];
+			[n_paint->cursor_blur set];
 		} else
-		if ( paint->pen_start )
+		if ( n_paint->pen_start )
 		{
-			[paint->cursor_pen_on set];
+			[n_paint->cursor_pen_on set];
 		} else {
-			[paint->cursor_pen_off set];
+			[n_paint->cursor_pen_off set];
 		}
 	} else {
 //NSLog( @"N/A %d", paint->pen_start );
 
-		[paint->cursor_arrow set];
+		[n_paint->cursor_arrow set];
 	}
 
 }
@@ -1984,7 +2015,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	// [x] : WACOM Driver : latest version : zero while side button is pressed
 
-	if ( paint->pressure_onoff )
+	if ( n_paint->pressure_onoff )
 	{
 		pressure = [theEvent pressure];
 	} else {
@@ -1998,17 +2029,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //NSLog( @"mouseUp" );
 
 
-	paint->scroller_thumb_is_captured = FALSE;
+	n_paint->scroller_thumb_is_captured = FALSE;
 
-	paint->scroller_x_offset = -1;
-	paint->scroller_y_offset = -1;
-
-
-	if ( paint->readonly ) { return; }
+	n_paint->scroller_x_offset = -1;
+	n_paint->scroller_y_offset = -1;
 
 
-	NonnonPaintPen_mouseUp( paint );
-	NonnonPaintGrabber_mouseUp( paint );
+	if ( n_paint->readonly ) { return; }
+
+
+	NonnonPaintPen_mouseUp();
+	NonnonPaintGrabber_mouseUp();
 
 
 	[self resetCursorRects];
@@ -2024,54 +2055,54 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 //n_bmp_circle( paint->pen_bmp_data, pt.x-16,pt.y-16,32,32, n_bmp_rgb_mac( 0,200,255 ) );
 //[self display];
 
-	paint->scroller_x_thumb_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, paint->scroller_x_rect_thumb );
-	paint->scroller_x_shaft_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, paint->scroller_x_rect_shaft );
-	paint->scroller_y_thumb_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, paint->scroller_y_rect_thumb );
-	paint->scroller_y_shaft_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, paint->scroller_y_rect_shaft );
+	n_paint->scroller_x_thumb_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, n_paint->scroller_x_rect_thumb );
+	n_paint->scroller_x_shaft_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, n_paint->scroller_x_rect_shaft );
+	n_paint->scroller_y_thumb_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, n_paint->scroller_y_rect_thumb );
+	n_paint->scroller_y_shaft_is_hovered = n_mac_window_is_hovered_offset_by_rect( self, n_paint->scroller_y_rect_shaft );
 
 
 	NSPoint pt_cur = n_mac_cursor_position_get( self );
 
-	if ( paint->scroller_x_thumb_is_hovered )
+	if ( n_paint->scroller_x_thumb_is_hovered )
 	{
-		paint->scroller_x_offset = pt_cur.x - paint->scroller_x_rect_thumb.origin.x;
+		n_paint->scroller_x_offset = pt_cur.x - n_paint->scroller_x_rect_thumb.origin.x;
 	} else {
-		paint->scroller_x_offset = -1;
+		n_paint->scroller_x_offset = -1;
 	}
 
-	if ( paint->scroller_y_thumb_is_hovered )
+	if ( n_paint->scroller_y_thumb_is_hovered )
 	{
-		paint->scroller_y_offset = pt_cur.y - paint->scroller_y_rect_thumb.origin.y;
+		n_paint->scroller_y_offset = pt_cur.y - n_paint->scroller_y_rect_thumb.origin.y;
 	} else {
-		paint->scroller_y_offset = -1;
+		n_paint->scroller_y_offset = -1;
 	}
 
 
-	if ( ( paint->scroller_x_thumb_is_hovered )||( paint->scroller_y_thumb_is_hovered ) )
+	if ( ( n_paint->scroller_x_thumb_is_hovered )||( n_paint->scroller_y_thumb_is_hovered ) )
 	{
-		paint->scroller_thumb_is_captured = TRUE;
+		n_paint->scroller_thumb_is_captured = TRUE;
 	} else
-	if ( paint->scroller_x_shaft_is_hovered )
+	if ( n_paint->scroller_x_shaft_is_hovered )
 	{
-		CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+		CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-		CGFloat items_per_canvas = paint->inner_sx;
-		CGFloat max_count        = (CGFloat) N_BMP_SX( paint->pen_bmp_data ) * zoom;
+		CGFloat items_per_canvas = n_paint->inner_sx;
+		CGFloat max_count        = (CGFloat) N_BMP_SX( n_paint->pen_bmp_data ) * zoom;
 
-		paint->scroll.x = pt_cur.x - ( NSWidth( paint->scroller_x_rect_thumb )/ 2 );
-		paint->scroll.x = ( paint->scroll.x / items_per_canvas ) * max_count;
+		n_paint->scroll.x = pt_cur.x - ( NSWidth( n_paint->scroller_x_rect_thumb )/ 2 );
+		n_paint->scroll.x = ( n_paint->scroll.x / items_per_canvas ) * max_count;
 
 		[self display];
 	} else
-	if ( paint->scroller_y_shaft_is_hovered )
+	if ( n_paint->scroller_y_shaft_is_hovered )
 	{
-		CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+		CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-		CGFloat items_per_canvas = paint->inner_sy;
-		CGFloat max_count        = (CGFloat) N_BMP_SY( paint->pen_bmp_data ) * zoom;
+		CGFloat items_per_canvas = n_paint->inner_sy;
+		CGFloat max_count        = (CGFloat) N_BMP_SY( n_paint->pen_bmp_data ) * zoom;
 
-		paint->scroll.y = pt_cur.y - ( NSHeight( paint->scroller_y_rect_thumb )/ 2 );
-		paint->scroll.y = ( paint->scroll.y / items_per_canvas ) * max_count;
+		n_paint->scroll.y = pt_cur.y - ( NSHeight( n_paint->scroller_y_rect_thumb )/ 2 );
+		n_paint->scroll.y = ( n_paint->scroll.y / items_per_canvas ) * max_count;
 
 		[self display];
 	} else {
@@ -2085,26 +2116,26 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		}
 
 
-		if ( paint->readonly ) { return; }
+		if ( n_paint->readonly ) { return; }
 
 
 		[self n_paint_grabber_frame_anim_on];
 
 
-		if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
+		if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_EDGE )
 		{
-			n_paint_grabber_frame_edge_mouseDown( paint );
+			n_paint_grabber_frame_edge_mouseDown();
 		} else
-		if ( paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
+		if ( n_paint->grabber_frame_mode == N_PAINT_GRABBER_FRAME_MODE_PIXEL )
 		{
-			n_paint_grabber_frame_pixel_mouseDown( paint );
+			n_paint_grabber_frame_pixel_mouseDown();
 		}
 
 
 		[self n_paint_pressure_set:theEvent];
 
-		NonnonPaintPen_mouseDown( paint, theEvent );
-		NonnonPaintGrabber_mouseDown( paint, theEvent );
+		NonnonPaintPen_mouseDown( theEvent );
+		NonnonPaintGrabber_mouseDown( theEvent );
 
 		[self resetCursorRects];
 
@@ -2116,38 +2147,38 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 {
 //NSLog( @"mouseDragged" );
 
-	if ( paint->scroller_thumb_is_captured )
+	if ( n_paint->scroller_thumb_is_captured )
 	{
 		NSPoint pt_cur = n_mac_cursor_position_get( self );
 
-		CGFloat zoom = [self n_paint_zoom_get_ratio:paint->zoom];
+		CGFloat zoom = [self n_paint_zoom_get_ratio:n_paint->zoom];
 
-		if ( paint->scroller_x_thumb_is_hovered )
+		if ( n_paint->scroller_x_thumb_is_hovered )
 		{
-			CGFloat items_per_canvas = paint->inner_sx;
-			CGFloat max_count        = (CGFloat) N_BMP_SX( paint->pen_bmp_data ) * zoom;
+			CGFloat items_per_canvas = n_paint->inner_sx;
+			CGFloat max_count        = (CGFloat) N_BMP_SX( n_paint->pen_bmp_data ) * zoom;
 
-			paint->scroll.x = pt_cur.x - paint->scroller_x_offset;
-			paint->scroll.x = ( paint->scroll.x / items_per_canvas ) * max_count;
+			n_paint->scroll.x = pt_cur.x - n_paint->scroller_x_offset;
+			n_paint->scroll.x = ( n_paint->scroll.x / items_per_canvas ) * max_count;
 		}
 
-		if ( paint->scroller_y_thumb_is_hovered )
+		if ( n_paint->scroller_y_thumb_is_hovered )
 		{
-			CGFloat items_per_canvas = paint->inner_sy;
-			CGFloat max_count        = (CGFloat) N_BMP_SY( paint->pen_bmp_data ) * zoom;
+			CGFloat items_per_canvas = n_paint->inner_sy;
+			CGFloat max_count        = (CGFloat) N_BMP_SY( n_paint->pen_bmp_data ) * zoom;
 
-			paint->scroll.y = pt_cur.y - paint->scroller_y_offset;
-			paint->scroll.y = ( paint->scroll.y / items_per_canvas ) * max_count;
+			n_paint->scroll.y = pt_cur.y - n_paint->scroller_y_offset;
+			n_paint->scroll.y = ( n_paint->scroll.y / items_per_canvas ) * max_count;
 		}
 
 		[self display];
 	} else {
-		if ( paint->readonly ) { return; }
+		if ( n_paint->readonly ) { return; }
 
 		[self n_paint_pressure_set:theEvent];
 
-		NonnonPaintPen_mouseDragged( paint );
-		NonnonPaintGrabber_mouseDragged( paint );
+		NonnonPaintPen_mouseDragged();
+		NonnonPaintGrabber_mouseDragged();
 	}
 
 }
@@ -2155,10 +2186,10 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void)rightMouseDown:(NSEvent *)theEvent
 {
 
-	if ( paint->readonly ) { return; }
+	if ( n_paint->readonly ) { return; }
 
-	NonnonPaintPen_rightMouseDown( paint, theEvent );
-	NonnonPaintGrabber_rightMouseDown( paint );
+	NonnonPaintPen_rightMouseDown( theEvent );
+	NonnonPaintGrabber_rightMouseDown();
 
 	[self.delegate NonnonPaintColorSet];
 
@@ -2184,22 +2215,22 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	}
 
 
-	n_type_gfx p_zoom = paint->zoom;
+	n_type_gfx p_zoom = n_paint->zoom;
 
-	paint->zoom += delta;
+	n_paint->zoom += delta;
 
 
 	static int prev = 1;
 
-	if ( ( paint->zoom == 0 )||( paint->zoom == -1 ) )
+	if ( ( n_paint->zoom == 0 )||( n_paint->zoom == -1 ) )
 	{
-		if ( prev > 0 ) { paint->zoom = -2; } else { paint->zoom = 1; }
+		if ( prev > 0 ) { n_paint->zoom = -2; } else { n_paint->zoom = 1; }
 	}
 
-	if ( paint->zoom < -100 ) { paint->zoom = -100; } else
-	if ( paint->zoom >  100 ) { paint->zoom =  100; }
+	if ( n_paint->zoom < -100 ) { n_paint->zoom = -100; } else
+	if ( n_paint->zoom >  100 ) { n_paint->zoom =  100; }
 
-	prev = paint->zoom;
+	prev = n_paint->zoom;
 
 
 	[self.delegate NonnonScrollbarZoomSync:TRUE];
@@ -2209,58 +2240,58 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	NSPoint pt = n_mac_cursor_position_get( self );
 
-	pt.x -= paint->canvas_offset_x;
-	pt.y -= paint->canvas_offset_y;
+	pt.x -= n_paint->canvas_offset_x;
+	pt.y -= n_paint->canvas_offset_y;
 
 
-	n_type_gfx p_z = [self n_paint_zoom_get_int:     p_zoom];
-	n_type_gfx c_z = [self n_paint_zoom_get_int:paint->zoom];
+	n_type_gfx p_z = [self n_paint_zoom_get_int:       p_zoom];
+	n_type_gfx c_z = [self n_paint_zoom_get_int:n_paint->zoom];
 
-	paint->scroll.x += pt.x;
-	paint->scroll.y += pt.y;
+	n_paint->scroll.x += pt.x;
+	n_paint->scroll.y += pt.y;
 
-	if ( ( p_zoom >=  1 )&&( paint->zoom >=  1 ) )
+	if ( ( p_zoom >=  1 )&&( n_paint->zoom >=  1 ) )
 	{
 		if ( p_z < c_z )
 		{
-//NSLog( @"1 : zoom in  : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x / p_z * c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y / p_z * c_z );
+//NSLog( @"1 : zoom in  : %d %d : %d %d", p_zoom, n_paint->zoom, p_z, c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x / p_z * c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y / p_z * c_z );
 		} else {
-//NSLog( @"2 : zoom out : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x / p_z * c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y / p_z * c_z );
+//NSLog( @"2 : zoom out : %d %d : %d %d", p_zoom, n_paint->zoom, p_z, c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x / p_z * c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y / p_z * c_z );
 		}
 	} else
-	if ( ( p_zoom <= -1 )&&( paint->zoom <= -1 ) )
+	if ( ( p_zoom <= -1 )&&( n_paint->zoom <= -1 ) )
 	{
 		if ( p_z > c_z )
 		{
 //NSLog( @"3 : zoom in  : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x * p_z / c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y * p_z / c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x * p_z / c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y * p_z / c_z );
 		} else {
 //NSLog( @"4 : zoom out : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x * p_z / c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y * p_z / c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x * p_z / c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y * p_z / c_z );
 		}
 	} else {
 		if ( p_z > c_z )
 		{
 //NSLog( @"5 : zoom cross : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x * p_z / c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y * p_z / c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x * p_z / c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y * p_z / c_z );
 		} else {
 //NSLog( @"6 : zoom cross : %d %d : %d %d", p_zoom, paint->zoom, p_z, c_z );
-			paint->scroll.x = trunc( (n_type_real) paint->scroll.x / p_z * c_z );
-			paint->scroll.y = trunc( (n_type_real) paint->scroll.y / p_z * c_z );
+			n_paint->scroll.x = trunc( (n_type_real) n_paint->scroll.x / p_z * c_z );
+			n_paint->scroll.y = trunc( (n_type_real) n_paint->scroll.y / p_z * c_z );
 		}
 	}
 
-	paint->scroll.x -= pt.x;
-	paint->scroll.y -= pt.y;
+	n_paint->scroll.x -= pt.x;
+	n_paint->scroll.y -= pt.y;
 
-//NSLog( @"%f %f", paint->scroll.x, paint->scroll.y );
+//NSLog( @"%f %f", n_paint->scroll.x, n_paint->scroll.y );
 
 
 	[self.delegate NonnonPaintResize];
@@ -2278,7 +2309,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	{
 		// [!] : middle button
 
-		paint->cursor_grab_n_drag_onoff = FALSE;
+		n_paint->cursor_grab_n_drag_onoff = FALSE;
 		[self resetCursorRects];
 
 		[self display];
@@ -2296,9 +2327,9 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 	{
 		// [!] : middle button
 
-		paint->pt_prv = n_mac_cursor_position_get( self );
+		n_paint->pt_prv = n_mac_cursor_position_get( self );
 
-		paint->cursor_grab_n_drag_onoff = TRUE;
+		n_paint->cursor_grab_n_drag_onoff = TRUE;
 		[self resetCursorRects];
 	}
 
@@ -2315,17 +2346,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 		CGPoint pt_cur = n_mac_cursor_position_get( self );
 
 
-		CGFloat dx = paint->pt_prv.x - pt_cur.x;
-		CGFloat dy = paint->pt_prv.y - pt_cur.y;
+		CGFloat dx = n_paint->pt_prv.x - pt_cur.x;
+		CGFloat dy = n_paint->pt_prv.y - pt_cur.y;
 //NSLog( @"%f %f", dx, dy );
 
 
-		paint->scroll.x += dx;
-		paint->scroll.y += dy;
+		n_paint->scroll.x += dx;
+		n_paint->scroll.y += dy;
 //NSLog( @"%f %f", paint->scroll.x, paint->scroll.y );
 
 
-		paint->pt_prv = pt_cur;
+		n_paint->pt_prv = pt_cur;
 
 
 		[self display];
@@ -2351,17 +2382,17 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) NonnonPaint_keyDown_pen : (NSEvent*) event
 {
 
-	if ( paint->tooltype != N_PAINT_TOOL_TYPE_PEN ) { return; }
+	if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_PEN ) { return; }
 
 	switch( event.keyCode ) {
 
 	case N_MAC_KEYCODE_UNDO: // [!] : 'Z'
 
-		if ( paint->pen_quick_blur_onoff ) { break; }
+		if ( n_paint->pen_quick_blur_onoff ) { break; }
 
-		if ( paint->pen_quick_eraser_whole_layer_onoff ) { break; }
+		if ( n_paint->pen_quick_eraser_whole_layer_onoff ) { break; }
 
-		paint->pen_quick_eraser_onoff = TRUE;
+		n_paint->pen_quick_eraser_onoff = TRUE;
 
 		[self resetCursorRects];
 
@@ -2369,11 +2400,11 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_CUT: // [!] : 'X'
 
-		if ( paint->pen_quick_eraser_onoff ) { break; }
+		if ( n_paint->pen_quick_eraser_onoff ) { break; }
 
-		if ( paint->pen_quick_eraser_whole_layer_onoff ) { break; }
+		if ( n_paint->pen_quick_eraser_whole_layer_onoff ) { break; }
 
-		paint->pen_quick_blur_onoff = TRUE;
+		n_paint->pen_quick_blur_onoff = TRUE;
 
 		[self resetCursorRects];
 
@@ -2381,15 +2412,15 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_COPY: // [!] : 'C'
 
-		if ( paint->pen_quick_blur_onoff ) { break; }
+		if ( n_paint->pen_quick_blur_onoff ) { break; }
 
-		if ( paint->pen_quick_eraser_onoff ) { break; }
+		if ( n_paint->pen_quick_eraser_onoff ) { break; }
 
-		if ( paint->layer_onoff )
+		if ( n_paint->layer_onoff )
 		{
-			if ( paint->grabber_mode ) { break; }
+			if ( n_paint->grabber_mode ) { break; }
 
-			paint->pen_quick_eraser_whole_layer_onoff = TRUE;
+			n_paint->pen_quick_eraser_whole_layer_onoff = TRUE;
 
 			[self resetCursorRects];
 		}
@@ -2403,14 +2434,14 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 - (void) NonnonPaint_keyUp_pen : (NSEvent*) event
 {
 
-	if ( paint->tooltype != N_PAINT_TOOL_TYPE_PEN ) { return; }
+	if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_PEN ) { return; }
 
 	switch( event.keyCode ) {
 
 	case N_MAC_KEYCODE_UNDO: // [!] : 'Z'
 
-		paint->pen_quick_eraser_onoff = FALSE;
-		paint->pen_start              = n_posix_false;
+		n_paint->pen_quick_eraser_onoff = FALSE;
+		n_paint->pen_start              = FALSE;
 
 		[self resetCursorRects];
 
@@ -2418,7 +2449,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_CUT: // [!] : 'X'
 
-		paint->pen_quick_blur_onoff = FALSE;
+		n_paint->pen_quick_blur_onoff = FALSE;
 
 		[self resetCursorRects];
 
@@ -2426,7 +2457,7 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_COPY: // [!] : 'C'
 
-		paint->pen_quick_eraser_whole_layer_onoff = FALSE;
+		n_paint->pen_quick_eraser_whole_layer_onoff = FALSE;
 
 		[self resetCursorRects];
 
@@ -2445,51 +2476,51 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_ARROW_UP :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyDown_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyDown_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_DOWN :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyDown_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyDown_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_LEFT :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyDown_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyDown_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_RIGHT:
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyDown_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyDown_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_UNDO: // [!] : 'Z'
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		paint->grabber_frame_hide = TRUE;
+		n_paint->grabber_frame_hide = TRUE;
 
 	break;
 
 	case N_MAC_KEYCODE_COPY: // [!] : 'C'
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
-			if ( paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 			{
 				n_paint_grabber_copy();
 			}
@@ -2499,11 +2530,11 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_PASTE: // [!] : 'V'
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
-			if ( paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 			{
 				n_paint_grabber_paste();
 			}
@@ -2513,30 +2544,30 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_SELECT_ALL: // [!] : 'A'
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
-			if ( paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+			if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 			{
 				n_paint_grabber_select_all();
 			}
 		}
 	break;
 
-	case N_MAC_KEYCODE_F2: 
+	case N_MAC_KEYCODE_F2:
 
 		[self.delegate keyDown:event];
 
 	break;
 
-	case N_MAC_KEYCODE_F3: 
+	case N_MAC_KEYCODE_F3:
 
 		n_paint_layer_info();
 
 	break;
 
-	case N_MAC_KEYCODE_NUMBER_1: 
+	case N_MAC_KEYCODE_NUMBER_1:
 
 		[self.delegate keyDown:event];
 
@@ -2555,39 +2586,39 @@ static n_posix_bool  n_paint_grabber_frame_anim_onoff = n_posix_false;
 
 	case N_MAC_KEYCODE_ARROW_UP :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyUp_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyUp_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_DOWN :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyUp_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyUp_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_LEFT :
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyUp_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyUp_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_ARROW_RIGHT:
 
-		if ( paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
+		if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { break; }
 
-		NonnonPaintGrabber_keyUp_arrow( paint, event.keyCode );
+		NonnonPaintGrabber_keyUp_arrow( event.keyCode );
 
 	break;
 
 	case N_MAC_KEYCODE_UNDO: // [!] : 'Z'
 
-		paint->grabber_frame_hide = FALSE;
+		n_paint->grabber_frame_hide = FALSE;
 
 	break;
 

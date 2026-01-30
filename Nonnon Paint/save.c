@@ -9,7 +9,7 @@
 
 
 void
-n_paint_layer_save_as_one( n_paint *paint, n_bmp *bmp_ret )
+n_paint_layer_save_as_one( n_bmp *bmp_ret )
 {
 
 	// [!] : performance
@@ -22,14 +22,14 @@ n_paint_layer_save_as_one( n_paint *paint, n_bmp *bmp_ret )
 
 	u32 color_bg = n_bmp_white_invisible;
 
-	n_type_gfx bmpsx = N_BMP_SX( &paint->layer_data[ 0 ].bmp_data );
-	n_type_gfx bmpsy = N_BMP_SY( &paint->layer_data[ 0 ].bmp_data );
+	n_type_gfx bmpsx = N_BMP_SX( &n_paint->layer_data[ 0 ].bmp_data );
+	n_type_gfx bmpsy = N_BMP_SY( &n_paint->layer_data[ 0 ].bmp_data );
 
 	n_bmp_new( bmp_ret, bmpsx, bmpsy );
 
 
-	n_posix_bool prv = n_bmp_is_multithread;
-	n_bmp_is_multithread = n_posix_true;
+	BOOL prv = n_bmp_is_multithread;
+	n_bmp_is_multithread = TRUE;
 
 	n_type_gfx y = 0;
 	n_posix_loop
@@ -41,7 +41,7 @@ n_paint_layer_save_as_one( n_paint *paint, n_bmp *bmp_ret )
 		n_posix_loop
 		{
 
-			u32 color = n_bmp_layer_ptr_get( paint->layer_data, x, y, n_posix_true, color_bg, n_posix_false );
+			u32 color = n_bmp_layer_ptr_get( n_paint->layer_data, x, y, TRUE, color_bg, FALSE );
 			n_bmp_ptr_set_fast( bmp_ret, x, y, color );
 
 			x++;
@@ -49,14 +49,14 @@ n_paint_layer_save_as_one( n_paint *paint, n_bmp *bmp_ret )
 		}
 
 		}];
-		[paint->queue addOperation:o];
+		[n_paint->queue addOperation:o];
 
 		y++;
 		if ( y >= bmpsy ) { break; }
 	}
 
 
-	[paint->queue waitUntilAllOperationsAreFinished];
+	[n_paint->queue waitUntilAllOperationsAreFinished];
 
 	n_bmp_is_multithread = prv;
 
@@ -71,17 +71,15 @@ void
 n_paint_save_carboncopy( n_bmp *bmp, n_bmp *bmp_ret )
 {
 
-	if ( n_paint_global.paint->layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		n_paint *paint = n_paint_global.paint;
-
-		if ( paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
-			n_paint_layer_save_as_one( paint, bmp_ret );
+			n_paint_layer_save_as_one( bmp_ret );
 		} else {
 			n_type_gfx x,y,sx,sy; n_paint_grabber_system_get( NULL, NULL, &sx, &sy, &x, &y );
 			n_bmp bmp; n_bmp_zero( &bmp ); 
-			n_paint_layer_save_as_one( paint, &bmp );
+			n_paint_layer_save_as_one( &bmp );
 
 			n_bmp_new_fast( bmp_ret, sx, sy );
 			n_bmp_fastcopy( &bmp, bmp_ret, x,y,sx,sy, 0,0 );
@@ -96,11 +94,11 @@ n_paint_save_carboncopy( n_bmp *bmp, n_bmp *bmp_ret )
 	return;
 }
 
-n_posix_bool
-n_paint_save_png( n_bmp *bmp, n_posix_char *path, n_posix_bool n_bmp_carboncopy_onoff )
+BOOL
+n_paint_save_png( n_bmp *bmp, n_posix_char *path, BOOL n_bmp_carboncopy_onoff )
 {
 
-	n_posix_bool ret = n_posix_true;
+	BOOL ret = TRUE;
 
 
 	n_bmp tmp; n_bmp_zero( &tmp );
@@ -137,11 +135,11 @@ n_paint_save_png( n_bmp *bmp, n_posix_char *path, n_posix_bool n_bmp_carboncopy_
 	return ret;
 }
 
-n_posix_bool
+BOOL
 n_paint_save( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 {
 
-	n_posix_bool ret = n_posix_true;
+	BOOL ret = TRUE;
 
 //n_string_path_ext_mod( ".bmp\0\0", path );
 
@@ -204,20 +202,18 @@ n_paint_save( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 	if ( n_string_path_ext_is_same_literal( ".PNG\0\0", path ) )
 	{
 
-		ret = n_paint_save_png( bmp, path, n_posix_false );
+		ret = n_paint_save_png( bmp, path, FALSE );
 
 	} else
 	if ( n_string_path_ext_is_same_literal( ".LYR\0\0", path ) )
 	{
 //NSLog( @"Layer" );
 
-		n_paint *p = n_paint_global.paint;
-
 		n_posix_char *str = n_string_path_carboncopy( path );
 		n_string_path_ext_del( str );
 //NSLog( @"%s", str );
 
-		ret = n_paint_layer_save( p, str );
+		ret = n_paint_layer_save( str );
 
 		n_string_path_free( str );
 
@@ -228,7 +224,7 @@ n_paint_save( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 		n_posix_char *default_name = n_string_path_carboncopy( path );
 		n_string_path_ext_mod_literal( ".png\0\0", default_name );
 
-		ret = n_paint_save_png( bmp, default_name, n_posix_false );
+		ret = n_paint_save_png( bmp, default_name, FALSE );
 
 		n_string_path_free( default_name );
 

@@ -41,15 +41,15 @@ n_paint_blend_pixel( u32 f, u32 t, n_type_real blend )
 
 
 n_type_real
-n_paint_pen_air( n_paint *paint, n_type_gfx x, n_type_gfx y, n_type_gfx radius, n_type_real coeff, n_type_real blend )
+n_paint_pen_air( n_type_gfx x, n_type_gfx y, n_type_gfx radius, n_type_real coeff, n_type_real blend )
 {
 
 	coeff *= blend;
 
 
-	if ( paint->air )
+	if ( n_paint->air )
 	{
-		if ( 0 == n_random_range( paint->air ) )
+		if ( 0 == n_random_range( n_paint->air ) )
 		{
 			coeff = coeff * ( 1.0 / 7.5 );
 		} else {
@@ -65,24 +65,24 @@ n_paint_pen_air( n_paint *paint, n_type_gfx x, n_type_gfx y, n_type_gfx radius, 
 
 
 void
-n_paint_pen_display( n_paint *paint, n_type_gfx px, n_type_gfx py, n_type_gfx radius )
+n_paint_pen_display( n_type_gfx px, n_type_gfx py, n_type_gfx radius )
 {
 //[n_paint_global display]; return;
 
 	radius++;
 
-	if ( paint->zoom < 0 ) { radius *= paint->zoom * -1; }
+	if ( n_paint->zoom < 0 ) { radius *= n_paint->zoom * -1; }
 
 	n_type_gfx  x = px - radius;
 	n_type_gfx  y = py - radius;
 	n_type_gfx sx = ( radius * 2 ) + 1;
 	n_type_gfx sy = ( radius * 2 ) + 1;
 
-	if ( paint->layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		if ( paint->layer_data[ paint->layer_index ].blur )
+		if ( n_paint->layer_data[ n_paint->layer_index ].blur )
 		{
-			n_type_gfx blur = paint->layer_data[ paint->layer_index ].blur * 2;
+			n_type_gfx blur = n_paint->layer_data[ n_paint->layer_index ].blur * 2;
 
 			 x -= blur;
 			 y -= blur;
@@ -91,13 +91,13 @@ n_paint_pen_display( n_paint *paint, n_type_gfx px, n_type_gfx py, n_type_gfx ra
 		}
 	}
 
-	n_bmp_box( &paint->layer_cache_bmp_data, x,y,sx,sy, 0 );
+	n_bmp_box( &n_paint->layer_cache_bmp_data, x,y,sx,sy, 0 );
 
-	if ( paint->layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		if ( paint->layer_data[ paint->layer_index ].blur )
+		if ( n_paint->layer_data[ n_paint->layer_index ].blur )
 		{
-			n_bmp_box( &paint->layer_data[ paint->layer_index ].bmp_blur, x,y,sx,sy, 0 );
+			n_bmp_box( &n_paint->layer_data[ n_paint->layer_index ].bmp_blur, x,y,sx,sy, 0 );
 		}
 	}
 
@@ -105,7 +105,7 @@ n_paint_pen_display( n_paint *paint, n_type_gfx px, n_type_gfx py, n_type_gfx ra
 
 	NSRect rect = NSMakeRect( x,y,sx,sy );
 
-	paint->redraw_type = N_PAINT_REDRAW_TYPE_PEN;
+	n_paint->redraw_type = N_PAINT_REDRAW_TYPE_PEN;
 
 	[n_paint_global displayRect:rect];
 
@@ -118,14 +118,11 @@ void
 n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 {
 
-	n_paint *paint = n_paint_global.paint;
-
-
 	if ( blend == 0.0 ) { return; }
 
 
-	n_type_gfx radius = paint->pen_radius * n_paint_global.pressure;
-	u32        color  = paint->pen_color;
+	n_type_gfx radius = n_paint->pen_radius * n_paint_global.pressure;
+	u32        color  = n_paint->pen_color;
 
 
 //NSLog( @"%d", paint->pen_radius );
@@ -151,7 +148,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 		n_paint_grabber_pixel_set( tx,ty, color_f, color_ret );
 
 
-		n_paint_pen_display( paint, fx,fy, 1 );
+		n_paint_pen_display( fx,fy, 1 );
 
 
 		return;
@@ -163,17 +160,17 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 
 	// Multi-Layer Eraser
 
-	n_posix_bool multi_layer_eraser = n_posix_false;
+	BOOL multi_layer_eraser = FALSE;
 
 	if (
-		( paint->layer_whole_grab_onoff )
+		( n_paint->layer_whole_grab_onoff )
 		&&
-		( paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL )
+		( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL )
 		&&
 		( color == n_bmp_white_invisible )
 	)
 	{
-		multi_layer_eraser = n_posix_true;
+		multi_layer_eraser = TRUE;
 	}
 
 
@@ -196,37 +193,37 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 			u32 color_f = color + 1;
 			u32 color_t = color;
 
-			if ( paint->pen_quick_eraser_whole_layer_onoff )
+			if ( n_paint->pen_quick_eraser_whole_layer_onoff )
 			{
 
 				n_type_gfx orig_x = tx;
 				n_type_gfx orig_y = ty;
 
-				if ( n_bmp_ptr_is_accessible( &paint->layer_data[ 0 ].bmp_data, orig_x,orig_y ) )
+				if ( n_bmp_ptr_is_accessible( &n_paint->layer_data[ 0 ].bmp_data, orig_x,orig_y ) )
 				{
 					n_type_int i = 0;
 					n_posix_loop
 					{
 
-						if ( n_posix_false == n_paint_layer_is_locked( i ) )
+						if ( FALSE == n_paint_layer_is_locked( i ) )
 						{
-							n_bmp *bmp_data = &paint->layer_data[ i ].bmp_data;
+							n_bmp *bmp_data = &n_paint->layer_data[ i ].bmp_data;
 
 							u32 c_f = n_bmp_antialias_pixel( bmp_data, orig_x,orig_y, 1.0 );
 							u32 c_t = n_bmp_white_invisible;
 
-							n_type_real d = n_paint_pen_air( paint, x,y, radius, coeff, blend * 0.01 );
+							n_type_real d = n_paint_pen_air( x,y, radius, coeff, blend * 0.01 );
 
 							u32 c = n_paint_blend_pixel( c_f, c_t, d );
 							n_bmp_ptr_set_fast( bmp_data, orig_x,orig_y, c );
 
-							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_data, orig_x,orig_y, 0 );
-							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_pre , orig_x,orig_y, 0 );
-							n_bmp_ptr_set_fast( &paint->layer_cache_bmp_pst , orig_x,orig_y, 0 );
+							n_bmp_ptr_set_fast( &n_paint->layer_cache_bmp_data, orig_x,orig_y, 0 );
+							n_bmp_ptr_set_fast( &n_paint->layer_cache_bmp_pre , orig_x,orig_y, 0 );
+							n_bmp_ptr_set_fast( &n_paint->layer_cache_bmp_pst , orig_x,orig_y, 0 );
 						}
 
 						i++;
-						if ( i >= paint->layer_count ) { break; }
+						if ( i >= n_paint->layer_count ) { break; }
 					}
 				}
 
@@ -246,8 +243,8 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 				n_posix_loop
 				{
 
-					n_bmp *bmp_data = &paint->layer_data[ i ].bmp_data;
-					n_bmp *bmp_grab = &paint->layer_data[ i ].bmp_grab;
+					n_bmp *bmp_data = &n_paint->layer_data[ i ].bmp_data;
+					n_bmp *bmp_grab = &n_paint->layer_data[ i ].bmp_grab;
 
 					u32 c1;
 					n_bmp_ptr_get( bmp_data, orig_x,orig_y, &c1 );
@@ -255,17 +252,17 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 					u32 c2;
 					n_bmp_ptr_get( bmp_grab, grab_x,grab_y, &c2 );
 
-					n_type_real d = n_paint_pen_air( paint, x,y, radius, coeff, blend );
+					n_type_real d = n_paint_pen_air( x,y, radius, coeff, blend );
 
 					c1 = n_paint_blend_pixel( c2, c1, d );
 					n_bmp_ptr_set( bmp_grab, grab_x,grab_y,  c1 );
 
 					i++;
-					if ( i >= paint->layer_count ) { break; }
+					if ( i >= n_paint->layer_count ) { break; }
 				}
 
 			} else
-			if ( paint->mix == 100 )
+			if ( n_paint->mix == 100 )
 			{
 
 				n_paint_grabber_pixel_get( tx,ty, color, &color_f, &color_t, 0.00 );
@@ -273,9 +270,9 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 
 			} else {
 
-				if ( paint->boost != 0 )
+				if ( n_paint->boost != 0 )
 				{
-					if ( paint->pensize == 0 )
+					if ( n_paint->pensize == 0 )
 					{
 						if ( ( x == 0 )&&( y == 0 ) )
 						{
@@ -284,7 +281,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 							coeff = 0.0;
 						}
 					} else
-					if ( paint->pensize == 1 )
+					if ( n_paint->pensize == 1 )
 					{
 						if ( ( x ==  0 )&&( y ==  0 ) )
 						{
@@ -331,7 +328,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 							coeff = 0.0;
 						}
 					} else {
-						if ( n_bmp_ellipse_detect_coeff( x,y, paint->pensize,paint->pensize, NULL ) )
+						if ( n_bmp_ellipse_detect_coeff( x,y, n_paint->pensize, n_paint->pensize, NULL ) )
 						{
 							coeff /= radius;
 						} else {
@@ -339,25 +336,25 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 						}
 					}
 
-					coeff *= (n_type_real) ( 100 - paint->boost ) * 0.01;
+					coeff *= (n_type_real) ( 100 - n_paint->boost ) * 0.01;
 				}
 
 				if ( coeff != 0.0 )
 				{
 				
-					if ( paint->pen_quick_blur_onoff )
+					if ( n_paint->pen_quick_blur_onoff )
 					{
 						n_paint_grabber_pixel_get( tx,ty, color, &color_f, &color_t, 1.00 );
 						n_paint_grabber_pixel_set( tx,ty, color_f - 1, color_f );
 					} else {
-						if ( paint->air )
+						if ( n_paint->air )
 						{
 							n_paint_grabber_pixel_get( tx,ty, color, &color_f, &color_t, 0.25 );
 						} else {
 							n_paint_grabber_pixel_get( tx,ty, color, &color_f, &color_t, 0.00 );
 						}
 
-						coeff = n_paint_pen_air( paint, x,y, radius, coeff, blend );
+						coeff = n_paint_pen_air( x,y, radius, coeff, blend );
 
 						u32 color_ret = n_paint_blend_pixel( color_f, color_t, coeff );
 						n_paint_grabber_pixel_set( tx,ty, color_f, color_ret );
@@ -383,7 +380,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 	}
 
 
-	n_paint_pen_display( paint, fx,fy, paint->pen_radius );
+	n_paint_pen_display( fx,fy, n_paint->pen_radius );
 
 
 	return;
@@ -396,12 +393,12 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 #define N_PAINT_PEN_LOOP  1
 #define N_PAINT_PEN_STOP  2
 
-#define n_paint_pen_start( p, pt ) n_paint_pen( p, pt, N_PAINT_PEN_START )
-#define n_paint_pen_loop(  p, pt ) n_paint_pen( p, pt, N_PAINT_PEN_LOOP  )
-#define n_paint_pen_stop(  p, pt ) n_paint_pen( p, pt, N_PAINT_PEN_STOP  )
+#define n_paint_pen_start( pt ) n_paint_pen( pt, N_PAINT_PEN_START )
+#define n_paint_pen_loop(  pt ) n_paint_pen( pt, N_PAINT_PEN_LOOP  )
+#define n_paint_pen_stop(  pt ) n_paint_pen( pt, N_PAINT_PEN_STOP  )
 
 void
-n_paint_pen( n_paint *paint, NSPoint pt, int mode )
+n_paint_pen( NSPoint pt, int mode )
 {
 
 	static n_type_gfx px;
@@ -417,14 +414,14 @@ n_paint_pen( n_paint *paint, NSPoint pt, int mode )
 	if ( mode == N_PAINT_PEN_START )
 	{
 
-		paint->pen_start_x = px = fx = tx;
-		paint->pen_start_y = py = fy = ty;
+		n_paint->pen_start_x = px = fx = tx;
+		n_paint->pen_start_y = py = fy = ty;
 
 	} else {
 
 		if ( mode == N_PAINT_PEN_STOP )
 		{
-			if ( ( paint->pen_start_x == tx )&&( paint->pen_start_y == ty ) ) { return; }
+			if ( ( n_paint->pen_start_x == tx )&&( n_paint->pen_start_y == ty ) ) { return; }
 		}
 
 		fx = px;
@@ -436,7 +433,7 @@ n_paint_pen( n_paint *paint, NSPoint pt, int mode )
 	if (
 		( mode == N_PAINT_PEN_LOOP )
 		&&
-		( paint->pen_blend != 1.0 )
+		( n_paint->pen_blend != 1.0 )
 	)
 	{
 
@@ -447,11 +444,11 @@ n_paint_pen( n_paint *paint, NSPoint pt, int mode )
 	}
 
 
-	if ( paint->pen_blend == 1.0 )
+	if ( n_paint->pen_blend == 1.0 )
 	{
-		n_bmp_pen_bresenham( fx,fy, tx,ty, paint->pen_blend, n_paint_pen_engine );
+		n_bmp_pen_bresenham( fx,fy, tx,ty, n_paint->pen_blend, n_paint_pen_engine );
 	} else {
-		n_bmp_pen_wu       ( fx,fy, tx,ty, paint->pen_blend, n_paint_pen_engine );
+		n_bmp_pen_wu       ( fx,fy, tx,ty, n_paint->pen_blend, n_paint_pen_engine );
 	}
 
 	px = tx;
@@ -465,56 +462,56 @@ n_paint_pen( n_paint *paint, NSPoint pt, int mode )
 }
 
 void
-NonnonPaintPen_mouseDown( n_paint *paint, NSEvent *theEvent )
+NonnonPaintPen_mouseDown( NSEvent *theEvent )
 {
 
-	if ( paint->layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		if ( n_paint_layer_is_locked( paint->layer_index ) )
+		if ( n_paint_layer_is_locked( n_paint->layer_index ) )
 		{
 			return;
 		}
 	}
 
 
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 
-		if ( paint->pen_start == n_posix_false )
+		if ( n_paint->pen_start == FALSE )
 		{
 
 			// [!] : pre-calculate
 
-			paint->pen_radius =  paint->pensize / 2;
-			paint->pen_blend  = (n_type_real) paint->mix * 0.01;
+			n_paint->pen_radius = n_paint->pensize / 2;
+			n_paint->pen_blend  = (n_type_real) n_paint->mix * 0.01;
 
 
 			// Quick Eraser
 
 			if ( n_mac_keystate_get( N_MAC_KEYCODE_UNDO ) )
 			{
-				paint->pen_color = n_bmp_white_invisible;
+				n_paint->pen_color = n_bmp_white_invisible;
 			} else {
-				paint->pen_color = paint->color;
+				n_paint->pen_color = n_paint->color;
 			}
 
 
 			// [!] : the first input
 //NSLog( @"Pen Start" );
-			paint->pen_start = n_posix_true;
+			n_paint->pen_start = TRUE;
 
-			n_paint_pen_start( paint, [n_paint_global n_paint_point_on_bitmap] );
+			n_paint_pen_start( [n_paint_global n_paint_point_on_bitmap] );
 
 
-			if ( paint->grabber_mode )
+			if ( n_paint->grabber_mode )
 			{
-				paint->grabber_frame_lock = TRUE;
+				n_paint->grabber_frame_lock = TRUE;
 			}
 
 		}
 
 	} else
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 
 		NSPoint pt = [n_paint_global n_paint_point_on_bitmap];
@@ -522,15 +519,15 @@ NonnonPaintPen_mouseDown( n_paint *paint, NSEvent *theEvent )
 		NSUInteger flags = [[NSApp currentEvent] modifierFlags];
 		if ( flags & NSEventModifierFlagCommand )
 		{
-			n_paint_grabber_fill_special( pt.x, pt.y, paint->color );
+			n_paint_grabber_fill_special( pt.x, pt.y, n_paint->color );
 		} else {
-			n_paint_grabber_fill( pt.x, pt.y, paint->color );
+			n_paint_grabber_fill( pt.x, pt.y, n_paint->color );
 		}
 
 
-		if ( paint->grabber_mode )
+		if ( n_paint->grabber_mode )
 		{
-			paint->grabber_frame_lock = TRUE;
+			n_paint->grabber_frame_lock = TRUE;
 		}
 
 
@@ -544,21 +541,21 @@ NonnonPaintPen_mouseDown( n_paint *paint, NSEvent *theEvent )
 }
 
 void
-NonnonPaintPen_mouseDragged( n_paint *paint )
+NonnonPaintPen_mouseDragged( void )
 {
 
 	[n_paint_global.delegate NonnonPaintStatus];
 
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
-		if ( paint->pen_start )
+		if ( n_paint->pen_start )
 		{
 //NSLog( @"Pen Loop" );
-			n_paint_pen_loop( paint, [n_paint_global n_paint_point_on_bitmap] );
+			n_paint_pen_loop( [n_paint_global n_paint_point_on_bitmap] );
 
 		}
 	} else
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 		//
 	}
@@ -566,21 +563,21 @@ NonnonPaintPen_mouseDragged( n_paint *paint )
 }
 
 void
-NonnonPaintPen_mouseUp( n_paint *paint )
+NonnonPaintPen_mouseUp( void )
 {
 
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 
-		if ( paint->pen_start )
+		if ( n_paint->pen_start )
 		{
 //NSLog( @"Pen Stop" );
-			n_paint_pen_stop( paint, [n_paint_global n_paint_point_on_bitmap] );
-			paint->pen_start = n_posix_false;
+			n_paint_pen_stop( [n_paint_global n_paint_point_on_bitmap] );
+			n_paint->pen_start = FALSE;
 
 		}
 	} else
-	if ( paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 		//
 	}
@@ -588,30 +585,30 @@ NonnonPaintPen_mouseUp( n_paint *paint )
 }
 
 BOOL
-NonnonPaintPen_colorpicker_margin( n_paint *paint )
+NonnonPaintPen_colorpicker_margin( void )
 {
 
 	BOOL ret = FALSE;
 
-	if ( paint->margin_onoff == FALSE ) { return FALSE; }
+	if ( n_paint->margin_onoff == FALSE ) { return FALSE; }
 
 
 	NSPoint pt_m = n_mac_cursor_position_get( n_paint_global );
 //NSLog( @"%0.0f %0.0f", pt_m.x, pt_m.y );
-//NSLog( @"Offset Point : %0.0f %0.0f", paint->canvas_offset_x , paint->canvas_offset_y  );
-//NSLog( @"Offset Size  : %0.0f %0.0f", paint->canvas_offset_sx, paint->canvas_offset_sy );
+//NSLog( @"Offset Point : %0.0f %0.0f", n_paint->canvas_offset_x , n_paint->canvas_offset_y  );
+//NSLog( @"Offset Size  : %0.0f %0.0f", n_paint->canvas_offset_sx, n_paint->canvas_offset_sy );
 
 	if (
-		( pt_m.x < paint->canvas_offset_x )
+		( pt_m.x < n_paint->canvas_offset_x )
 		||
-		( pt_m.y < paint->canvas_offset_y )
+		( pt_m.y < n_paint->canvas_offset_y )
 		||
-		( pt_m.x > ( paint->canvas_offset_x + paint->canvas_offset_sx ) )
+		( pt_m.x > ( n_paint->canvas_offset_x + n_paint->canvas_offset_sx ) )
 		||
-		( pt_m.y > ( paint->canvas_offset_y + paint->canvas_offset_sy ) )
+		( pt_m.y > ( n_paint->canvas_offset_y + n_paint->canvas_offset_sy ) )
 	)
 	{
-		paint->color = n_bmp_white_invisible;
+		n_paint->color = n_bmp_white_invisible;
 		ret = TRUE;
 	}
 
@@ -620,44 +617,44 @@ NonnonPaintPen_colorpicker_margin( n_paint *paint )
 }
 
 void
-NonnonPaintPen_rightMouseDown( n_paint *paint, NSEvent *event )
+NonnonPaintPen_rightMouseDown( NSEvent *event )
 {
 //NSLog( @"NonnonPaintPen_rightMouseDown()" );
 
 	if (
-		( paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
+		( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 		||
-		( paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
+		( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	)
 	{
 		if ( event.modifierFlags & NSEventModifierFlagCommand )
 		{
 			NSPoint pt = n_mac_cursor_position_get( n_paint_global );
 
-			n_bmp_ptr_get( [n_paint_global n_paint_nbmp_get], pt.x, pt.y, &paint->color );
+			n_bmp_ptr_get( [n_paint_global n_paint_nbmp_get], pt.x, pt.y, &n_paint->color );
 		} else {
-			if ( NonnonPaintPen_colorpicker_margin( paint ) )
+			if ( NonnonPaintPen_colorpicker_margin() )
 			{
 				//
 			} else
-			if ( paint->grabber_mode )
+			if ( n_paint->grabber_mode )
 			{
 //NSLog( @"Grabber" );
 				NSPoint pt = [n_paint_global n_paint_point_on_bitmap];
 
-				n_paint_grabber_pixel_get( pt.x, pt.y, n_bmp_white_invisible, &paint->color, NULL, 0.00 );
+				n_paint_grabber_pixel_get( pt.x, pt.y, n_bmp_white_invisible, &n_paint->color, NULL, 0.00 );
 			} else {
 				NSPoint pt = [n_paint_global n_paint_point_on_bitmap];
 
-				if ( n_bmp_ptr_get( paint->pen_bmp_data, pt.x, pt.y, &paint->color ) )
+				if ( n_bmp_ptr_get( n_paint->pen_bmp_data, pt.x, pt.y, &n_paint->color ) )
 				{
-					paint->color = n_bmp_white_invisible;
+					n_paint->color = n_bmp_white_invisible;
 				}
 			}
 		}
 
 		extern void n_paint_colorhistory_add( u32 color );
-		n_paint_colorhistory_add( paint->color );
+		n_paint_colorhistory_add( n_paint->color );
 	}
 
 }

@@ -66,8 +66,7 @@
 
 	// [Needed] : NSTrackingMouseEnteredAndExited
 
-	n_paint *p = n_paint_global.paint;
-	if ( p->xmouse_stop ) { return; }
+	if ( n_paint->xmouse_stop ) { return; }
 
 	if ( FALSE == n_mac_window_is_keywindow( self.window ) )
 	{
@@ -103,9 +102,6 @@
 {
 //NSLog(@"XMouse : mouseUp");
 
-	// [!] : scrollers use this for preventing press N run
-	[self.delegate mouseUp:theEvent];
-
 	[super mouseUp:theEvent];
 
 }
@@ -132,9 +128,7 @@
 {
 //NSLog(@"XMouse : mouseUp");
 
-	n_paint *paint = n_paint_global.paint;
-
-	paint->cursor_grab_n_drag_onoff = FALSE;
+	n_paint->cursor_grab_n_drag_onoff = FALSE;
 	[self resetCursorRects];
 
 	//[self.delegate otherMouseUp:theEvent];
@@ -151,14 +145,19 @@
 */
 
 
+/*
+- (void) keyUp : (NSEvent*) event
+{
+NSLog( @"keyUp : Key Code = %d", event.keyCode );
+}
+*/
+
+
 
 -(BOOL) NonnonPaintDnDIsDisabled:( id <NSDraggingInfo> ) sender
 {
 
 	BOOL ret = FALSE;
-
-
-	n_paint *p = n_paint_global.paint;
 
 
 	NSPasteboard *pasteboard = [sender draggingPasteboard];
@@ -174,24 +173,24 @@
 
 //NSLog( @"%d %d", p->tooltype, p->grabber_mode );
 
-	if ( p->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 	{
 		if ( check ) { ret = TRUE; }
 	} else {
-		if ( p->grabber_mode ) { return TRUE; }
+		if ( n_paint->grabber_mode ) { return TRUE; }
 		if ( check ) { return FALSE; }
 	}
 
 
-	if ( p->readonly                                ) { ret = TRUE; }
-	if ( p->grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { ret = TRUE; }
+	if ( n_paint->readonly                                ) { ret = TRUE; }
+	if ( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { ret = TRUE; }
 	if (
-		( p->layer_onoff )
+		( n_paint->layer_onoff )
 		&&
 		(
-			( p->layer_data[ p->layer_index ].visible == FALSE )
+			( n_paint->layer_data[ n_paint->layer_index ].visible == FALSE )
 			||
-			( n_paint_layer_is_locked( p->layer_index ) )
+			( n_paint_layer_is_locked( n_paint->layer_index ) )
 		)
 	)
 	{

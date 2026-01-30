@@ -9,22 +9,7 @@
 
 
 
-#include "../nonnon/neutral/bmp/all.c"
-#include "../nonnon/neutral/curico.c"
-#include "../nonnon/neutral/jpg.c"
-#include "../nonnon/neutral/png.c"
-
-
-#include "../nonnon/mac/_mac.c"
-#include "../nonnon/mac/draw.c"
-#include "../nonnon/mac/image.c"
-#include "../nonnon/mac/window.c"
-
-#include "../nonnon/mac/n_button.c"
-#include "../nonnon/mac/n_scrollbar.c"
-#include "../nonnon/mac/n_txtbox.c"
-
-#include "../nonnon/project/ini2gdi.c"
+#include "extern.h"
 
 
 
@@ -84,13 +69,13 @@ n_paint_memory_limit( void )
 
 
 
-n_posix_bool
+BOOL
 n_paint_load_ini2gdi( n_posix_char *path, n_bmp *bmp )
 {
 
-	n_posix_bool ret = n_ini2gdi_load( path, bmp );
+	BOOL ret = n_ini2gdi_load( path, bmp );
 /*
-	if ( ret == n_posix_false )
+	if ( ret == FALSE )
 	{
 		n_string_path_ext_mod_literal( ".png", path );
 	}
@@ -98,11 +83,11 @@ n_paint_load_ini2gdi( n_posix_char *path, n_bmp *bmp )
 	return ret;
 }
 
-n_posix_bool
+BOOL
 n_paint_load( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 {
 
-	if ( n_posix_stat_is_dir( path ) ) { return n_posix_true; }
+	if ( n_posix_stat_is_dir( path ) ) { return TRUE; }
 
 	if (
 		( n_png_png2bmp( path, bmp ) )
@@ -118,7 +103,7 @@ n_paint_load( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 		( n_mac_image_load( path, bmp ) )
 	)
 	{
-		return n_posix_true;
+		return TRUE;
 	} else {
 		n_bmp_mac_color( bmp );
 	}
@@ -127,10 +112,10 @@ n_paint_load( n_posix_char *path, n_bmp *bmp, n_curico *curico )
 //n_bmp_scaler_big( bmp, 2 );
 
 
-	return n_posix_false;
+	return FALSE;
 }
 
-n_posix_bool
+BOOL
 n_mac_window_is_hovered_by_nwwindow( NSWindow *window )
 {
 
@@ -474,8 +459,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 @implementation AppDelegate {
 
-	n_paint paint;
-
 	BOOL    sheet_onoff;
 
 	int     delayed_apply_id;
@@ -520,19 +503,19 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		str = n_mac_settings_read( @"pensize" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"5"]; }
-		paint.pensize = [str intValue];
+		n_paint->pensize = [str intValue];
 
 		str = n_mac_settings_read( @"mix" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"10"]; }
-		paint.mix = [str intValue];
+		n_paint->mix = [str intValue];
 
 		str = n_mac_settings_read( @"boost" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.boost = [str intValue];
+		n_paint->boost = [str intValue];
 
 		str = n_mac_settings_read( @"air" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.air = [str intValue];
+		n_paint->air = [str intValue];
 
 
 		str = n_mac_settings_read( @"a" );
@@ -551,77 +534,77 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"255"]; }
 		int b = [str intValue];
 
-		paint.color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->color = n_bmp_argb_mac( a,r,g,b );
 
 
 		str = n_mac_settings_read( @"grid_onoff" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.grid_onoff = [str intValue];
-		if ( paint.grid_onoff ) { [_n_menu_grid setState:NSControlStateValueOn]; }
+		n_paint->grid_onoff = [str intValue];
+		if ( n_paint->grid_onoff ) { [_n_menu_grid setState:NSControlStateValueOn]; }
 
 		str = n_mac_settings_read( @"pixel_grid_onoff" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.pixel_grid_onoff = [str intValue];
-		if ( paint.pixel_grid_onoff ) { [_n_menu_pixelgrid setState:NSControlStateValueOn]; }
+		n_paint->pixel_grid_onoff = [str intValue];
+		if ( n_paint->pixel_grid_onoff ) { [_n_menu_pixelgrid setState:NSControlStateValueOn]; }
 
 		str = n_mac_settings_read( @"alpha_emphasizer_onoff" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.alpha_emphasizer_onoff = [str intValue];
-		if ( paint.alpha_emphasizer_onoff ) { [_n_menu_alpha_emphasizer setState:NSControlStateValueOn]; }
+		n_paint->alpha_emphasizer_onoff = [str intValue];
+		if ( n_paint->alpha_emphasizer_onoff ) { [_n_menu_alpha_emphasizer setState:NSControlStateValueOn]; }
 
 		str = n_mac_settings_read( @"pressure_onoff" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"1"]; }
-		paint.pressure_onoff = [str intValue];
-		if ( paint.pressure_onoff ) { [_n_menu_pressure setState:NSControlStateValueOn]; }
+		n_paint->pressure_onoff = [str intValue];
+		if ( n_paint->pressure_onoff ) { [_n_menu_pressure setState:NSControlStateValueOn]; }
 
 
 		str = n_mac_settings_read( @"grabber_frame_mode" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
-		paint.grabber_frame_mode = [str intValue];
-		[_n_grabber_frame_mode_combo selectItemAtIndex:paint.grabber_frame_mode];
+		n_paint->grabber_frame_mode = [str intValue];
+		[_n_grabber_frame_mode_combo selectItemAtIndex:n_paint->grabber_frame_mode];
 
 	} else {
 
-		str = [NSString stringWithFormat:@"%d", paint.pensize];
+		str = [NSString stringWithFormat:@"%d", n_paint->pensize];
 		n_mac_settings_write( @"pensize", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.mix];
+		str = [NSString stringWithFormat:@"%d", n_paint->mix];
 		n_mac_settings_write( @"mix", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.boost];
+		str = [NSString stringWithFormat:@"%d", n_paint->boost];
 		n_mac_settings_write( @"boost", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.air];
+		str = [NSString stringWithFormat:@"%d", n_paint->air];
 		n_mac_settings_write( @"air", str );
 
 
-		str = [NSString stringWithFormat:@"%d", n_bmp_a( paint.color )];
+		str = [NSString stringWithFormat:@"%d", n_bmp_a( n_paint->color )];
 		n_mac_settings_write( @"a", str );
 
-		str = [NSString stringWithFormat:@"%d", n_bmp_b( paint.color )];
+		str = [NSString stringWithFormat:@"%d", n_bmp_b( n_paint->color )];
 		n_mac_settings_write( @"r", str );
 
-		str = [NSString stringWithFormat:@"%d", n_bmp_g( paint.color )];
+		str = [NSString stringWithFormat:@"%d", n_bmp_g( n_paint->color )];
 		n_mac_settings_write( @"g", str );
 
-		str = [NSString stringWithFormat:@"%d", n_bmp_r( paint.color )];
+		str = [NSString stringWithFormat:@"%d", n_bmp_r( n_paint->color )];
 		n_mac_settings_write( @"b", str );
 
 
-		str = [NSString stringWithFormat:@"%d", paint.grid_onoff];
+		str = [NSString stringWithFormat:@"%d", n_paint->grid_onoff];
 		n_mac_settings_write( @"grid_onoff", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.pixel_grid_onoff];
+		str = [NSString stringWithFormat:@"%d", n_paint->pixel_grid_onoff];
 		n_mac_settings_write( @"pixel_grid_onoff", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.alpha_emphasizer_onoff];
+		str = [NSString stringWithFormat:@"%d", n_paint->alpha_emphasizer_onoff];
 		n_mac_settings_write( @"alpha_emphasizer_onoff", str );
 
-		str = [NSString stringWithFormat:@"%d", paint.pressure_onoff];
+		str = [NSString stringWithFormat:@"%d", n_paint->pressure_onoff];
 		n_mac_settings_write( @"pressure_onoff", str );
 
 
-		str = [NSString stringWithFormat:@"%d", paint.grabber_frame_mode];
+		str = [NSString stringWithFormat:@"%d", n_paint->grabber_frame_mode];
 		n_mac_settings_write( @"grabber_frame_mode", str );
 
 	}
@@ -634,12 +617,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonTxtbox_delegate_listbox_edited : (n_type_int) i;
 {
 //NSLog( @"NonnonTxtbox_delegate_listbox_edited" );
-//NSLog( @"%s", paint.layer_data[ i ].name );
+//NSLog( @"%s", n_paint->layer_data[ i ].name );
 
 	n_posix_char *str = n_txt_get( _n_layer_listbox.n_txt_data, i );
 //NSLog( @"%s", str );
 
-	n_paint_layer_text_mod( &paint, i, str );
+	n_paint_layer_text_mod( i, str );
 
 
 	[self NonnonPaintLayerMenuContext];
@@ -648,11 +631,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (void) NonnonTxtbox_delegate_listbox_rename : (n_type_int) i;
 {
-//NSLog( @"%s", paint.layer_data[ i ].name );
+//NSLog( @"%s", n_paint->layer_data[ i ].name );
 
 	renamer_index = i;
 
-	NSString *nsstring = n_mac_str2nsstring( paint.layer_data[ i ].name );
+	NSString *nsstring = n_mac_str2nsstring( n_paint->layer_data[ i ].name );
 	[_n_renamer_text setStringValue:nsstring];
 
 	n_mac_window_show( _n_renamer_window );
@@ -665,7 +648,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( nsstring.length >= N_PAINT_LAYER_CCH ) { return; }
 
 	n_posix_char *str = n_mac_nsstring2str( nsstring );
-	n_paint_layer_text_mod( &paint, renamer_index, str );
+	n_paint_layer_text_mod( renamer_index, str );
 	n_string_free( str );
 
 	[_n_layer_listbox display];
@@ -690,18 +673,18 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 {
 //NSLog( @"NonnonTxtbox_delegate_swap" );
 
-	paint.layer_index = _n_layer_listbox.n_focus;
+	n_paint->layer_index = _n_layer_listbox.n_focus;
 
 	if ( is_up )
 	{
-		if ( n_paint_layer_swap_up( paint.layer_index ) )
+		if ( n_paint_layer_swap_up( n_paint->layer_index ) )
 		{
-			_n_layer_listbox.n_focus = paint.layer_index;
+			_n_layer_listbox.n_focus = n_paint->layer_index;
 		}
 	} else {
-		if ( n_paint_layer_swap_down( paint.layer_index ) )
+		if ( n_paint_layer_swap_down( n_paint->layer_index ) )
 		{
-			_n_layer_listbox.n_focus = paint.layer_index;
+			_n_layer_listbox.n_focus = n_paint->layer_index;
 		}
 	}
 
@@ -728,18 +711,18 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonDragAndDrop_dropped : (NSString*) nsstr
 {
 
-	if ( paint.readonly )
+	if ( n_paint->readonly )
 	{
 //NSLog( @"readonly" );
 		return;
 	}
 
 
-	if ( paint.grabber_mode ) { return; }
+	if ( n_paint->grabber_mode ) { return; }
 
 
-	NSPoint    prv_scroll      = paint.scroll;
-	n_type_int prv_layer_index = paint.layer_index;
+	NSPoint    prv_scroll      = n_paint->scroll;
+	n_type_int prv_layer_index = n_paint->layer_index;
 
 
 	NSString *path = n_mac_alias_resolve( nsstr );
@@ -749,7 +732,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_posix_char *str = n_mac_nsstring2str( path );
 //NSLog( @"%s", str );
 
-	if ( paint.tooltype == N_PAINT_TOOL_TYPE_GRABBER )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 	{
 
 		n_bmp bmp; n_bmp_zero( &bmp );
@@ -765,50 +748,50 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 			n_paint_grabber_select_drop( &bmp, is_zero, TRUE );
 
-			paint.grabber_mode = N_PAINT_GRABBER_DRAG_OK;
+			n_paint->grabber_mode = N_PAINT_GRABBER_DRAG_OK;
 
 			[n_paint_global n_paint_layer_window_onoff:FALSE];
 
-			paint.layer_whole_preview_onoff = n_posix_false;
-			paint.layer_whole_grab_onoff    = n_posix_false;
-			[paint.whole_preview_checkbox setState:NSControlStateValueOff];
-			[paint.whole_grab_checkbox    setState:NSControlStateValueOff];
+			n_paint->layer_whole_preview_onoff = FALSE;
+			n_paint->layer_whole_grab_onoff    = FALSE;
+			[n_paint->whole_preview_checkbox setState:NSControlStateValueOff];
+			[n_paint->whole_grab_checkbox    setState:NSControlStateValueOff];
 
 
-			paint.grabber_frame_lock = TRUE;
+			n_paint->grabber_frame_lock = TRUE;
 			[_n_paint_canvas n_paint_grabber_frame_anim_on];
 
 
-			n_bmp_flush( &paint.layer_cache_bmp_data, 0 );
+			n_bmp_flush( &n_paint->layer_cache_bmp_data, 0 );
 
-			paint.grabber_cache_redraw_x  = 0;
-			paint.grabber_cache_redraw_y  = 0;
-			paint.grabber_cache_redraw_sx = 0;
-			paint.grabber_cache_redraw_sy = 0;
+			n_paint->grabber_cache_redraw_x  = 0;
+			n_paint->grabber_cache_redraw_y  = 0;
+			n_paint->grabber_cache_redraw_sx = 0;
+			n_paint->grabber_cache_redraw_sy = 0;
 
-			paint.grabber_resync_rect = NSMakeRect( 0,0,0,0 );
+			n_paint->grabber_resync_rect = NSMakeRect( 0,0,0,0 );
 
 
 			[_n_paint_canvas display_optimized];
 		}
 
 	} else
-	if ( n_paint_layer_load( &paint, str ) )
+	if ( n_paint_layer_load( str ) )
 	{
 //NSLog( @"n_paint_layer_load() : error" );
 
-		if ( paint.grabber_mode != N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL )
 		{
 			//
 		} else
-		if ( n_paint_load( str, &paint.bmp_data, &paint.curico ) )
+		if ( n_paint_load( str, &n_paint->bmp_data, &n_paint->curico ) )
 		{
 //NSLog( @"n_paint_load() : error" );
 			//
 		} else {
-			paint.layer_save_count = 0;
+			n_paint->layer_save_count = 0;
 
-			n_bmp_layer_turn_off( &paint );
+			n_bmp_layer_turn_off();
 
 			n_posix_char *s = n_mac_nsstring2str( path );
 			if (
@@ -823,18 +806,18 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 				( n_string_path_ext_is_same_literal( ".png", s ) )
 			)
 			{
-				paint.filename = path;
+				n_paint->filename = path;
 			} else {
 				n_string_path_ext_mod_literal( ".png", s );
-				paint.filename = n_mac_str2nsstring( s );
+				n_paint->filename = n_mac_str2nsstring( s );
 			}
 			n_string_path_free( s );
 
-			n_bmp_free( &paint.bmp_grab );
+			n_bmp_free( &n_paint->bmp_grab );
 
 			[self NonnonPaintTitle];
 
-			paint.scroll = NSMakePoint( 0, 0 );
+			n_paint->scroll = NSMakePoint( 0, 0 );
 			[self NonnonPaintResize];
 
 			[self NonnonPaintResizerReset];
@@ -845,13 +828,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	} else {
 //NSLog( @"layer" );
 
-		paint.layer_save_count++;
+		n_paint->layer_save_count++;
 
 
-		n_bmp_free( &paint.bmp_data );
-		n_bmp_free( &paint.bmp_grab );
+		n_bmp_free( &n_paint->bmp_data );
+		n_bmp_free( &n_paint->bmp_grab );
 
-		[self NonnonPaintLayerSelect:paint.layer_index];
+		[self NonnonPaintLayerSelect:n_paint->layer_index];
 
 
 		n_posix_char *newname = n_string_alloccopy( n_posix_strlen( str ) * 2, str );
@@ -866,15 +849,15 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_string_path_ext_add( ".lyr\0\0", newname );
 //NSLog( @"%s", newname );
 
-		paint.filename = n_mac_str2nsstring( newname );
+		n_paint->filename = n_mac_str2nsstring( newname );
 
 		n_string_path_free( newname );
 
 
 		[self NonnonPaintTitle];
 
-		//paint.scroll = NSMakePoint( 0, 0 );
-		paint.scroll = prv_scroll;
+		//n_paint->scroll = NSMakePoint( 0, 0 );
+		n_paint->scroll = prv_scroll;
 		[self NonnonPaintResize];
 
 		[self NonnonPaintResizerReset];
@@ -884,21 +867,21 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		static NSString *prv_filename = NULL;
 
-		if ( [paint.filename compare:prv_filename] == 0 )
+		if ( [n_paint->filename compare:prv_filename] == 0 )
 		{
 //NSLog( @"Same" );
-			paint.layer_index = prv_layer_index;
+			n_paint->layer_index = prv_layer_index;
 		} else {
 //NSLog( @"Not the Same" );
 			//
 		}
 
-		prv_filename = [paint.filename copy];
+		prv_filename = [n_paint->filename copy];
 
 
-		_n_layer_listbox.n_focus = paint.layer_index;
+		_n_layer_listbox.n_focus = n_paint->layer_index;
 //NSLog( @"%f", _n_layer_listbox.n_focus );
-		[self NonnonPaintLayerSelect:paint.layer_index];
+		[self NonnonPaintLayerSelect:n_paint->layer_index];
 
 
 		[_n_layer_listbox NonnonTxtboxFocus2Caret];
@@ -907,13 +890,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_n_layer_listbox display];
 
 
-		paint.layer_whole_preview_onoff = n_posix_false;
-		paint.layer_whole_grab_onoff    = n_posix_false;
-		paint.layer_whole_save_onoff    = n_posix_true;
+		n_paint->layer_whole_preview_onoff = FALSE;
+		n_paint->layer_whole_grab_onoff    = FALSE;
+		n_paint->layer_whole_save_onoff    = TRUE;
 
-		[paint.whole_preview_checkbox setState:NSControlStateValueOff];
-		[paint.whole_grab_checkbox    setState:NSControlStateValueOff];
-		[paint.whole_save_checkbox    setState:NSControlStateValueOn ];
+		[n_paint->whole_preview_checkbox setState:NSControlStateValueOff];
+		[n_paint->whole_grab_checkbox    setState:NSControlStateValueOff];
+		[n_paint->whole_save_checkbox    setState:NSControlStateValueOn ];
 
 
 		[self NonnonPaintLayerRefresh];
@@ -939,7 +922,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		n_mac_window_show( _window );
 
-		if ( paint.resizer_onoff )
+		if ( n_paint->resizer_onoff )
 		{
 			n_mac_window_show( _n_resizer_window );
 			[_window addChildWindow:_n_resizer_window ordered:NSWindowAbove];
@@ -947,7 +930,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 			n_mac_window_hide( _n_resizer_window );
 		}
 
-		if ( paint.layer_onoff )
+		if ( n_paint->layer_onoff )
 		{
 			n_mac_window_show( _n_layer_window );
 			[_window addChildWindow:_n_layer_window ordered:NSWindowAbove];
@@ -958,22 +941,22 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_type_int i = 1;
 		n_posix_loop
 		{
-			if ( paint.nswindow[ i ] == nil ) { break; }
+			if ( n_paint->nswindow[ i ] == nil ) { break; }
 
-			if ( paint.nswindow[ i ] == _n_resizer_window )
+			if ( n_paint->nswindow[ i ] == _n_resizer_window )
 			{
 				//
 			} else
-			if ( paint.nswindow[ i ] == _n_layer_window )
+			if ( n_paint->nswindow[ i ] == _n_layer_window )
 			{
 				//
 			} else
-			if ( paint.restore[ i ] )
+			if ( n_paint->restore[ i ] )
 			{
-				paint.restore[ i ] = FALSE;
+				n_paint->restore[ i ] = FALSE;
 
-				n_mac_window_show( paint.nswindow[ i ] );
-				[_window addChildWindow:paint.nswindow[ i ] ordered:NSWindowAbove];
+				n_mac_window_show( n_paint->nswindow[ i ] );
+				[_window addChildWindow:n_paint->nswindow[ i ] ordered:NSWindowAbove];
 			}
 
 			i++;
@@ -982,15 +965,15 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_type_int i = 0;
 		n_posix_loop
 		{
-			if ( paint.nswindow[ i ] == nil ) { break; }
-//NSLog( @"%lld %d %lu", i, paint.nswindow[ i ].visible, paint.nswindow[ i ].occlusionState );
+			if ( n_paint->nswindow[ i ] == nil ) { break; }
+//NSLog( @"%lld %d %lu", i, n_paint->nswindow[ i ].visible, n_paint->nswindow[ i ].occlusionState );
 
-			if ( n_mac_window_is_visible( paint.nswindow[ i ] ) )
+			if ( n_mac_window_is_visible( n_paint->nswindow[ i ] ) )
 			{
-				paint.restore[ i ] = TRUE;
+				n_paint->restore[ i ] = TRUE;
 			}
 
-			n_mac_window_hide( paint.nswindow[ i ] );
+			n_mac_window_hide( n_paint->nswindow[ i ] );
 
 			i++;
 		}
@@ -1002,17 +985,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 {
 //return;
 
-	n_type_gfx bmpsx = N_BMP_SX( paint.pen_bmp_data );
-	n_type_gfx bmpsy = N_BMP_SY( paint.pen_bmp_data );
+	n_type_gfx bmpsx = N_BMP_SX( n_paint->pen_bmp_data );
+	n_type_gfx bmpsy = N_BMP_SY( n_paint->pen_bmp_data );
 
 	NSString *fname;
 
-	n_posix_char *str = n_mac_nsstring2str( paint.filename );
+	n_posix_char *str = n_mac_nsstring2str( n_paint->filename );
 	if ( n_string_path_ext_is_same_literal( ".LYR\0\0", str ) )
 	{
-		fname = [paint.filename stringByDeletingPathExtension];
+		fname = [n_paint->filename stringByDeletingPathExtension];
 	} else {
-		fname = paint.filename;
+		fname = n_paint->filename;
 	}
 	n_string_free( str );
 
@@ -1024,11 +1007,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintZoomUI
 {
 
-	if ( paint.zoom > 0 )
+	if ( n_paint->zoom > 0 )
 	{
-		[_n_zoom_value setIntegerValue:paint.zoom];
+		[_n_zoom_value setIntegerValue:n_paint->zoom];
 	} else {
-		NSString *nsstr = [NSString stringWithFormat:@"1/%d", paint.zoom * -1];
+		NSString *nsstr = [NSString stringWithFormat:@"1/%d", n_paint->zoom * -1];
 		[_n_zoom_value setStringValue:nsstr];
 	}
 
@@ -1039,8 +1022,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintResize
 {
 
-	CGFloat sx = N_BMP_SX( &paint.bmp_data );
-	CGFloat sy = N_BMP_SY( &paint.bmp_data );
+	CGFloat sx = N_BMP_SX( &n_paint->bmp_data );
+	CGFloat sy = N_BMP_SY( &n_paint->bmp_data );
 
 	CGFloat dsx,dsy; n_mac_desktop_size( &dsx, &dsy );
 
@@ -1050,16 +1033,16 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		sx = dsx * 0.70;
 		sy = dsy * 0.70;
 
-		paint.inner_sx = sx;
-		paint.inner_sy = sy;
+		n_paint->inner_sx = sx;
+		n_paint->inner_sy = sy;
 	}
 
-	if ( paint.margin_onoff )
+	if ( n_paint->margin_onoff )
 	{
-		paint.margin = n_posix_min_n_type_real( dsx, dsy ) * 0.1;
+		n_paint->margin = n_posix_min_n_type_real( dsx, dsy ) * 0.1;
 
-		sx += paint.margin;
-		sy += paint.margin;
+		sx += n_paint->margin;
+		sy += n_paint->margin;
 	}
 
 	[self NonnonPaintZoomUI];
@@ -1075,10 +1058,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintColorSet
 {
 
-	int a = n_bmp_a( paint.color );
-	int r = n_bmp_r( paint.color );
-	int g = n_bmp_g( paint.color );
-	int b = n_bmp_b( paint.color );
+	int a = n_bmp_a( n_paint->color );
+	int r = n_bmp_r( n_paint->color );
+	int g = n_bmp_g( n_paint->color );
+	int b = n_bmp_b( n_paint->color );
 //NSLog( @"%d %d %d %d", a,r,g,b );
 
 	[_n_color_a_value setIntegerValue:a];
@@ -1099,10 +1082,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintClearCanvasColorSet
 {
 
-	int a = n_bmp_a( paint.clear_color );
-	int r = n_bmp_r( paint.clear_color );
-	int g = n_bmp_g( paint.clear_color );
-	int b = n_bmp_b( paint.clear_color );
+	int a = n_bmp_a( n_paint->clear_color );
+	int r = n_bmp_r( n_paint->clear_color );
+	int g = n_bmp_g( n_paint->clear_color );
+	int b = n_bmp_b( n_paint->clear_color );
 //NSLog( @"%d %d %d %d", a,r,g,b );
 
 	[_n_clear_a_value setIntegerValue:a];
@@ -1125,10 +1108,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	{
 
-		int a = n_bmp_a( paint.replacer_fr_color );
-		int r = n_bmp_r( paint.replacer_fr_color );
-		int g = n_bmp_g( paint.replacer_fr_color );
-		int b = n_bmp_b( paint.replacer_fr_color );
+		int a = n_bmp_a( n_paint->replacer_fr_color );
+		int r = n_bmp_r( n_paint->replacer_fr_color );
+		int g = n_bmp_g( n_paint->replacer_fr_color );
+		int b = n_bmp_b( n_paint->replacer_fr_color );
 //NSLog( @"%d %d %d %d", a,r,g,b );
 
 		[_n_replacer_fr_a_value setIntegerValue:a];
@@ -1147,10 +1130,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	{
 
-		int a = n_bmp_a( paint.replacer_to_color );
-		int r = n_bmp_r( paint.replacer_to_color );
-		int g = n_bmp_g( paint.replacer_to_color );
-		int b = n_bmp_b( paint.replacer_to_color );
+		int a = n_bmp_a( n_paint->replacer_to_color );
+		int r = n_bmp_r( n_paint->replacer_to_color );
+		int g = n_bmp_g( n_paint->replacer_to_color );
+		int b = n_bmp_b( n_paint->replacer_to_color );
 //NSLog( @"%d %d %d %d", a,r,g,b );
 
 		[_n_replacer_to_a_value setIntegerValue:a];
@@ -1198,7 +1181,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_posix_char str2[ 100 ];
 	n_posix_char str3[ 100 ];
 
-	if ( paint.tooltype == N_PAINT_TOOL_TYPE_PEN )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 
 		n_posix_sprintf_literal( str1, "Pen" );
@@ -1208,7 +1191,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_posix_sprintf_literal( str3, "Y:%0.0f", pt.y );
 
 	} else
-	if ( paint.tooltype == N_PAINT_TOOL_TYPE_FILL )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 
 		n_posix_sprintf_literal( str1, "Fill" );
@@ -1218,41 +1201,41 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_posix_sprintf_literal( str3, "Y:%0.0f", pt.y );
 
 	} else
-	if ( paint.tooltype == N_PAINT_TOOL_TYPE_GRABBER )
+	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 	{
 
-		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			n_posix_sprintf_literal( str1, "Neutral" );
 		} else
-		if ( paint.grabber_mode == N_PAINT_GRABBER_SELECTING )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
 		{
 			n_posix_sprintf_literal( str1, "Selecting" );
 		} else
-		if ( paint.grabber_mode == N_PAINT_GRABBER_DRAG_OK )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 		{
 			n_posix_sprintf_literal( str1, "Drag OK" );
 		} else
-		if ( paint.grabber_mode == N_PAINT_GRABBER_DRAGGING )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 		{
 			n_posix_sprintf_literal( str1, "Dragging" );
 		} else
-		if ( paint.grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 		{
 			n_posix_sprintf_literal( str1, "Stretching" );
 		} else
-		if ( paint.grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
 		{
 			n_posix_sprintf_literal( str1, "Stretching" );
 		} else {
 			n_posix_sprintf_literal( str1, "N/A" );
-			//n_posix_sprintf_literal( str1, "%d", paint.grabber_mode );
+			//n_posix_sprintf_literal( str1, "%d", n_paint->grabber_mode );
 		}
 
 
 		n_type_gfx x,y,sx,sy,fx,fy;
 
-		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			x = y = sx = sy = fx = fy = 0;
 		} else {
@@ -1278,14 +1261,14 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_resizer_combo selectItemAtIndex:2];
 
 
-//NSLog( @"%d", n_paint_global.paint->grabber_mode );
-	if ( n_paint_global.paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+//NSLog( @"%d", n_paint->grabber_mode );
+	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		resizer_sx = N_BMP_SX( paint.pen_bmp_data );
-		resizer_sy = N_BMP_SY( paint.pen_bmp_data );
+		resizer_sx = N_BMP_SX( n_paint->pen_bmp_data );
+		resizer_sy = N_BMP_SY( n_paint->pen_bmp_data );
 	} else {
-		resizer_sx = N_BMP_SX( paint.pen_bmp_grab );
-		resizer_sy = N_BMP_SY( paint.pen_bmp_grab );
+		resizer_sx = N_BMP_SX( n_paint->pen_bmp_grab );
+		resizer_sy = N_BMP_SY( n_paint->pen_bmp_grab );
 	}
 
 	[_n_resizer_sx setEnabled:TRUE];
@@ -1304,7 +1287,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	resizer_rotate = 360;
 
 	_n_resizer_rotate_scrollbar.delegate = self;
-	[_n_resizer_rotate_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_ROTATE step:1 page:10 max:720 pos:resizer_rotate redraw:n_posix_true];
+	[_n_resizer_rotate_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_ROTATE step:1 page:10 max:720 pos:resizer_rotate redraw:TRUE];
 	[_n_resizer_rotate_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 
 	[self NonnonScrollbarMessage:N_PAINT_ID_RESIZER_ROTATE value:resizer_rotate reason:0];
@@ -1314,34 +1297,34 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	resizer_gamma = 10;
 	_n_resizer_gamma_scrollbar.delegate = self;
-	[_n_resizer_gamma_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_GAMMA step:1 page:5 max:20 pos:resizer_gamma redraw:n_posix_true];
+	[_n_resizer_gamma_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_GAMMA step:1 page:5 max:20 pos:resizer_gamma redraw:TRUE];
 	[_n_resizer_gamma_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_gamma_value setIntegerValue:resizer_gamma];
 
 	[self NonnonScrollbarMessage:N_PAINT_ID_RESIZER_GAMMA value:resizer_gamma reason:0];
 
 	_n_resizer_colorwheel_scrollbar.delegate = self;
-	[_n_resizer_colorwheel_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_COLORWHEEL step:1 page:10 max:256 pos:128 redraw:n_posix_true];
+	[_n_resizer_colorwheel_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_COLORWHEEL step:1 page:10 max:256 pos:128 redraw:TRUE];
 	[_n_resizer_colorwheel_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_colorwheel_value setIntegerValue:0];
 
 	_n_resizer_vividness_scrollbar.delegate = self;
-	[_n_resizer_vividness_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_VIVIDNESS step:1 page:10 max:200 pos:100 redraw:n_posix_true];
+	[_n_resizer_vividness_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_VIVIDNESS step:1 page:10 max:200 pos:100 redraw:TRUE];
 	[_n_resizer_vividness_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_vividness_value setIntegerValue:0];
 
 	_n_resizer_sharpness_scrollbar.delegate = self;
-	[_n_resizer_sharpness_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_SHARPNESS step:1 page:10 max:200 pos:100 redraw:n_posix_true];
+	[_n_resizer_sharpness_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_SHARPNESS step:1 page:10 max:200 pos:100 redraw:TRUE];
 	[_n_resizer_sharpness_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_sharpness_value setIntegerValue:0];
 
 	_n_resizer_contrast_scrollbar.delegate = self;
-	[_n_resizer_contrast_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_CONTRAST step:1 page:10 max:100 pos:0 redraw:n_posix_true];
+	[_n_resizer_contrast_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_CONTRAST step:1 page:10 max:100 pos:0 redraw:TRUE];
 	[_n_resizer_contrast_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_contrast_value setIntegerValue:0];
 
 
-	n_paint_global.paint->grabber_rect_resizer = n_paint_global.paint->grabber_rect;
+	n_paint->grabber_rect_resizer = n_paint->grabber_rect;
 
 
 	resizer_is_ok = FALSE;
@@ -1369,7 +1352,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 {
 //return;
 
-	n_posix_char *path = n_mac_nsstring2str( paint.filename );
+	n_posix_char *path = n_mac_nsstring2str( n_paint->filename );
 
 	if ( n_string_path_ext_is_same_literal( ".BMP\0\0", path ) )
 	{
@@ -1405,8 +1388,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintLayerSync
 {
 
-	n_type_int     index = paint.layer_index;
-	n_paint_layer *layer = &paint.layer_data[ index ];
+	n_type_int     index = n_paint->layer_index;
+	n_paint_layer *layer = &n_paint->layer_data[ index ];
 
 	_n_layer_listbox.n_focus = index;
 
@@ -1424,11 +1407,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintLayerRefresh
 {
 
-	if ( paint.layer_onoff == FALSE ) { return; }
+	if ( n_paint->layer_onoff == FALSE ) { return; }
 
 
-	n_type_int     index = paint.layer_index;
-	n_paint_layer *layer = &paint.layer_data[ index ];
+	n_type_int     index = n_paint->layer_index;
+	n_paint_layer *layer = &n_paint->layer_data[ index ];
 
 	_n_layer_listbox.n_focus = index;
 
@@ -1451,11 +1434,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintLayerSelect:(n_type_int)index
 {
 
-	paint.layer_index = index;
-//NSLog( @"%d", paint.layer_index );
+	n_paint->layer_index = index;
+//NSLog( @"%d", n_paint->layer_index );
 
-	paint.pen_bmp_data = &paint.layer_data[ paint.layer_index ].bmp_data;
-	paint.pen_bmp_grab = &paint.layer_data[ paint.layer_index ].bmp_grab;
+	n_paint->pen_bmp_data = &n_paint->layer_data[ n_paint->layer_index ].bmp_data;
+	n_paint->pen_bmp_grab = &n_paint->layer_data[ n_paint->layer_index ].bmp_grab;
 
 	//[_n_layer_listbox display];
 
@@ -1464,9 +1447,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) NonnonPaintSave
 {
 
-	n_posix_char *path = n_mac_nsstring2str( paint.filename );
+	n_posix_char *path = n_mac_nsstring2str( n_paint->filename );
 
-	if ( n_paint_save( path, &paint.bmp_data, &paint.curico ) )
+	if ( n_paint_save( path, &n_paint->bmp_data, &n_paint->curico ) )
 	{
 		// [!] : when error
 
@@ -1485,7 +1468,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 			[_window endSheet:_n_formatter_bmp_window];
 		}
 
-		NSString *name = [paint.filename lastPathComponent];
+		NSString *name = [n_paint->filename lastPathComponent];
 
 		NSSavePanel *panel = [NSSavePanel savePanel];
 		[panel setNameFieldStringValue:name];
@@ -1500,9 +1483,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 				NSString     *nsstring = [[panel URL] path];
 				n_posix_char *str      = n_mac_nsstring2str( nsstring );
 //NSLog( @"Saved : %s", str );
-				n_paint_save( str, &self->paint.bmp_data, &self->paint.curico );
+				n_paint_save( str, &n_paint->bmp_data, &n_paint->curico );
 
-				self->paint.filename = nsstring;
+				n_paint->filename = nsstring;
 				[self NonnonPaintTitle];
 
 				n_string_free( str );
@@ -1519,16 +1502,16 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		if ( n_string_path_ext_is_same_literal( ".LYR\0\0", path ) )
 		{
-			if ( paint.layer_save_count == 0 )
+			if ( n_paint->layer_save_count == 0 )
 			{
-				paint.readonly = FALSE;
+				n_paint->readonly = FALSE;
 
-				NSString *fname = [paint.filename stringByDeletingPathExtension];
+				NSString *fname = [n_paint->filename stringByDeletingPathExtension];
 				[self NonnonDragAndDrop_dropped:fname];
 			}
 
-			paint.layer_save_count++;
-			if ( paint.layer_save_count > 1 ) { paint.layer_save_count = 1; }
+			n_paint->layer_save_count++;
+			if ( n_paint->layer_save_count > 1 ) { n_paint->layer_save_count = 1; }
 		}
 
 	}
@@ -1558,7 +1541,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( show )
 	{
-		n_paint_preview_cache_init( &paint, _n_preview_window, _n_preview_view );
+		n_paint_preview_cache_init( _n_preview_window, _n_preview_view );
 
 		n_mac_window_centering( _n_preview_window );
 		//n_mac_topmost( _n_preview_window, TRUE );
@@ -1580,15 +1563,15 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 
 
-/*
+
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
 
-	// [x] : deprecated
+	// [Needed] : NSMenuItemValidation @ AppDelegate.h
 
 	return [menuItem isEnabled];
 
 }
-*/
+
 - (void) NonnonPaintUIContext:(NSWindow*)window onoff:(BOOL)onoff
 {
 
@@ -1633,7 +1616,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //NSLog( @"!" );
 
 	BOOL menu_onoff;
-	if ( n_paint_layer_is_locked( paint.layer_index ) )
+	if ( n_paint_layer_is_locked( n_paint->layer_index ) )
 	{
 		menu_onoff = FALSE;
 	} else {
@@ -1657,7 +1640,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_memory_limit_callback_func = n_paint_memory_limit;
 
 
-	n_bmp_safemode = n_posix_false;
+	n_bmp_safemode = FALSE;
 
 	// [!] : macOS 12 Monterey needs this
 	[_n_toolwindow     setFrameAutosaveName:@"Nonnon.NonnonPaint.ToolWindow"];
@@ -1680,35 +1663,35 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	// [!] : Instance
 
-	n_paint_zero( &paint );
+	n_paint_zero( n_paint );
 
-	paint.margin_onoff = TRUE;
+	n_paint->margin_onoff = TRUE;
 
-	paint.scroller_size = 12;
+	n_paint->scroller_size = 12;
 
-	paint.queue = [[NSOperationQueue alloc] init];
-	paint.cores = n_posix_cpu_count();
+	n_paint->queue = [[NSOperationQueue alloc] init];
+	n_paint->cores = n_posix_cpu_count();
 
-	paint.nswindow[  0 ] = _window;
-	paint.nswindow[  1 ] = _n_toolwindow;
-	paint.nswindow[  2 ] = _n_layer_window;
-	paint.nswindow[  3 ] = _n_resizer_window;
-	paint.nswindow[  4 ] = _n_formatter_bmp_window;
-	paint.nswindow[  5 ] = _n_formatter_cur_window;
-	paint.nswindow[  6 ] = _n_clear_window;
-	paint.nswindow[  7 ] = _n_replacer_window;
-	paint.nswindow[  8 ] = _n_alpha_tweaker_window;
-	paint.nswindow[  9 ] = _n_preview_window;
-	paint.nswindow[ 10 ] = _n_renamer_window;
-	paint.nswindow[ 11 ] = nil;
+	n_paint->nswindow[  0 ] = _window;
+	n_paint->nswindow[  1 ] = _n_toolwindow;
+	n_paint->nswindow[  2 ] = _n_layer_window;
+	n_paint->nswindow[  3 ] = _n_resizer_window;
+	n_paint->nswindow[  4 ] = _n_formatter_bmp_window;
+	n_paint->nswindow[  5 ] = _n_formatter_cur_window;
+	n_paint->nswindow[  6 ] = _n_clear_window;
+	n_paint->nswindow[  7 ] = _n_replacer_window;
+	n_paint->nswindow[  8 ] = _n_alpha_tweaker_window;
+	n_paint->nswindow[  9 ] = _n_preview_window;
+	n_paint->nswindow[ 10 ] = _n_renamer_window;
+	n_paint->nswindow[ 11 ] = nil;
 	
 
 	// [!] : Resources
 
-	paint.cursor_arrow = [NSCursor arrowCursor];
-	paint.cursor_no    = [NSCursor operationNotAllowedCursor];
-	paint.cursor_hand  = [NSCursor closedHandCursor];
-	paint.cursor_blur  = [NSCursor pointingHandCursor];
+	n_paint->cursor_arrow = [NSCursor arrowCursor];
+	n_paint->cursor_no    = [NSCursor operationNotAllowedCursor];
+	n_paint->cursor_hand  = [NSCursor closedHandCursor];
+	n_paint->cursor_blur  = [NSCursor pointingHandCursor];
 
 	{
 		n_bmp bmp; n_bmp_zero( &bmp );
@@ -1719,7 +1702,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int hotspot_x = N_BMP_SX( &bmp ) / 2; hotspot_x--;
 		int hotspot_y = N_BMP_SY( &bmp ) / 2; hotspot_y--;
 
-		paint.cursor_pen_off = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
+		n_paint->cursor_pen_off = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
 	}
 
 	{
@@ -1731,7 +1714,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int hotspot_x = N_BMP_SX( &bmp ) / 2; hotspot_x--;
 		int hotspot_y = N_BMP_SY( &bmp ) / 2; hotspot_y--;
 
-		paint.cursor_pen_on = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
+		n_paint->cursor_pen_on = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
 	}
 
 	{
@@ -1743,7 +1726,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int hotspot_x = N_BMP_SX( &bmp ) / 2; hotspot_x--;
 		int hotspot_y = N_BMP_SY( &bmp ) / 2; hotspot_y--;
 
-		paint.cursor_eraser = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
+		n_paint->cursor_eraser = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
 	}
 
 	{
@@ -1755,7 +1738,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int hotspot_x = N_BMP_SX( &bmp ) / 2; hotspot_x--;
 		int hotspot_y = N_BMP_SY( &bmp ) / 2; hotspot_y--;
 
-		paint.cursor_resize_nw = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
+		n_paint->cursor_resize_nw = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
 	}
 
 	{
@@ -1767,13 +1750,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int hotspot_x = N_BMP_SX( &bmp ) / 2; hotspot_x--;
 		int hotspot_y = N_BMP_SY( &bmp ) / 2; hotspot_y--;
 
-		paint.cursor_resize_ne = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
+		n_paint->cursor_resize_ne = [[NSCursor alloc] initWithImage:img hotSpot:NSMakePoint( hotspot_x, hotspot_y )];
 	}
 
 
 	// [!] : Tool Window : Settings
 
-	paint.color = n_bmp_rgb_mac( 0,200,255 );
+	n_paint->color = n_bmp_rgb_mac( 0,200,255 );
 
 	[self NonnonSettings:YES];
 
@@ -1867,40 +1850,40 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	// [!] : Tool Window
 
-	paint.tooltype = N_PAINT_TOOL_TYPE_PEN;
-	//paint.tooltype = N_PAINT_TOOL_TYPE_FILL;
-	//paint.tooltype = N_PAINT_TOOL_TYPE_GRABBER;
+	n_paint->tooltype = N_PAINT_TOOL_TYPE_PEN;
+	//n_paint->tooltype = N_PAINT_TOOL_TYPE_FILL;
+	//n_paint->tooltype = N_PAINT_TOOL_TYPE_GRABBER;
 
-	paint.zoom     = 1;
-	paint.scroll   = NSMakePoint( 0, 0 );
+	n_paint->zoom     = 1;
+	n_paint->scroll   = NSMakePoint( 0, 0 );
 
 	_n_size_scrollbar.delegate = self;
-	[_n_size_scrollbar n_scrollbar_parameter:N_PAINT_ID_PENSIZE step:2 page:10 max:100 pos:paint.pensize redraw:n_posix_true];
+	[_n_size_scrollbar n_scrollbar_parameter:N_PAINT_ID_PENSIZE step:2 page:10 max:100 pos:n_paint->pensize redraw:TRUE];
 	[_n_size_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_size_value setIntegerValue:paint.pensize];
+	[_n_size_value setIntegerValue:n_paint->pensize];
 
 	_n_mix_scrollbar.delegate = self;
-	[_n_mix_scrollbar n_scrollbar_parameter:N_PAINT_ID_MIX      step:1 page:10 max:100 pos:paint.mix     redraw:n_posix_true];
+	[_n_mix_scrollbar n_scrollbar_parameter:N_PAINT_ID_MIX      step:1 page:10 max:100 pos:n_paint->mix     redraw:TRUE];
 	[_n_mix_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_mix_value setIntegerValue:paint.mix];
+	[_n_mix_value setIntegerValue:n_paint->mix];
 
 	_n_boost_scrollbar.delegate = self;
-	[_n_boost_scrollbar n_scrollbar_parameter:N_PAINT_ID_BOOST  step:1 page:10 max:100 pos:paint.boost   redraw:n_posix_true];
+	[_n_boost_scrollbar n_scrollbar_parameter:N_PAINT_ID_BOOST  step:1 page:10 max:100 pos:n_paint->boost   redraw:TRUE];
 	[_n_boost_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_boost_value setIntegerValue:paint.boost];
+	[_n_boost_value setIntegerValue:n_paint->boost];
 
 	_n_air_scrollbar.delegate = self;
-	[_n_air_scrollbar n_scrollbar_parameter:N_PAINT_ID_AIR      step:1 page:10 max:100 pos:paint.air     redraw:n_posix_true];
+	[_n_air_scrollbar n_scrollbar_parameter:N_PAINT_ID_AIR      step:1 page:10 max:100 pos:n_paint->air     redraw:TRUE];
 	[_n_air_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_air_value setIntegerValue:paint.air];
+	[_n_air_value setIntegerValue:n_paint->air];
 
 	_n_zoom_scrollbar.delegate = self;
-	[_n_zoom_scrollbar n_scrollbar_parameter:N_PAINT_ID_ZOOM    step:1 page:10 max:100 pos:paint.zoom+50 redraw:n_posix_true];
+	[_n_zoom_scrollbar n_scrollbar_parameter:N_PAINT_ID_ZOOM    step:1 page:10 max:100 pos:n_paint->zoom+50 redraw:TRUE];
 	[_n_zoom_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_zoom_value setIntegerValue:paint.zoom];
+	[_n_zoom_value setIntegerValue:n_paint->zoom];
 
 
-	_n_color_preview.color = &paint.color;
+	_n_color_preview.color = &n_paint->color;
 
 	[self NonnonPaintColorSet];
 
@@ -1909,10 +1892,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	_n_color_g_scrollbar.delegate = self;
 	_n_color_b_scrollbar.delegate = self;
 
-	[_n_color_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_A step:1 page:10 max:255 pos:n_bmp_a( paint.color ) redraw:n_posix_true];
-	[_n_color_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_R step:1 page:10 max:255 pos:n_bmp_b( paint.color ) redraw:n_posix_true];
-	[_n_color_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_G step:1 page:10 max:255 pos:n_bmp_g( paint.color ) redraw:n_posix_true];
-	[_n_color_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_B step:1 page:10 max:255 pos:n_bmp_r( paint.color ) redraw:n_posix_true];
+	[_n_color_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_A step:1 page:10 max:255 pos:n_bmp_a( n_paint->color ) redraw:TRUE];
+	[_n_color_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_R step:1 page:10 max:255 pos:n_bmp_b( n_paint->color ) redraw:TRUE];
+	[_n_color_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_G step:1 page:10 max:255 pos:n_bmp_g( n_paint->color ) redraw:TRUE];
+	[_n_color_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_COLOR_B step:1 page:10 max:255 pos:n_bmp_r( n_paint->color ) redraw:TRUE];
 
 	[_n_color_a_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
 	[_n_color_r_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
@@ -2064,9 +2047,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	}
 
 	_n_grabber_blend_scrollbar.delegate = self;
-	[_n_grabber_blend_scrollbar n_scrollbar_parameter:N_PAINT_ID_BLEND step:1 page:10 max:100 pos:paint.grabber_blend redraw:n_posix_true];
+	[_n_grabber_blend_scrollbar n_scrollbar_parameter:N_PAINT_ID_BLEND step:1 page:10 max:100 pos:n_paint->grabber_blend redraw:TRUE];
 	[_n_grabber_blend_scrollbar n_scrollbar_nswindow_set:_n_toolwindow];
-	[_n_grabber_blend_value setIntegerValue:paint.grabber_blend];
+	[_n_grabber_blend_value setIntegerValue:n_paint->grabber_blend];
 
 	[self NonnonPaintGrabberUIOnOff:FALSE];
 
@@ -2076,18 +2059,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		NSString     *desktop = [paths objectAtIndex:0];
 		n_posix_char  tmpname[ 100 ]; n_string_path_tmpname( tmpname );
 
-		paint.filename = [NSString stringWithFormat:@"%@/%s.png", desktop, tmpname];
+		n_paint->filename = [NSString stringWithFormat:@"%@/%s.png", desktop, tmpname];
 //NSLog( @"%@", path );
 	}
 
-	n_bmp_new_fast( &paint.bmp_data, 512,512 );
-	n_bmp_flush( &paint.bmp_data, n_bmp_white );
+	n_bmp_new_fast( &n_paint->bmp_data, 512,512 );
+	n_bmp_flush( &n_paint->bmp_data, n_bmp_white );
 
-	paint.pen_bmp_data = &paint.bmp_data;
-	paint.pen_bmp_grab = &paint.bmp_grab;
+	n_paint->pen_bmp_data = &n_paint->bmp_data;
+	n_paint->pen_bmp_grab = &n_paint->bmp_grab;
 
 	_n_paint_canvas.delegate = self;
-	_n_paint_canvas.paint    = &paint;
 
 	[self NonnonPaintResize];
 	[self NonnonPaintStatus];
@@ -2099,7 +2081,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_mac_timer_init( self, @selector( n_paint_delayed_apply_method ), 100 );
 
 
-	paint.resizer_onoff = FALSE;
+	n_paint->resizer_onoff = FALSE;
 
 	[self NonnonPaintResizerReset];
 
@@ -2107,14 +2089,14 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	// Formatter
 
 	_n_formatter_cur_hotspot_x_scrollbar.delegate = self;
-	[_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_parameter:N_PAINT_ID_FORMATTER_CUR_X step:1 page:10 max:255 pos:paint.curico.hotspotx redraw:n_posix_true];
+	[_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_parameter:N_PAINT_ID_FORMATTER_CUR_X step:1 page:10 max:255 pos:n_paint->curico.hotspotx redraw:TRUE];
 	[_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_nswindow_set:_n_formatter_cur_window];
-	[_n_formatter_cur_hotspot_x_value setIntegerValue:paint.curico.hotspotx];
+	[_n_formatter_cur_hotspot_x_value setIntegerValue:n_paint->curico.hotspotx];
 
 	_n_formatter_cur_hotspot_y_scrollbar.delegate = self;
-	[_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_parameter:N_PAINT_ID_FORMATTER_CUR_Y step:1 page:10 max:255 pos:paint.curico.hotspoty redraw:n_posix_true];
+	[_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_parameter:N_PAINT_ID_FORMATTER_CUR_Y step:1 page:10 max:255 pos:n_paint->curico.hotspoty redraw:TRUE];
 	[_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_nswindow_set:_n_formatter_cur_window];
-	[_n_formatter_cur_hotspot_y_value setIntegerValue:paint.curico.hotspoty];
+	[_n_formatter_cur_hotspot_y_value setIntegerValue:n_paint->curico.hotspoty];
 
 	[_n_formatter_icon_cur n_enable:TRUE]; [_n_formatter_icon_cur n_border:TRUE]; [_n_formatter_icon_cur n_nswindow_set:_n_formatter_cur_window];
 	[_n_formatter_icon_etc n_enable:TRUE]; [_n_formatter_icon_etc n_border:TRUE]; [_n_formatter_icon_etc n_nswindow_set:_n_formatter_bmp_window];
@@ -2127,17 +2109,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	layer_click_phase = 0;
 	layer_click_msec  = 0;
 
-	paint.layer_onoff  = false;
-	paint.layer_count  = N_PAINT_LAYER_MAX;
+	n_paint->layer_onoff  = false;
+	n_paint->layer_count  = N_PAINT_LAYER_MAX;
 
-	paint.layer_data  = n_memory_new( sizeof( n_paint_layer ) * paint.layer_count );
-	n_memory_zero( paint.layer_data, sizeof( n_paint_layer ) * paint.layer_count );
+	n_paint->layer_data  = n_memory_new( sizeof( n_paint_layer ) * n_paint->layer_count );
+	n_memory_zero( n_paint->layer_data, sizeof( n_paint_layer ) * n_paint->layer_count );
 
 	_n_layer_listbox.delegate_option     = N_MAC_TXTBOX_DELEGATE_MOUSEDOWN_LEFT | N_MAC_TXTBOX_DELEGATE_MOUSEUP_RIGHT | N_MAC_TXTBOX_DELEGATE_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_MOVED | N_MAC_TXTBOX_DELEGATE_SWAP;
 	_n_layer_listbox.delegate            = self;
 	_n_layer_listbox.n_mode              = N_MAC_TXTBOX_MODE_LISTBOX;
-	_n_layer_listbox.n_txt_data          = &paint.layer_txt;
-	_n_layer_listbox.n_txt_deco          = &paint.layer_decoration_txt;
+	_n_layer_listbox.n_txt_data          = &n_paint->layer_txt;
+	_n_layer_listbox.n_txt_deco          = &n_paint->layer_decoration_txt;
 	_n_layer_listbox.n_focus             = 0;
 	_n_layer_listbox.n_option_linenumber = N_MAC_TXTBOX_DRAW_LINENUMBER_ZEROBASED_INDEX;
 
@@ -2151,36 +2133,36 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	_n_layer_blur_scrollbar.delegate  = self;
 	_n_layer_blend_scrollbar.delegate = self;
 
-	[_n_layer_blur_scrollbar  n_scrollbar_parameter:N_PAINT_ID_LAYER_BLUR  step:1 page: 5 max: 25 pos:0 redraw:n_posix_true];
+	[_n_layer_blur_scrollbar  n_scrollbar_parameter:N_PAINT_ID_LAYER_BLUR  step:1 page: 5 max: 25 pos:0 redraw:TRUE];
 	[_n_layer_blur_scrollbar n_scrollbar_nswindow_set:_n_layer_window];
 
-	[_n_layer_blend_scrollbar n_scrollbar_parameter:N_PAINT_ID_LAYER_BLEND step:1 page:10 max:100 pos:0 redraw:n_posix_true];
+	[_n_layer_blend_scrollbar n_scrollbar_parameter:N_PAINT_ID_LAYER_BLEND step:1 page:10 max:100 pos:0 redraw:TRUE];
 	[_n_layer_blend_scrollbar n_scrollbar_nswindow_set:_n_layer_window];
 
 	_n_paint_canvas.txtbox = _n_layer_listbox;
 
 	// [!] : on/off state depends NonnonDragAndDrop_dropped method
 
-	paint.whole_preview_checkbox   = _n_layer_whole_preview_checkbox;
-	paint.whole_grab_checkbox      = _n_layer_whole_grab_checkbox;
-	paint.whole_save_checkbox      = _n_layer_whole_save_checkbox;
+	n_paint->whole_preview_checkbox   = _n_layer_whole_preview_checkbox;
+	n_paint->whole_grab_checkbox      = _n_layer_whole_grab_checkbox;
+	n_paint->whole_save_checkbox      = _n_layer_whole_save_checkbox;
 
-	paint.layer_whole_save_onoff = n_posix_true;
+	n_paint->layer_whole_save_onoff = TRUE;
 
 
 	// Clear Canvas
 
-	_n_clear_preview.color = &paint.clear_color;
+	_n_clear_preview.color = &n_paint->clear_color;
 
 	_n_clear_a_scrollbar.delegate = self;
 	_n_clear_r_scrollbar.delegate = self;
 	_n_clear_g_scrollbar.delegate = self;
 	_n_clear_b_scrollbar.delegate = self;
 
-	[_n_clear_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_A step:1 page:10 max:255 pos:n_bmp_a( paint.clear_color ) redraw:n_posix_true];
-	[_n_clear_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_R step:1 page:10 max:255 pos:n_bmp_b( paint.clear_color ) redraw:n_posix_true];
-	[_n_clear_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_G step:1 page:10 max:255 pos:n_bmp_g( paint.clear_color ) redraw:n_posix_true];
-	[_n_clear_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_B step:1 page:10 max:255 pos:n_bmp_r( paint.clear_color ) redraw:n_posix_true];
+	[_n_clear_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_A step:1 page:10 max:255 pos:n_bmp_a( n_paint->clear_color ) redraw:TRUE];
+	[_n_clear_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_R step:1 page:10 max:255 pos:n_bmp_b( n_paint->clear_color ) redraw:TRUE];
+	[_n_clear_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_G step:1 page:10 max:255 pos:n_bmp_g( n_paint->clear_color ) redraw:TRUE];
+	[_n_clear_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_CLEAR_B step:1 page:10 max:255 pos:n_bmp_r( n_paint->clear_color ) redraw:TRUE];
 
 	[_n_clear_a_scrollbar n_scrollbar_nswindow_set:_n_clear_window];
 	[_n_clear_r_scrollbar n_scrollbar_nswindow_set:_n_clear_window];
@@ -2194,17 +2176,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	// Color Replacer
 
-	_n_replacer_fr_preview.color = &paint.replacer_fr_color;
+	_n_replacer_fr_preview.color = &n_paint->replacer_fr_color;
 
 	_n_replacer_fr_a_scrollbar.delegate = self;
 	_n_replacer_fr_r_scrollbar.delegate = self;
 	_n_replacer_fr_g_scrollbar.delegate = self;
 	_n_replacer_fr_b_scrollbar.delegate = self;
 
-	[_n_replacer_fr_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_A step:1 page:10 max:255 pos:n_bmp_a( paint.replacer_fr_color ) redraw:n_posix_true];
-	[_n_replacer_fr_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_R step:1 page:10 max:255 pos:n_bmp_b( paint.replacer_fr_color ) redraw:n_posix_true];
-	[_n_replacer_fr_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_G step:1 page:10 max:255 pos:n_bmp_g( paint.replacer_fr_color ) redraw:n_posix_true];
-	[_n_replacer_fr_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_B step:1 page:10 max:255 pos:n_bmp_r( paint.replacer_fr_color ) redraw:n_posix_true];
+	[_n_replacer_fr_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_A step:1 page:10 max:255 pos:n_bmp_a( n_paint->replacer_fr_color ) redraw:TRUE];
+	[_n_replacer_fr_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_R step:1 page:10 max:255 pos:n_bmp_b( n_paint->replacer_fr_color ) redraw:TRUE];
+	[_n_replacer_fr_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_G step:1 page:10 max:255 pos:n_bmp_g( n_paint->replacer_fr_color ) redraw:TRUE];
+	[_n_replacer_fr_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_FR_B step:1 page:10 max:255 pos:n_bmp_r( n_paint->replacer_fr_color ) redraw:TRUE];
 
 	[_n_replacer_fr_a_scrollbar n_scrollbar_nswindow_set:_n_replacer_window];
 	[_n_replacer_fr_r_scrollbar n_scrollbar_nswindow_set:_n_replacer_window];
@@ -2215,17 +2197,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_replacer_fr_g_scrollbar n_scrollbar_gradient:nil from:n_bmp_black to:n_bmp_rgb_mac( 0,255,0 )];
 	[_n_replacer_fr_b_scrollbar n_scrollbar_gradient:nil from:n_bmp_black to:n_bmp_rgb_mac( 0,0,255 )];
 
-	_n_replacer_to_preview.color = &paint.replacer_to_color;
+	_n_replacer_to_preview.color = &n_paint->replacer_to_color;
 
 	_n_replacer_to_a_scrollbar.delegate = self;
 	_n_replacer_to_r_scrollbar.delegate = self;
 	_n_replacer_to_g_scrollbar.delegate = self;
 	_n_replacer_to_b_scrollbar.delegate = self;
 
-	[_n_replacer_to_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_A step:1 page:10 max:255 pos:n_bmp_a( paint.replacer_to_color ) redraw:n_posix_true];
-	[_n_replacer_to_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_R step:1 page:10 max:255 pos:n_bmp_b( paint.replacer_to_color ) redraw:n_posix_true];
-	[_n_replacer_to_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_G step:1 page:10 max:255 pos:n_bmp_g( paint.replacer_to_color ) redraw:n_posix_true];
-	[_n_replacer_to_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_B step:1 page:10 max:255 pos:n_bmp_r( paint.replacer_to_color ) redraw:n_posix_true];
+	[_n_replacer_to_a_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_A step:1 page:10 max:255 pos:n_bmp_a( n_paint->replacer_to_color ) redraw:TRUE];
+	[_n_replacer_to_r_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_R step:1 page:10 max:255 pos:n_bmp_b( n_paint->replacer_to_color ) redraw:TRUE];
+	[_n_replacer_to_g_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_G step:1 page:10 max:255 pos:n_bmp_g( n_paint->replacer_to_color ) redraw:TRUE];
+	[_n_replacer_to_b_scrollbar n_scrollbar_parameter:N_PAINT_ID_REPLACER_TO_B step:1 page:10 max:255 pos:n_bmp_r( n_paint->replacer_to_color ) redraw:TRUE];
 
 	[_n_replacer_to_a_scrollbar n_scrollbar_nswindow_set:_n_replacer_window];
 	[_n_replacer_to_r_scrollbar n_scrollbar_nswindow_set:_n_replacer_window];
@@ -2340,45 +2322,45 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[self NonnonPaintIconSet:@"rc/grabber"      button:_n_button_2_2];
 	[self NonnonPaintIconSet:@"rc/color"        button:_n_button_4_2];
 
-	n_win_scrollbar_on_settingchange( [_n_size_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_mix_scrollbar   n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_boost_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_air_scrollbar   n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_zoom_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_size_scrollbar  n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_mix_scrollbar   n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_boost_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_air_scrollbar   n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_zoom_scrollbar  n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_color_a_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_color_r_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_color_g_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_color_b_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_color_a_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_color_r_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_color_g_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_color_b_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_grabber_blend_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_grabber_blend_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_resizer_rotate_scrollbar     n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_resizer_gamma_scrollbar      n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_resizer_colorwheel_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_resizer_vividness_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_resizer_sharpness_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_resizer_contrast_scrollbar   n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_resizer_rotate_scrollbar     n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_gamma_scrollbar      n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_colorwheel_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_vividness_scrollbar  n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_sharpness_scrollbar  n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_contrast_scrollbar   n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_layer_blur_scrollbar  n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_layer_blend_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_layer_blur_scrollbar  n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_layer_blend_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_clear_a_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_clear_r_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_clear_g_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_clear_b_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_clear_a_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_clear_r_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_clear_g_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_clear_b_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
-	n_win_scrollbar_on_settingchange( [_n_replacer_fr_a_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_fr_r_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_fr_g_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_fr_b_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_to_a_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_to_r_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_to_g_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
-	n_win_scrollbar_on_settingchange( [_n_replacer_to_b_scrollbar n_scrollbar_struct_get], 0, n_posix_true );
+	n_win_scrollbar_on_settingchange( [_n_replacer_fr_a_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_fr_r_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_fr_g_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_fr_b_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_to_a_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_to_r_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_to_g_scrollbar n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_replacer_to_b_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
 }
 
@@ -2388,7 +2370,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (void) WindowWillMiniaturize:(NSNotification *)notification
 {
 	
-	if ( paint.resizer_onoff )
+	if ( n_paint->resizer_onoff )
 	{
 		n_mac_window_hide( _n_toolwindow );
 
@@ -2402,7 +2384,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		n_mac_window_hide( _n_resizer_window );
 
-		if ( paint.layer_onoff )
+		if ( n_paint->layer_onoff )
 		{
 			n_mac_window_show( _n_layer_window );
 			[_window addChildWindow:_n_layer_window ordered:NSWindowAbove];
@@ -2435,8 +2417,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		// [Needed] : set every time
 		[_window addChildWindow:_n_toolwindow ordered:NSWindowAbove];
 
-//NSLog( @"Layer On/Off : %d", paint.layer_onoff );
-		if ( paint.layer_onoff )
+//NSLog( @"Layer On/Off : %d", n_paint->layer_onoff );
+		if ( n_paint->layer_onoff )
 		{
 			[_window addChildWindow:_n_layer_window ordered:NSWindowAbove];
 		} else {
@@ -2445,11 +2427,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		if ( resizer_is_ok == FALSE )
 		{
-			n_paint_global.paint->grabber_rect = n_paint_global.paint->grabber_rect_resizer;
+			n_paint->grabber_rect = n_paint->grabber_rect_resizer;
 		}
 
-		paint.readonly      = FALSE;
-		paint.resizer_onoff = FALSE;
+		n_paint->readonly      = FALSE;
+		n_paint->resizer_onoff = FALSE;
 
 		[self NonnonPaintTitle];
 
@@ -2467,16 +2449,16 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		( window == _n_formatter_cur_window )
 	)
 	{
-		paint.readonly = FALSE;
+		n_paint->readonly = FALSE;
 
 		[self NonnonPaintUIContext:nil onoff:TRUE];
 	} else {
 		[self NonnonPaintUIContext:nil onoff:TRUE];
 	}
 
-	if ( paint.is_about_window )
+	if ( n_paint->is_about_window )
 	{
-		paint.is_about_window = FALSE;
+		n_paint->is_about_window = FALSE;
 
 		[self NonnonPaintWindowShowHide:TRUE];
 	}
@@ -2502,7 +2484,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //NSRect rect_canvas = [_n_paint_canvas frame];
 //NSLog( @"Canvas : %f %f", NSWidth( rect_canvas ), NSHeight( rect_canvas ) );
 
-	paint.init = TRUE;
+	n_paint->init = TRUE;
 	[_n_paint_canvas display_optimized];
 
 	[_window makeKeyWindow];
@@ -2524,7 +2506,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 
 
-
+/*
+- (void) keyUp : (NSEvent*) event
+{
+//NSLog( @"keyUp : Key Code = %d", event.keyCode );
+}
+*/
 - (void) keyDown : (NSEvent*) event
 {
 //NSLog( @"Key Code = %d", event.keyCode );
@@ -2532,33 +2519,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	switch( event.keyCode ) {
 
 	case N_MAC_KEYCODE_F2: 
-	{
 
-		// [!] : fork
-
-		n_posix_char *str = n_mac_nsstring2str( paint.filename );
-		n_posix_char *dir = n_string_path_upperfolder_new( str );
-		n_posix_char *ext = n_string_path_ext_get_new( str );
-		n_posix_char *nam = n_string_path_tmpname_new( ext );
-		n_posix_char *tmp = n_string_path_make_new( dir, nam );
-
-//NSLog( @"str %@", paint.filename );
-//NSLog( @"str %s", str );
-//NSLog( @"dir %s", dir );
-//NSLog( @"ext %s", ext );
-//NSLog( @"nam %s", nam );
-//NSLog( @"tmp %s", tmp );
-
-		paint.filename = n_mac_str2nsstring( tmp );
-
-		n_string_free( str );
-		n_string_free( dir );
-		n_string_free( ext );
-		n_string_free( nam );
-		n_string_free( tmp );
+		n_paint->filename = n_mac_fork_rename( n_paint->filename );
 
 		[self NonnonPaintTitle];
-	}
+
 	break;
 
 	case N_MAC_KEYCODE_NUMBER_1: 
@@ -2572,7 +2537,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
 
-//NSLog( @"NonnonPaintLayerRefresh : %lld", paint.layer_index );
+//NSLog( @"NonnonPaintLayerRefresh : %lld", n_paint->layer_index );
 //break;
 		[self NonnonPaintLayerRefresh];
 
@@ -2592,12 +2557,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( index == 0 )
 	{
 //NSLog( @"index 0" );
-		paint.grabber_frame_mode = N_PAINT_GRABBER_FRAME_MODE_EDGE;
+		n_paint->grabber_frame_mode = N_PAINT_GRABBER_FRAME_MODE_EDGE;
 	} else
 	if ( index == 1 )
 	{
 //NSLog( @"index 1" );
-		paint.grabber_frame_mode = N_PAINT_GRABBER_FRAME_MODE_PIXEL;
+		n_paint->grabber_frame_mode = N_PAINT_GRABBER_FRAME_MODE_PIXEL;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2619,10 +2584,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( s == NSControlStateValueOff )
 	{
 		[_n_menu_grid setState:NSControlStateValueOn];
-		paint.grid_onoff = TRUE;
+		n_paint->grid_onoff = TRUE;
 	} else {
 		[_n_menu_grid setState:NSControlStateValueOff];
-		paint.grid_onoff = FALSE;
+		n_paint->grid_onoff = FALSE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2635,10 +2600,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( s == NSControlStateValueOff )
 	{
 		[_n_menu_pixelgrid setState:NSControlStateValueOn];
-		paint.pixel_grid_onoff = TRUE;
+		n_paint->pixel_grid_onoff = TRUE;
 	} else {
 		[_n_menu_pixelgrid setState:NSControlStateValueOff];
-		paint.pixel_grid_onoff = FALSE;
+		n_paint->pixel_grid_onoff = FALSE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2651,10 +2616,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( s == NSControlStateValueOff )
 	{
 		[_n_menu_alpha_emphasizer setState:NSControlStateValueOn];
-		paint.alpha_emphasizer_onoff = TRUE;
+		n_paint->alpha_emphasizer_onoff = TRUE;
 	} else {
 		[_n_menu_alpha_emphasizer setState:NSControlStateValueOff];
-		paint.alpha_emphasizer_onoff = FALSE;
+		n_paint->alpha_emphasizer_onoff = FALSE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2667,17 +2632,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( s == NSControlStateValueOff )
 	{
 		[_n_menu_pressure setState:NSControlStateValueOn];
-		paint.pressure_onoff = TRUE;
+		n_paint->pressure_onoff = TRUE;
 	} else {
 		[_n_menu_pressure setState:NSControlStateValueOff];
-		paint.pressure_onoff = FALSE;
+		n_paint->pressure_onoff = FALSE;
 	}
 
 }
 
 - (IBAction)n_menu_clear_canvas_method:(id)sender {
 
-	paint.clear_color = paint.color;
+	n_paint->clear_color = n_paint->color;
 	[self NonnonPaintClearCanvasColorSet];
 
 	[self NonnonPaintUIContext:_n_clear_window onoff:FALSE];
@@ -2696,15 +2661,15 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	);
 
 
-//n_paint_bmp_flush_alpha_base_color( paint.pen_bmp_data, color );
+//n_paint_bmp_flush_alpha_base_color( n_paint->pen_bmp_data, color );
 
-	if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		n_bmp_flush( paint.pen_bmp_data, color );
+		n_bmp_flush( n_paint->pen_bmp_data, color );
 	} else {
-		n_bmp_flush( paint.pen_bmp_grab, color );
+		n_bmp_flush( n_paint->pen_bmp_grab, color );
 
-		paint.grabber_frame_lock = TRUE;
+		n_paint->grabber_frame_lock = TRUE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2717,8 +2682,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_replacer_method:(id)sender {
 
-	paint.replacer_fr_color = paint.color;
-	paint.replacer_to_color = paint.color;
+	n_paint->replacer_fr_color = n_paint->color;
+	n_paint->replacer_to_color = n_paint->color;
 
 	[self NonnonPaintColorReplacerColorSet];
 
@@ -2744,13 +2709,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		(int) [_n_replacer_to_b_value integerValue]
 	);
 
-	if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		n_bmp_flush_replacer( paint.pen_bmp_data, color_fr, color_to );
+		n_bmp_flush_replacer( n_paint->pen_bmp_data, color_fr, color_to );
 	} else {
-		n_bmp_flush_replacer( paint.pen_bmp_grab, color_fr, color_to );
+		n_bmp_flush_replacer( n_paint->pen_bmp_grab, color_fr, color_to );
 
-		paint.grabber_frame_lock = TRUE;
+		n_paint->grabber_frame_lock = TRUE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -2763,14 +2728,14 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_formatter_go_method:(NSButton *)sender {
 
-	paint.curico.hotspotx = (int) [_n_formatter_cur_hotspot_x_value integerValue];
-	paint.curico.hotspoty = (int) [_n_formatter_cur_hotspot_y_value integerValue];
+	n_paint->curico.hotspotx = (int) [_n_formatter_cur_hotspot_x_value integerValue];
+	n_paint->curico.hotspoty = (int) [_n_formatter_cur_hotspot_y_value integerValue];
 
 	n_mac_window_hide( _n_formatter_cur_window );
 
 	[self NonnonPaintSave];
 
-	paint.readonly = FALSE;
+	n_paint->readonly = FALSE;
 
 	[self NonnonPaintUIContext:nil onoff:TRUE];
 
@@ -2788,7 +2753,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	[self NonnonPaintSave];
 
-	paint.readonly = FALSE;
+	n_paint->readonly = FALSE;
 
 	[self NonnonPaintUIContext:nil onoff:TRUE];
 
@@ -2804,7 +2769,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	n_mac_window_hide( _n_formatter_cur_window );
 
-	paint.readonly = FALSE;
+	n_paint->readonly = FALSE;
 
 	[self NonnonPaintUIContext:nil onoff:TRUE];
 
@@ -2820,7 +2785,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	n_mac_window_hide( _n_formatter_bmp_window );
 
-	paint.readonly = FALSE;
+	n_paint->readonly = FALSE;
 
 	[self NonnonPaintUIContext:nil onoff:TRUE];
 
@@ -2868,7 +2833,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( ( onoff_clear )||( onoff_reverse ) )
 	{
-		paint.grabber_frame_lock = TRUE;
+		n_paint->grabber_frame_lock = TRUE;
 	}
 
 
@@ -2905,9 +2870,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 - (IBAction)n_menu_about:(id)sender {
 //NSLog( @"n_menu_about" );
 
-	[paint.cursor_arrow set];
+	[n_paint->cursor_arrow set];
 
-	paint.is_about_window = TRUE;
+	n_paint->is_about_window = TRUE;
 	[self NonnonPaintWindowShowHide:FALSE];
 
 	[self NonnonPaintUIContext:nil onoff:FALSE];
@@ -2922,7 +2887,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 {
 
 	n_win_scrollbar *scr = [_n_zoom_scrollbar n_scrollbar_struct_get];
-	scr->unit_pos = 50 + paint.zoom;
+	scr->unit_pos = 50 + n_paint->zoom;
 
 	if ( redraw ) { [_n_zoom_scrollbar display]; }
 
@@ -2951,7 +2916,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( delayed_apply_queue == FALSE ) { return; }
 
-	if ( n_game_timer( &delayed_apply_timer, 500 ) )
+	if ( n_bmp_ui_timer( &delayed_apply_timer, 500 ) )
 	{
 		[self n_paint_delayed_apply_method_main];
 
@@ -2982,24 +2947,24 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( n_id == N_PAINT_ID_PENSIZE )
 	{
-		paint.pensize = v;
-		if ( ( v % 2 ) == 0 ) { paint.pensize++; }
-		[_n_size_value setIntegerValue:paint.pensize];
+		n_paint->pensize = v;
+		if ( ( v % 2 ) == 0 ) { n_paint->pensize++; }
+		[_n_size_value setIntegerValue:n_paint->pensize];
 	} else
 	if ( n_id == N_PAINT_ID_MIX )
 	{
-		paint.mix = v;
-		[_n_mix_value setIntegerValue:paint.mix];
+		n_paint->mix = v;
+		[_n_mix_value setIntegerValue:n_paint->mix];
 	} else
 	if ( n_id == N_PAINT_ID_BOOST )
 	{
-		paint.boost = v;
-		[_n_boost_value setIntegerValue:paint.boost];
+		n_paint->boost = v;
+		[_n_boost_value setIntegerValue:n_paint->boost];
 	} else
 	if ( n_id == N_PAINT_ID_AIR )
 	{
-		paint.air = v;
-		[_n_air_value setIntegerValue:paint.air];
+		n_paint->air = v;
+		[_n_air_value setIntegerValue:n_paint->air];
 	} else
 	if ( n_id == N_PAINT_ID_ZOOM )
 	{
@@ -3007,50 +2972,50 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		static int prev = 0;
 
-		paint.zoom = v - 50;
-//NSLog( @"Prv %d : Cur %d", prev, paint.zoom );
+		n_paint->zoom = v - 50;
+//NSLog( @"Prv %d : Cur %d", prev, n_paint->zoom );
 
-		if ( 1 >= abs( prev - paint.zoom ) )
+		if ( 1 >= abs( prev - n_paint->zoom ) )
 		{
-			if ( paint.zoom == -1 )
+			if ( n_paint->zoom == -1 )
 			{
-				paint.zoom =  1;
+				n_paint->zoom =  1;
 
 				[self NonnonScrollbarZoomSync:FALSE];
 			} else
-			if ( paint.zoom == 0 )
+			if ( n_paint->zoom == 0 )
 			{
 				if ( prev < 0 )
 				{
-					paint.zoom =  1;
+					n_paint->zoom =  1;
 				} else {
-					paint.zoom = -2;
+					n_paint->zoom = -2;
 				}
 
 				[self NonnonScrollbarZoomSync:FALSE];
 			}
 		} else {
-			if ( paint.zoom == 0 )
+			if ( n_paint->zoom == 0 )
 			{
-				paint.zoom =  1;
+				n_paint->zoom =  1;
 			} else
-			if ( ( prev == 1 )&&( paint.zoom < 0 ) )
+			if ( ( prev == 1 )&&( n_paint->zoom < 0 ) )
 			{
 				//
 			} else
-			if ( ( prev > 0 )&&( paint.zoom < 0 ) )
+			if ( ( prev > 0 )&&( n_paint->zoom < 0 ) )
 			{
-				paint.zoom =  1;
+				n_paint->zoom =  1;
 			} else
-			if ( ( prev < 0 )&&( paint.zoom > 0 ) )
+			if ( ( prev < 0 )&&( n_paint->zoom > 0 ) )
 			{
-				paint.zoom =  1;
+				n_paint->zoom =  1;
 			}
 
 			[self NonnonScrollbarZoomSync:FALSE];
 		}
 
-		prev = paint.zoom;
+		prev = n_paint->zoom;
 
 		[self NonnonPaintZoomUI];
 
@@ -3060,11 +3025,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_n_color_a_value setIntegerValue:v];
 
 		int a = v;
-		int r = n_bmp_b( paint.color );
-		int g = n_bmp_g( paint.color );
-		int b = n_bmp_r( paint.color );
+		int r = n_bmp_b( n_paint->color );
+		int g = n_bmp_g( n_paint->color );
+		int b = n_bmp_r( n_paint->color );
 
-		paint.color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_color_preview display];
 	} else
@@ -3072,12 +3037,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_color_r_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.color );
+		int a = n_bmp_a( n_paint->color );
 		int r = v;
-		int g = n_bmp_g( paint.color );
-		int b = n_bmp_r( paint.color );
+		int g = n_bmp_g( n_paint->color );
+		int b = n_bmp_r( n_paint->color );
 
-		paint.color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_color_preview display];
 	} else
@@ -3085,12 +3050,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_color_g_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.color );
-		int r = n_bmp_b( paint.color );
+		int a = n_bmp_a( n_paint->color );
+		int r = n_bmp_b( n_paint->color );
 		int g = v;
-		int b = n_bmp_r( paint.color );
+		int b = n_bmp_r( n_paint->color );
 
-		paint.color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_color_preview display];
 	} else
@@ -3098,22 +3063,22 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_color_b_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.color );
-		int r = n_bmp_b( paint.color );
-		int g = n_bmp_g( paint.color );
+		int a = n_bmp_a( n_paint->color );
+		int r = n_bmp_b( n_paint->color );
+		int g = n_bmp_g( n_paint->color );
 		int b = v;
 
-		paint.color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_color_preview display];
 	} else
 	if ( n_id == N_PAINT_ID_BLEND )
 	{
 
-		paint.grabber_blend = v;
-		[_n_grabber_blend_value setIntegerValue:paint.grabber_blend];
+		n_paint->grabber_blend = v;
+		[_n_grabber_blend_value setIntegerValue:n_paint->grabber_blend];
 
-		paint.grabber_blend_ratio = (double) paint.grabber_blend * 0.01;
+		n_paint->grabber_blend_ratio = (double) n_paint->grabber_blend * 0.01;
 
 		[_n_paint_canvas display_optimized];
 	} else
@@ -3188,11 +3153,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_n_clear_a_value setIntegerValue:v];
 
 		int a = v;
-		int r = n_bmp_b( paint.clear_color );
-		int g = n_bmp_g( paint.clear_color );
-		int b = n_bmp_r( paint.clear_color );
+		int r = n_bmp_b( n_paint->clear_color );
+		int g = n_bmp_g( n_paint->clear_color );
+		int b = n_bmp_r( n_paint->clear_color );
 
-		paint.clear_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->clear_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_clear_preview display];
 	} else
@@ -3200,12 +3165,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_clear_r_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.clear_color );
+		int a = n_bmp_a( n_paint->clear_color );
 		int r = v;
-		int g = n_bmp_g( paint.clear_color );
-		int b = n_bmp_r( paint.clear_color );
+		int g = n_bmp_g( n_paint->clear_color );
+		int b = n_bmp_r( n_paint->clear_color );
 
-		paint.clear_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->clear_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_clear_preview display];
 	} else
@@ -3213,12 +3178,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_clear_g_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.clear_color );
-		int r = n_bmp_b( paint.clear_color );
+		int a = n_bmp_a( n_paint->clear_color );
+		int r = n_bmp_b( n_paint->clear_color );
 		int g = v;
-		int b = n_bmp_r( paint.clear_color );
+		int b = n_bmp_r( n_paint->clear_color );
 
-		paint.clear_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->clear_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_clear_preview display];
 	} else
@@ -3226,12 +3191,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_clear_b_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.clear_color );
-		int r = n_bmp_b( paint.clear_color );
-		int g = n_bmp_g( paint.clear_color );
+		int a = n_bmp_a( n_paint->clear_color );
+		int r = n_bmp_b( n_paint->clear_color );
+		int g = n_bmp_g( n_paint->clear_color );
 		int b = v;
 
-		paint.clear_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->clear_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_clear_preview display];
 	} else
@@ -3241,11 +3206,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_n_replacer_fr_a_value setIntegerValue:v];
 
 		int a = v;
-		int r = n_bmp_b( paint.replacer_fr_color );
-		int g = n_bmp_g( paint.replacer_fr_color );
-		int b = n_bmp_r( paint.replacer_fr_color );
+		int r = n_bmp_b( n_paint->replacer_fr_color );
+		int g = n_bmp_g( n_paint->replacer_fr_color );
+		int b = n_bmp_r( n_paint->replacer_fr_color );
 
-		paint.replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_fr_preview display];
 	} else
@@ -3253,12 +3218,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_fr_r_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_fr_color );
+		int a = n_bmp_a( n_paint->replacer_fr_color );
 		int r = v;
-		int g = n_bmp_g( paint.replacer_fr_color );
-		int b = n_bmp_r( paint.replacer_fr_color );
+		int g = n_bmp_g( n_paint->replacer_fr_color );
+		int b = n_bmp_r( n_paint->replacer_fr_color );
 
-		paint.replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_fr_preview display];
 	} else
@@ -3266,12 +3231,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_fr_g_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_fr_color );
-		int r = n_bmp_b( paint.replacer_fr_color );
+		int a = n_bmp_a( n_paint->replacer_fr_color );
+		int r = n_bmp_b( n_paint->replacer_fr_color );
 		int g = v;
-		int b = n_bmp_r( paint.replacer_fr_color );
+		int b = n_bmp_r( n_paint->replacer_fr_color );
 
-		paint.replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_fr_preview display];
 	} else
@@ -3279,12 +3244,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_fr_b_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_fr_color );
-		int r = n_bmp_b( paint.replacer_fr_color );
-		int g = n_bmp_g( paint.replacer_fr_color );
+		int a = n_bmp_a( n_paint->replacer_fr_color );
+		int r = n_bmp_b( n_paint->replacer_fr_color );
+		int g = n_bmp_g( n_paint->replacer_fr_color );
 		int b = v;
 
-		paint.replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_fr_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_fr_preview display];
 	} else
@@ -3294,11 +3259,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_n_replacer_to_a_value setIntegerValue:v];
 
 		int a = v;
-		int r = n_bmp_b( paint.replacer_to_color );
-		int g = n_bmp_g( paint.replacer_to_color );
-		int b = n_bmp_r( paint.replacer_to_color );
+		int r = n_bmp_b( n_paint->replacer_to_color );
+		int g = n_bmp_g( n_paint->replacer_to_color );
+		int b = n_bmp_r( n_paint->replacer_to_color );
 
-		paint.replacer_to_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_to_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_to_preview display];
 	} else
@@ -3306,12 +3271,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_to_r_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_to_color );
+		int a = n_bmp_a( n_paint->replacer_to_color );
 		int r = v;
-		int g = n_bmp_g( paint.replacer_to_color );
-		int b = n_bmp_r( paint.replacer_to_color );
+		int g = n_bmp_g( n_paint->replacer_to_color );
+		int b = n_bmp_r( n_paint->replacer_to_color );
 
-		paint.replacer_to_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_to_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_to_preview display];
 	} else
@@ -3319,12 +3284,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_to_g_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_to_color );
-		int r = n_bmp_b( paint.replacer_to_color );
+		int a = n_bmp_a( n_paint->replacer_to_color );
+		int r = n_bmp_b( n_paint->replacer_to_color );
 		int g = v;
-		int b = n_bmp_r( paint.replacer_to_color );
+		int b = n_bmp_r( n_paint->replacer_to_color );
 
-		paint.replacer_to_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_to_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_to_preview display];
 	} else
@@ -3332,12 +3297,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[_n_replacer_to_b_value setIntegerValue:v];
 
-		int a = n_bmp_a( paint.replacer_to_color );
-		int r = n_bmp_b( paint.replacer_to_color );
-		int g = n_bmp_g( paint.replacer_to_color );
+		int a = n_bmp_a( n_paint->replacer_to_color );
+		int r = n_bmp_b( n_paint->replacer_to_color );
+		int g = n_bmp_g( n_paint->replacer_to_color );
 		int b = v;
 
-		paint.replacer_to_color = n_bmp_argb_mac( a,r,g,b );
+		n_paint->replacer_to_color = n_bmp_argb_mac( a,r,g,b );
 
 		[_n_replacer_to_preview display];
 	}// else
@@ -3388,12 +3353,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		[self NonnonPaintIconSet:@"rc/grabber" button:_n_button_2_2];
 
-		if ( n_paint_global.paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			[self NonnonPaintGrabberUIOnOff:FALSE];
 		}
 
-		paint.tooltype = N_PAINT_TOOL_TYPE_PEN;
+		n_paint->tooltype = N_PAINT_TOOL_TYPE_PEN;
 
 		[_n_button_0_2 n_fake: TRUE]; [_n_button_0_2 display];
 		[_n_button_1_2 n_fake:FALSE]; [_n_button_1_2 display];
@@ -3407,12 +3372,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	{
 		[self NonnonPaintIconSet:@"rc/grabber" button:_n_button_2_2];
 
-		if ( n_paint_global.paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			[self NonnonPaintGrabberUIOnOff:FALSE];
 		}
 
-		paint.tooltype = N_PAINT_TOOL_TYPE_FILL;
+		n_paint->tooltype = N_PAINT_TOOL_TYPE_FILL;
 
 		[_n_button_0_2 n_fake:FALSE]; [_n_button_0_2 display];
 		[_n_button_1_2 n_fake: TRUE]; [_n_button_1_2 display];
@@ -3428,12 +3393,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		[self NonnonPaintGrabberUIOnOff:TRUE];
 
-		if ( paint.tooltype == N_PAINT_TOOL_TYPE_GRABBER )
+		if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 		{
 			n_paint_grabber_reset();
 		}
 
-		paint.tooltype = N_PAINT_TOOL_TYPE_GRABBER;
+		n_paint->tooltype = N_PAINT_TOOL_TYPE_GRABBER;
 
 		[_n_button_0_2 n_fake:FALSE]; [_n_button_0_2 display];
 		[_n_button_1_2 n_fake:FALSE]; [_n_button_1_2 display];
@@ -3481,7 +3446,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( [_n_button_3_1 n_is_pressed] )
 	{
 
-		if ( n_posix_false == [_n_button_3_1 n_is_enabled] ) { return; }
+		if ( FALSE == [_n_button_3_1 n_is_enabled] ) { return; }
 
 		[self NonnonPaintResizerReset];
 		[self NonnonPaintResizerInit ];
@@ -3493,23 +3458,23 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[_window addChildWindow:_n_resizer_window ordered:NSWindowAbove];
 
 		// [Needed] : hide always
-//NSLog( @"Layer On/Off : %d", paint.layer_onoff );
-		if ( paint.layer_onoff )
+//NSLog( @"Layer On/Off : %d", n_paint->layer_onoff );
+		if ( n_paint->layer_onoff )
 		{
 			n_mac_window_hide( _n_layer_window );
 		} else {
 			n_mac_window_hide( _n_layer_window );
 		}
 
-		paint.readonly      = TRUE;
-		paint.resizer_onoff = TRUE;
+		n_paint->readonly      = TRUE;
+		n_paint->resizer_onoff = TRUE;
 
-//NSLog( @"%d", paint.readonly );
+//NSLog( @"%d", n_paint->readonly );
 	} else
 	if ( [_n_button_4_1 n_is_pressed] )
 	{
 
-		if ( n_posix_false == [_n_button_4_1 n_is_enabled] ) { return; }
+		if ( FALSE == [_n_button_4_1 n_is_enabled] ) { return; }
 
 
 		// [!] : for traditional Mac mice like Magic Mouse
@@ -3521,21 +3486,21 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		}
 
 
-		paint.readonly = TRUE;
+		n_paint->readonly = TRUE;
 
 
 		[self NonnonPaintUIContext:nil onoff:FALSE];
 
 
-		n_posix_char *path = n_mac_nsstring2str( paint.filename );
+		n_posix_char *path = n_mac_nsstring2str( n_paint->filename );
 
 		if ( n_string_path_ext_is_same_literal( ".CUR\0\0", path ) )
 		{
-			[_n_formatter_cur_hotspot_x_value setIntegerValue:paint.curico.hotspotx];
-			[_n_formatter_cur_hotspot_y_value setIntegerValue:paint.curico.hotspoty];
+			[_n_formatter_cur_hotspot_x_value setIntegerValue:n_paint->curico.hotspotx];
+			[_n_formatter_cur_hotspot_y_value setIntegerValue:n_paint->curico.hotspoty];
 
-			[_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_position_set:paint.curico.hotspotx redraw:YES];
-			[_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_position_set:paint.curico.hotspotx redraw:YES];
+			[_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_position_set:n_paint->curico.hotspotx redraw:YES];
+			[_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_position_set:n_paint->curico.hotspotx redraw:YES];
 
 			[self NonnonPaintIconDisplay:_n_formatter_icon_cur];
 
@@ -3583,16 +3548,24 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
 
 
+		static n_type_int p_focus = -1;
+
+
 		BOOL double_click_onoff = FALSE;
 
 		if ( layer_click_phase == 0 )
 		{
 			layer_click_phase = 1;
 			layer_click_msec  = n_posix_tickcount();
+			p_focus = _n_layer_listbox.n_focus;
 		} else
 		if ( layer_click_phase == 1 )
 		{
-			if ( n_posix_false == n_game_timer_once( &layer_click_msec, 500 ) )
+			if ( p_focus != _n_layer_listbox.n_focus )
+			{
+				layer_click_phase = 0;
+			} else
+			if ( FALSE == n_bmp_ui_timer_once( &layer_click_msec, 500 ) )
 			{
 				double_click_onoff = TRUE;
 				layer_click_phase = 0;
@@ -3607,20 +3580,20 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		{
 //NSLog( @"n_layer_window_mouseDown" );
 
-			if ( paint.layer_whole_grab_onoff )
+			if ( n_paint->layer_whole_grab_onoff )
 			{
-				if ( paint.grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { return; }
+				if ( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { return; }
 			}
 
-			n_posix_char *str = n_txt_get( &paint.layer_decoration_txt, paint.layer_index );
+			n_posix_char *str = n_txt_get( &n_paint->layer_decoration_txt, n_paint->layer_index );
 //NSLog( @"%s", str );
 
-			if ( paint.layer_data[ paint.layer_index ].visible )
+			if ( n_paint->layer_data[ n_paint->layer_index ].visible )
 			{
-				paint.layer_data[ paint.layer_index ].visible = FALSE;
+				n_paint->layer_data[ n_paint->layer_index ].visible = FALSE;
 				str[ 0 ] = ' ';
 			} else {
-				paint.layer_data[ paint.layer_index ].visible = TRUE;
+				n_paint->layer_data[ n_paint->layer_index ].visible = TRUE;
 				str[ 0 ] = 'B';
 			}
 
@@ -3659,47 +3632,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[self n_toolwindow_mouseUp:theEvent];
 
 //return;
-/*
-	[_n_size_scrollbar  mouseUp:theEvent];
-	[_n_mix_scrollbar   mouseUp:theEvent];
-	[_n_boost_scrollbar mouseUp:theEvent];
-	[_n_air_scrollbar   mouseUp:theEvent];
-	[_n_zoom_scrollbar  mouseUp:theEvent];
-
-	[_n_color_a_scrollbar mouseUp:theEvent];
-	[_n_color_r_scrollbar mouseUp:theEvent];
-	[_n_color_g_scrollbar mouseUp:theEvent];
-	[_n_color_b_scrollbar mouseUp:theEvent];
-
-	[_n_grabber_blend_scrollbar mouseUp:theEvent];
-
-	[_n_resizer_rotate_scrollbar     mouseUp:theEvent];
-	[_n_resizer_gamma_scrollbar      mouseUp:theEvent];
-	[_n_resizer_colorwheel_scrollbar mouseUp:theEvent];
-	[_n_resizer_vividness_scrollbar  mouseUp:theEvent];
-	[_n_resizer_sharpness_scrollbar  mouseUp:theEvent];
-	[_n_resizer_contrast_scrollbar   mouseUp:theEvent];
-
-	[_n_formatter_cur_hotspot_x_scrollbar mouseUp:theEvent];
-	[_n_formatter_cur_hotspot_y_scrollbar mouseUp:theEvent];
-
-	[_n_layer_blur_scrollbar  mouseUp:theEvent];
-	[_n_layer_blend_scrollbar mouseUp:theEvent];
-
-	[_n_clear_a_scrollbar mouseUp:theEvent];
-	[_n_clear_r_scrollbar mouseUp:theEvent];
-	[_n_clear_g_scrollbar mouseUp:theEvent];
-	[_n_clear_b_scrollbar mouseUp:theEvent];
-
-	[_n_replacer_fr_a_scrollbar mouseUp:theEvent];
-	[_n_replacer_fr_r_scrollbar mouseUp:theEvent];
-	[_n_replacer_fr_g_scrollbar mouseUp:theEvent];
-	[_n_replacer_fr_b_scrollbar mouseUp:theEvent];
-	[_n_replacer_to_a_scrollbar mouseUp:theEvent];
-	[_n_replacer_to_r_scrollbar mouseUp:theEvent];
-	[_n_replacer_to_g_scrollbar mouseUp:theEvent];
-	[_n_replacer_to_b_scrollbar mouseUp:theEvent];
-*/
 
 	if ( n_mac_window_is_keywindow( _n_preview_window ) )
 	{
@@ -3775,10 +3707,10 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( [_n_button_4_1 n_is_pressed_right] )
 	{
 //return;
-		if ( n_posix_false == [_n_button_4_1 n_is_enabled] ) { return; }
+		if ( FALSE == [_n_button_4_1 n_is_enabled] ) { return; }
 
 
-		n_posix_char *path = n_mac_nsstring2str( paint.filename );
+		n_posix_char *path = n_mac_nsstring2str( n_paint->filename );
 //NSLog( @"filename : %s", path );
 
 		if ( n_string_path_ext_is_same_literal( ".BMP\0\0", path ) )
@@ -3807,7 +3739,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		}
 //NSLog( @"filename after : %s", path );
 
-		paint.filename = n_mac_str2nsstring( path );
+		n_paint->filename = n_mac_str2nsstring( path );
 		n_string_path_free( path );
 
 		[self NonnonPaintIconDisplay:_n_button_4_1];
@@ -3822,28 +3754,28 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( FALSE == n_mac_window_is_keywindow( _n_layer_window ) ) { return; }
 
-	if ( paint.layer_txt.readonly ) { return; }
+	if ( n_paint->layer_txt.readonly ) { return; }
 
 	if ( n_mac_window_is_hovered( _n_layer_listbox ) )
 	{
-		if ( paint.layer_whole_grab_onoff )
+		if ( n_paint->layer_whole_grab_onoff )
 		{
-			if ( paint.grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { return; }
+			if ( n_paint->grabber_mode != N_PAINT_GRABBER_NEUTRAL ) { return; }
 		}
 
 		[_n_layer_listbox NonnonTxtboxClickEvent:theEvent detailed:YES];
 
 		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
-//NSLog( @"%lld : %lld", _n_layer_listbox.n_focus, paint.layer_index );
+//NSLog( @"%lld : %lld", _n_layer_listbox.n_focus, n_paint->layer_index );
 
-		if ( paint.layer_index == 0 )
+		if ( n_paint->layer_index == 0 )
 		{
 			[_n_layer_popup_menu_up setEnabled:FALSE];
 		} else {
 			[_n_layer_popup_menu_up setEnabled:TRUE];
 		}
 
-		if ( paint.layer_index == ( paint.layer_count - 1 ) )
+		if ( n_paint->layer_index == ( n_paint->layer_count - 1 ) )
 		{
 			[_n_layer_popup_menu_down setEnabled:FALSE];
 		} else {
@@ -3868,7 +3800,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
  
 	NSColor *nscolor = colorPanel.color;
 
-	paint.color = n_bmp_color_mac( n_mac_nscolor2argb( nscolor ) );
+	n_paint->color = n_bmp_color_mac( n_mac_nscolor2argb( nscolor ) );
 
 	[self NonnonPaintColorSet];
 
@@ -3878,11 +3810,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( sender.state == NSControlStateValueOff )
 	{
-		paint.grabber_per_pixel_alpha_onoff = n_posix_false;
+		n_paint->grabber_per_pixel_alpha_onoff = FALSE;
 	} else
 	if ( sender.state == NSControlStateValueOn )
 	{
-		paint.grabber_per_pixel_alpha_onoff = n_posix_true;
+		n_paint->grabber_per_pixel_alpha_onoff = TRUE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -3981,7 +3913,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_bmp_flush_sharpen( resizer_bmp, 0.5 );
 	}// else
 
-	n_bmp_matrix_rotate( resizer_bmp, resizer_rotate, n_bmp_white_invisible, n_posix_true );
+	n_bmp_matrix_rotate( resizer_bmp, resizer_rotate, n_bmp_white_invisible, TRUE );
 
 
 	return;
@@ -4089,17 +4021,17 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //return;
 //n_mac_debug_count(); return;
 
-	if ( paint.resizer_onoff != FALSE ) { return; }
+	if ( n_paint->resizer_onoff != FALSE ) { return; }
 
-	if ( paint.layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		paint.resizer_layer_data = n_bmp_layer_raw_copy( paint.layer_data, paint.layer_count );
-//n_mac_image_debug_save( &paint.resizer_layer_data[ paint.layer_index ].bmp_data );
+		n_paint->resizer_layer_data = n_bmp_layer_raw_copy( n_paint->layer_data, n_paint->layer_count );
+//n_mac_image_debug_save( &n_paint->resizer_layer_data[ n_paint->layer_index ].bmp_data );
 	} else {
-		n_paint_bmp_carboncopy( &paint.bmp_data, &paint.resizer_bmp_data );
-		n_paint_bmp_carboncopy( &paint.bmp_grab, &paint.resizer_bmp_grab );
-//n_mac_image_debug_save( &paint.bmp_data );
-//n_mac_image_debug_save( &paint.resizer_bmp_data );
+		n_paint_bmp_carboncopy( &n_paint->bmp_data, &n_paint->resizer_bmp_data );
+		n_paint_bmp_carboncopy( &n_paint->bmp_grab, &n_paint->resizer_bmp_grab );
+//n_mac_image_debug_save( &n_paint->bmp_data );
+//n_mac_image_debug_save( &n_paint->resizer_bmp_data );
 	}
 
 //NSLog( @"!" );
@@ -4117,40 +4049,40 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //return;
 //n_mac_debug_count(); return;
 
-	if ( paint.resizer_onoff == FALSE ) { return; }
+	if ( n_paint->resizer_onoff == FALSE ) { return; }
 
 	if ( replace )
 	{
 //n_mac_debug_count();
 
-		if ( paint.layer_onoff )
+		if ( n_paint->layer_onoff )
 		{
-			n_bmp_layer_raw_free( paint.resizer_layer_data, paint.layer_count );
-			paint.resizer_layer_data = NULL;
+			n_bmp_layer_raw_free( n_paint->resizer_layer_data, n_paint->layer_count );
+			n_paint->resizer_layer_data = NULL;
 		} else {
-			n_bmp_free( &paint.resizer_bmp_data );
-			n_bmp_free( &paint.resizer_bmp_grab );
+			n_bmp_free( &n_paint->resizer_bmp_data );
+			n_bmp_free( &n_paint->resizer_bmp_grab );
 		}
 
 	} else {
 
-		if ( paint.layer_onoff )
+		if ( n_paint->layer_onoff )
 		{
-			n_bmp_layer_raw_free( paint.layer_data, paint.layer_count );
-			paint.layer_data = paint.resizer_layer_data;
-//n_mac_image_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
+			n_bmp_layer_raw_free( n_paint->layer_data, n_paint->layer_count );
+			n_paint->layer_data = n_paint->resizer_layer_data;
+//n_mac_image_debug_save( &n_paint->layer_data[ n_paint->layer_index ].bmp_data );
 		} else {
-			n_paint_bmp_carboncopy( &paint.resizer_bmp_data, &paint.bmp_data );
-			n_paint_bmp_carboncopy( &paint.resizer_bmp_grab, &paint.bmp_grab );
+			n_paint_bmp_carboncopy( &n_paint->resizer_bmp_data, &n_paint->bmp_data );
+			n_paint_bmp_carboncopy( &n_paint->resizer_bmp_grab, &n_paint->bmp_grab );
 		}
 
 	}
 
-	if ( paint.layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
-		n_type_int y = paint.layer_index;
-		paint.pen_bmp_data = &paint.layer_data[ y ].bmp_data;
-		paint.pen_bmp_grab = &paint.layer_data[ y ].bmp_grab;
+		n_type_int y = n_paint->layer_index;
+		n_paint->pen_bmp_data = &n_paint->layer_data[ y ].bmp_data;
+		n_paint->pen_bmp_grab = &n_paint->layer_data[ y ].bmp_grab;
 	}
 
 
@@ -4167,53 +4099,53 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //return;
 //n_mac_debug_count(); return;
 
-	if ( paint.resizer_onoff == FALSE ) { return; }
+	if ( n_paint->resizer_onoff == FALSE ) { return; }
 
 
 	[[NSCursor operationNotAllowedCursor] set];
 
-	if ( paint.layer_onoff )
+	if ( n_paint->layer_onoff )
 	{
 
-		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 //NSLog( @"1" );
-			n_bmp_layer_raw_free( paint.layer_data, paint.layer_count );
-			paint.layer_data = n_bmp_layer_raw_copy( paint.resizer_layer_data, paint.layer_count );
+			n_bmp_layer_raw_free( n_paint->layer_data, n_paint->layer_count );
+			n_paint->layer_data = n_bmp_layer_raw_copy( n_paint->resizer_layer_data, n_paint->layer_count );
 
-			n_type_int y = paint.layer_index;
+			n_type_int y = n_paint->layer_index;
 
-			if ( paint.layer_whole_grab_onoff )
+			if ( n_paint->layer_whole_grab_onoff )
 			{
 				n_type_int i = 0;
 				n_posix_loop
 				{//break;
 
-					[self n_resizer_go_resize:&paint.layer_data[ i ].bmp_data];
+					[self n_resizer_go_resize:&n_paint->layer_data[ i ].bmp_data];
 
-					if ( n_posix_false == n_paint_layer_is_locked( i ) )
+					if ( FALSE == n_paint_layer_is_locked( i ) )
 					{
-						[self n_resizer_go_color :&paint.layer_data[ i ].bmp_data];
+						[self n_resizer_go_color :&n_paint->layer_data[ i ].bmp_data];
 					}
 
 					i++;
-					if ( i >= paint.layer_count ) { break; }
+					if ( i >= n_paint->layer_count ) { break; }
 				}
 			} else {
 				n_type_int i = 0;
 				n_posix_loop
 				{//break;
 
-					[self n_resizer_go_resize:&paint.layer_data[ i ].bmp_data];
+					[self n_resizer_go_resize:&n_paint->layer_data[ i ].bmp_data];
 
 					i++;
-					if ( i >= paint.layer_count ) { break; }
+					if ( i >= n_paint->layer_count ) { break; }
 				}
 
-				[self n_resizer_go_color :&paint.layer_data[ y ].bmp_data];
+				[self n_resizer_go_color :&n_paint->layer_data[ y ].bmp_data];
 			}
 
-			paint.pen_bmp_data = &paint.layer_data[ y ].bmp_data;
+			n_paint->pen_bmp_data = &n_paint->layer_data[ y ].bmp_data;
 
 			[_n_paint_canvas n_paint_canvas_reset_cache];
 		} else {
@@ -4223,50 +4155,50 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 			n_posix_loop
 			{//break;
 
-				n_bmp_free( &paint.layer_data[ i ].bmp_grab );
-				n_bmp_carboncopy( &paint.resizer_layer_data[ i ].bmp_grab, &paint.layer_data[ i ].bmp_grab );
+				n_bmp_free( &n_paint->layer_data[ i ].bmp_grab );
+				n_bmp_carboncopy( &n_paint->resizer_layer_data[ i ].bmp_grab, &n_paint->layer_data[ i ].bmp_grab );
 
-				[self n_resizer_go_resize:&paint.layer_data[ i ].bmp_grab];
-				[self n_resizer_go_color :&paint.layer_data[ i ].bmp_grab];
+				[self n_resizer_go_resize:&n_paint->layer_data[ i ].bmp_grab];
+				[self n_resizer_go_color :&n_paint->layer_data[ i ].bmp_grab];
 
 				i++;
-				if ( i >= paint.layer_count ) { break; }
+				if ( i >= n_paint->layer_count ) { break; }
 			}
 
-			n_type_int y = paint.layer_index;
-			paint.pen_bmp_grab = &paint.layer_data[ y ].bmp_grab;
+			n_type_int y = n_paint->layer_index;
+			n_paint->pen_bmp_grab = &n_paint->layer_data[ y ].bmp_grab;
 
 			[_n_paint_canvas n_paint_canvas_reset_cache];
 
 			n_type_gfx gx,gy,gsx,gsy,gfx,gfy;
 			n_paint_grabber_system_get( &gx,&gy, &gsx,&gsy, &gfx,&gfy );
 
-			gsx = N_BMP_SX( paint.pen_bmp_grab );
-			gsy = N_BMP_SY( paint.pen_bmp_grab );
+			gsx = N_BMP_SX( n_paint->pen_bmp_grab );
+			gsy = N_BMP_SY( n_paint->pen_bmp_grab );
 
 			n_paint_grabber_system_set( &gx,&gy, &gsx,&gsy, &gfx,&gfy );
 		}
 
-//n_mac_image_debug_save( &paint.layer_data[ paint.layer_index ].bmp_data );
+//n_mac_image_debug_save( &n_paint->layer_data[ n_paint->layer_index ].bmp_data );
 	} else {
 
 		n_bmp *bmp_target;
 
-		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
-			n_paint_bmp_carboncopy( &paint.resizer_bmp_data, &paint.bmp_data );
-//n_mac_image_debug_save( &paint.resizer_bmp_data );
-			bmp_target = &paint.bmp_data;
+			n_paint_bmp_carboncopy( &n_paint->resizer_bmp_data, &n_paint->bmp_data );
+//n_mac_image_debug_save( &n_paint->resizer_bmp_data );
+			bmp_target = &n_paint->bmp_data;
 		} else {
-			n_paint_bmp_carboncopy( &paint.resizer_bmp_grab, &paint.bmp_grab );
-			bmp_target = &paint.bmp_grab;
+			n_paint_bmp_carboncopy( &n_paint->resizer_bmp_grab, &n_paint->bmp_grab );
+			bmp_target = &n_paint->bmp_grab;
 		}
 
 		[self n_resizer_go_resize:bmp_target];
 		[self n_resizer_go_color :bmp_target];
 
-//NSLog( @"%d", n_paint_global.paint->grabber_mode );
-		if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+//NSLog( @"%d", n_paint->grabber_mode );
+		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
 			//
 		} else {
@@ -4284,7 +4216,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[[NSCursor arrowCursor] set];
 
 
-	paint.grabber_frame_lock = TRUE;
+	n_paint->grabber_frame_lock = TRUE;
 
 
 	[_n_paint_canvas display_optimized];
@@ -4382,11 +4314,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( sender.state == NSControlStateValueOff )
 	{
-		paint.layer_whole_preview_onoff = n_posix_false;
+		n_paint->layer_whole_preview_onoff = FALSE;
 	} else
 	if ( sender.state == NSControlStateValueOn )
 	{
-		paint.layer_whole_preview_onoff = n_posix_true;
+		n_paint->layer_whole_preview_onoff = TRUE;
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -4397,11 +4329,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( sender.state == NSControlStateValueOff )
 	{
-		paint.layer_whole_grab_onoff = n_posix_false;
+		n_paint->layer_whole_grab_onoff = FALSE;
 	} else
 	if ( sender.state == NSControlStateValueOn )
 	{
-		paint.layer_whole_grab_onoff = n_posix_true;
+		n_paint->layer_whole_grab_onoff = TRUE;
 	}
 
 }
@@ -4410,11 +4342,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( sender.state == NSControlStateValueOff )
 	{
-		paint.layer_whole_save_onoff = n_posix_false;
+		n_paint->layer_whole_save_onoff = FALSE;
 	} else
 	if ( sender.state == NSControlStateValueOn )
 	{
-		paint.layer_whole_save_onoff = n_posix_true;
+		n_paint->layer_whole_save_onoff = TRUE;
 	}
 
 }
@@ -4425,9 +4357,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_up:(id)sender {
 
-	if ( n_paint_layer_swap_up( paint.layer_index ) )
+	if ( n_paint_layer_swap_up( n_paint->layer_index ) )
 	{
-		_n_layer_listbox.n_focus = paint.layer_index;
+		_n_layer_listbox.n_focus = n_paint->layer_index;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
@@ -4439,9 +4371,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_down:(id)sender {
 
-	if ( n_paint_layer_swap_down( paint.layer_index ) )
+	if ( n_paint_layer_swap_down( n_paint->layer_index ) )
 	{
-		_n_layer_listbox.n_focus = paint.layer_index;
+		_n_layer_listbox.n_focus = n_paint->layer_index;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
@@ -4453,7 +4385,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_rename:(id)sender {
 
-	[self NonnonTxtbox_delegate_listbox_rename:paint.layer_index];
+	[self NonnonTxtbox_delegate_listbox_rename:n_paint->layer_index];
 
 	[self NonnonPaintLayerMenuContext];
 /*
@@ -4470,28 +4402,28 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_all_off:(id)sender {
 
-	n_paint_layer_visibility_onoff_all( n_posix_false );
+	n_paint_layer_visibility_onoff_all( FALSE );
 
 }
 
 - (IBAction)n_layer_menu_all_on:(id)sender {
 
-	n_paint_layer_visibility_onoff_all( n_posix_true  );
+	n_paint_layer_visibility_onoff_all( TRUE  );
 
 }
 
 - (IBAction)n_layer_menu_this_only:(id)sender {
 
-	n_paint *p = &paint;
+	n_paint_struct *p = n_paint;
 
-	n_paint_layer_visibility_onoff_all( n_posix_false );
+	n_paint_layer_visibility_onoff_all( FALSE );
 
 	n_type_int i = p->layer_index;
 
-	p->layer_data[ i ].visible = n_posix_true;
+	p->layer_data[ i ].visible = TRUE;
 
 	n_posix_char *nam = n_txt_get( &p->layer_txt, i );
-	n_paint_layer_text_mod( p, i, nam );
+	n_paint_layer_text_mod( i, nam );
 
 	[_n_layer_listbox display];
 
@@ -4501,13 +4433,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_thicken_lines:(id)sender {
 
-	n_type_int y = paint.layer_index;
+	n_type_int y = n_paint->layer_index;
 
-	if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		n_paint_bmp_thicken( &paint.layer_data[ y ].bmp_data, paint.color );
+		n_paint_bmp_thicken( &n_paint->layer_data[ y ].bmp_data, n_paint->color );
 	} else {
-		n_paint_bmp_thicken( &paint.layer_data[ y ].bmp_grab, paint.color );
+		n_paint_bmp_thicken( &n_paint->layer_data[ y ].bmp_grab, n_paint->color );
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -4516,13 +4448,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_thin_lines:(id)sender {
 
-	n_type_int y = paint.layer_index;
+	n_type_int y = n_paint->layer_index;
 
-	if ( paint.grabber_mode == N_PAINT_GRABBER_NEUTRAL )
+	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		n_paint_bmp_thin( &paint.layer_data[ y ].bmp_data, paint.color );
+		n_paint_bmp_thin( &n_paint->layer_data[ y ].bmp_data, n_paint->color );
 	} else {
-		n_paint_bmp_thin( &paint.layer_data[ y ].bmp_grab, paint.color );
+		n_paint_bmp_thin( &n_paint->layer_data[ y ].bmp_grab, n_paint->color );
 	}
 
 	[_n_paint_canvas display_optimized];
@@ -4531,7 +4463,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 - (IBAction)n_layer_menu_add_a_new_layer:(id)sender {
 
-	n_paint *p = &paint;
+	n_paint_struct *p = n_paint;
 
 
 	n_type_int i = p->layer_count;
@@ -4550,13 +4482,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_txt_add( &p->layer_decoration_txt, i, n_posix_literal( "B" ) );
 
 
-	n_paint_layer_config_default_single( p, i );
+	n_paint_layer_config_default_single( i );
 
 
 	n_posix_char *nam = n_txt_get( &p->layer_txt, i );
 
-	p->layer_data[ i ].visible = n_posix_true;
-	n_paint_layer_text_mod( p, i, nam );
+	p->layer_data[ i ].visible = TRUE;
+	n_paint_layer_text_mod( i, nam );
 
 
 	p->layer_count++;

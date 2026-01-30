@@ -30,6 +30,14 @@
         return YES;
 }
 
+- (void) keyUp:(NSEvent *)theEvent
+{
+//NSLog(@"keyUp");
+
+	[n_paint_global keyUp:theEvent];
+
+}
+
 - (void) keyDown:(NSEvent *)theEvent
 {
 //NSLog(@"keyDown");

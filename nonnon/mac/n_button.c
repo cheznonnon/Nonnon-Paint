@@ -95,15 +95,15 @@ typedef struct {
 	n_bmp_fade   fade;
 	int          fade_type;
 
-	n_posix_bool active_onoff;
-	n_posix_bool   sink_onoff;
-	n_posix_bool    hot_onoff;
-	n_posix_bool   hide_onoff;
-	n_posix_bool  press_onoff;
-	n_posix_bool   prev_onoff;
-	n_posix_bool   gray_onoff;
-	n_posix_bool   fake_onoff;
-	n_posix_bool  right_onoff;
+	BOOL        active_onoff;
+	BOOL         sink_onoff;
+	BOOL          hot_onoff;
+	BOOL         hide_onoff;
+	BOOL        press_onoff;
+	BOOL         prev_onoff;
+	BOOL         gray_onoff;
+	BOOL         fake_onoff;
+	BOOL        right_onoff;
 
 
 	// [!] : option : you can set these directly
@@ -112,7 +112,7 @@ typedef struct {
 
 	n_bmp         icon;
 
-	n_posix_bool  show_border;
+	BOOL          show_border;
 	BOOL          direct_click_onoff;
 
 	BOOL          menu_click_as_normal_click;
@@ -165,7 +165,7 @@ n_mac_button_box( n_bmp *bmp, NSRect rect, NSColor *color )
 	return;
 }
 
-n_posix_bool
+BOOL
 n_mac_button_is_enabled( n_mac_button *p )
 {
 	return p->active_onoff;
@@ -183,7 +183,7 @@ n_mac_button_fade_go( n_mac_button *p )
 		color = n_bmp_white;
 	}
 
-	p->fade.stop = n_posix_true;
+	p->fade.stop = TRUE;
 
 	n_bmp_fade_go( &p->fade, color );
 
@@ -244,7 +244,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 	u32 color_bg = 0;
 
-	if ( n_posix_false == n_mac_button_is_enabled( p ) )
+	if ( FALSE == n_mac_button_is_enabled( p ) )
 	{
 		color_bg = n_bmp_blend_pixel( color_f, color_t, r_disbl );
 	} else
@@ -256,7 +256,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	{
 		color_bg = n_bmp_blend_pixel( color_f, color_t, r_press );
 	} else
-	if ( p->fade.stop == n_posix_false )
+	if ( p->fade.stop == FALSE )
 	{
 		u32 f = 0;
 		u32 t = 0;
@@ -444,7 +444,6 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 		n_bmp_fade_init( &button.fade, n_bmp_black );
 
 		n_mac_timer_init( self, @selector( n_timer_method_fade        ),  33 );
-		n_mac_timer_init( self, @selector( n_timer_method_press_n_run ), 500 );
 
 		NSTrackingArea* trackingArea = [[NSTrackingArea alloc]
 			initWithRect:[self bounds]
@@ -453,6 +452,40 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 			    userInfo:nil
 		];
 		[self addTrackingArea:trackingArea];
+
+
+		// [!] : for lack of mouse capture
+		//n_mac_timer_init( self, @selector( n_timer_method_press_n_run ), 500 );
+
+		[NSEvent addLocalMonitorForEventsMatchingMask:
+			NSEventMaskLeftMouseDragged |
+			NSEventMaskLeftMouseUp
+			handler:^NSEvent* _Nullable( NSEvent * _Nonnull event )
+			{
+				switch( event.type )
+				{
+					case NSEventTypeLeftMouseDragged:
+
+						[self mouseDragged:event];
+
+					break;
+
+					case NSEventTypeLeftMouseUp:
+
+						[self mouseUp:event];
+
+					break;
+
+					default:
+
+						// [Needed]
+
+					break;
+				}
+
+				return event;
+			}
+		];
 
 /*
 		// [x] : gray-out at lost focus : un-implementable : system should do
@@ -506,7 +539,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	n_mac_button *p = &button;
 
 
-	n_bmp_fade_engine( &p->fade, n_posix_true );
+	n_bmp_fade_engine( &p->fade, TRUE );
 
 	[self display];
 
@@ -530,22 +563,22 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	n_mac_button *p = &button;
 
 
-	n_posix_bool redraw = n_posix_false;
+	BOOL redraw = FALSE;
 
 
 	if ( p->hide_onoff ) { return; }
 
 	if ( p->gray_onoff ) { return; }
 
-	if ( n_posix_false == n_mac_button_is_enabled( p ) )
+	if ( FALSE == n_mac_button_is_enabled( p ) )
 	{
-		redraw = n_posix_true;
+		redraw = TRUE;
 
 		p->hot_onoff = FALSE;
 	} else
 	if ( p->hot_onoff )
 	{
-		redraw = n_posix_true;
+		redraw = TRUE;
 
 		p->hot_onoff = FALSE;
 
@@ -556,7 +589,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	} else
 	if ( p->press_onoff )
 	{
-		redraw = n_posix_true;
+		redraw = TRUE;
 
 		p->press_onoff = p->prev_onoff;
 
@@ -568,7 +601,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 	if ( p->sink_onoff )
 	{
-		redraw = n_posix_true;
+		redraw = TRUE;
 
 		p->sink_onoff = FALSE;
 	}
@@ -611,7 +644,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (n_posix_bool) n_is_enabled
+- (BOOL) n_is_enabled
 {
 
 	n_mac_button *p = &button;
@@ -620,7 +653,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (void) n_enable:(n_posix_bool)onoff
+- (void) n_enable:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -629,7 +662,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (n_posix_bool) n_is_grayed
+- (BOOL) n_is_grayed
 {
 
 	n_mac_button *p = &button;
@@ -637,7 +670,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	return p->gray_onoff;
 }
 
-- (void) n_gray:(n_posix_bool)onoff
+- (void) n_gray:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -646,7 +679,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (n_posix_bool) n_is_pressed
+- (BOOL) n_is_pressed
 {
 
 	n_mac_button *p = &button;
@@ -654,7 +687,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	return p->press_onoff;
 }
 
-- (n_posix_bool) n_is_pressed_right
+- (BOOL) n_is_pressed_right
 {
 
 	n_mac_button *p = &button;
@@ -662,8 +695,10 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 	return p->right_onoff;
 }
 
-- (void) n_press:(n_posix_bool)onoff
+- (void) n_press:(BOOL)onoff
 {
+
+	// [!] : important : on/off switch : use below "n_fake" to make pressed effect
 
 	n_mac_button *p = &button;
 
@@ -671,7 +706,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (void) n_fake:(n_posix_bool)onoff
+- (void) n_fake:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -680,7 +715,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (void) n_border:(n_posix_bool)onoff
+- (void) n_border:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -689,7 +724,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (void) n_direct_click:(n_posix_bool)onoff
+- (void) n_direct_click:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -698,7 +733,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 }
 
-- (void) menu_click_as_normal_click:(n_posix_bool)onoff
+- (void) menu_click_as_normal_click:(BOOL)onoff
 {
 
 	n_mac_button *p = &button;
@@ -752,13 +787,13 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 	if ( p->hide_onoff ) { return; }
 
-	if ( n_posix_false == n_mac_button_is_enabled( p ) ) { return; }
+	if ( FALSE == n_mac_button_is_enabled( p ) ) { return; }
 
 
 	p-> prev_onoff = p->press_onoff;
-	p->  hot_onoff = n_posix_false;
-	p-> sink_onoff = n_posix_true;
-	p->press_onoff = n_posix_true;
+	p->  hot_onoff = FALSE;
+	p-> sink_onoff = TRUE;
+	p->press_onoff = TRUE;
 
 	p->fade_type = 	N_MAC_BUTTON_FADE_TYPE_PRESS;
 	n_mac_button_fade_go( p );
@@ -786,15 +821,15 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 	if ( p->hide_onoff ) { return; }
 
-	if ( n_posix_false == n_mac_button_is_enabled( p ) ) { return; }
+	if ( FALSE == n_mac_button_is_enabled( p ) ) { return; }
 
 
 	if ( p->press_onoff )
 	{
 //NSLog(@"mouseUp : press_onoff" );
 
-		p-> hot_onoff = n_posix_true;
-		p->sink_onoff = n_posix_false;
+		p-> hot_onoff = TRUE;
+		p->sink_onoff = FALSE;
 
 		p->fade_type = 	N_MAC_BUTTON_FADE_TYPE_PRESS;
 		n_mac_button_fade_go( p );
@@ -805,7 +840,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 		if ( n_mac_window_is_hovered( self ) )
 		{
-//NSLog(@"mouseUp : press_onoff : n_mac_window_is_hovered() : %x", delegate );
+//NSLog(@"mouseUp : press_onoff : n_mac_window_is_hovered() : %x", self );
 			if ( delegate ) { [delegate mouseUp:theEvent]; }
 		}
 
@@ -865,7 +900,7 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 	if ( p->gray_onoff ) { return; }
 
-	if ( n_posix_false == n_mac_button_is_enabled( p ) )
+	if ( FALSE == n_mac_button_is_enabled( p ) )
 	{
 		p->hot_onoff = FALSE;
 		[self display];
@@ -892,15 +927,9 @@ n_mac_button_draw( n_mac_button *p, NSRect rect )
 
 -(void)mouseDragged:(NSEvent *)event {
 //NSLog(@"mouseDragged");
-/*
-	n_mac_button *p = &button;
 
-	if ( n_posix_false == n_mac_window_is_hovered( self ) )
-	{
-NSLog(@"mouseDragged : hovered");
-		// [x] : never comes : press N run possible : un-implementable
-	}
-*/
+	[self n_timer_method_press_n_run];
+
 }
 
 -(void)mouseExited:(NSEvent *)theEvent {

@@ -149,11 +149,11 @@ n_mac_cursor_position_get( NSView *view )
 	return viewLocation;
 }
 
-n_posix_bool
+BOOL
 n_mac_window_is_hovered( NSView *view )
 {
 
-	n_posix_bool ret = n_posix_false;
+	BOOL ret = FALSE;
 
 	NSPoint pt = n_mac_cursor_position_get( view );
 //NSLog( @"%f %f", pt.y, [ view bounds ].origin.y );
@@ -167,11 +167,11 @@ n_mac_window_is_hovered( NSView *view )
 	return ret;
 }
 
-n_posix_bool
+BOOL
 n_mac_window_is_hovered_offset_by_rect( NSView *view, NSRect rect )
 {
 
-	n_posix_bool ret = n_posix_false;
+	BOOL ret = FALSE;
 
 	NSPoint pt = n_mac_cursor_position_get( view );
 
@@ -221,6 +221,41 @@ n_mac_window_is_visible( NSWindow *window )
 	// [x] : macOS Sonoma : isVisible is deprecated : returns FALSE when child windows
 
 	return ( ( window.isVisible )||( window.occlusionState & NSWindowOcclusionStateVisible ) );
+}
+
+void
+n_mac_window_all_controls_onoff( NSView *view, BOOL onoff )
+{
+
+	// [!] : Thx : DeepSeek AI
+
+	// [!] : use [NSWindow contentView] for NSView
+
+	for( NSView *subview in view.subviews )
+	{
+
+		if ( [subview isKindOfClass:[NSControl class]] )
+		{
+			NSControl *control = (NSControl *)subview;
+
+			if ( [control isKindOfClass:[NSTextField class]] )
+			{
+				if ( onoff )
+				{
+					[control setAlphaValue:1.0];
+				} else {
+					[control setAlphaValue:0.2];
+				}
+			} else {
+				[control setEnabled:onoff];
+			}
+		}
+
+		n_mac_window_all_controls_onoff( subview, onoff );
+	}
+
+
+	return;
 }
 
 

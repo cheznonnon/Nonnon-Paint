@@ -11,10 +11,12 @@
 
 
 
-#include "./_error.c"
-
+#include "../wav.c"
 
 #include "../random.c"
+
+
+#include "./_error.c"
 
 
 
@@ -28,6 +30,72 @@
 
 
 
+
+float
+n_wav_sample_clamp_normalized( float f )
+{
+
+	if ( f >  1.0 )
+	{
+		f =  1.0;
+	} else
+	if ( f < -1.0 )
+	{
+		f = -1.0;
+	}
+
+	return f;
+}
+
+n_type_real
+n_wav_sample_clamp( n_wav *wav, n_type_real d )
+{
+
+	if ( N_WAV_FORMAT_PCM == N_WAV_FORMAT( wav ) )
+	{
+		// [!] : don't use SHRT_MIN
+
+		if ( d >  SHRT_MAX )
+		{
+			d =  SHRT_MAX;
+		} else
+		if ( d < -SHRT_MAX )
+		{
+			d = -SHRT_MAX;
+		}
+	} else
+	if ( N_WAV_FORMAT_FLOAT == N_WAV_FORMAT( wav ) )
+	{
+		if ( d >  1.0 )
+		{
+			d =  1.0;
+		} else
+		if ( d < -1.0 )
+		{
+			d = -1.0;
+		}
+	}
+
+
+	return d;
+}
+
+n_type_real
+n_wav_sample_blend( n_type_real f, n_type_real t, n_type_real blend )
+{
+
+	if ( blend <= 0.0 ) { return f; }
+	if ( blend >= 1.0 ) { return t; }
+
+	n_type_real d = ( f - t ) * blend;
+
+	if ( f > t )
+	{
+		return f - (int) n_posix_max_n_type_real(  1.0, d );
+	} else {
+		return f - (int) n_posix_min_n_type_real( -1.0, d );
+	}
+}
 
 n_type_real
 n_wav_sample_amp( n_wav *wav )
@@ -65,9 +133,12 @@ n_wav_sample_get( n_wav *wav, u32 i, n_type_real *l, n_type_real *r )
 	{
 		float *ptr = (float*) N_WAV_PTR( wav );
 
-		if ( l != NULL ) { (*l) = n_posix_minmax_n_type_real( -1.0, 1.0, ptr[ p + 0 ] ); }
-		if ( r != NULL ) { (*r) = n_posix_minmax_n_type_real( -1.0, 1.0, ptr[ p + 1 ] ); }
+		if ( l != NULL ) { (*l) = (n_type_real) ptr[ p + 0 ]; }
+		if ( r != NULL ) { (*r) = (n_type_real) ptr[ p + 1 ]; }
 	}
+
+	if ( l != NULL ) { (*l) = n_wav_sample_clamp( wav, (*l) ); }
+	if ( r != NULL ) { (*r) = n_wav_sample_clamp( wav, (*r) ); }
 
 
 	return;
@@ -83,6 +154,9 @@ n_wav_sample_set( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 	{
 		s16 *ptr = (s16*) N_WAV_PTR( wav );
 
+		l = n_wav_sample_clamp( wav, l );
+		r = n_wav_sample_clamp( wav, r );
+
 		ptr[ p + 0 ] = (s16) l;
 		ptr[ p + 1 ] = (s16) r;
 	} else
@@ -90,8 +164,11 @@ n_wav_sample_set( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 	{
 		float *ptr = (float*) N_WAV_PTR( wav );
 
-		ptr[ p + 0 ] = (float) n_posix_minmax_n_type_real( -1.0, 1.0, l );
-		ptr[ p + 1 ] = (float) n_posix_minmax_n_type_real( -1.0, 1.0, r );
+		l = n_wav_sample_clamp( wav, l );
+		r = n_wav_sample_clamp( wav, r );
+
+		ptr[ p + 0 ] = (float) l;
+		ptr[ p + 1 ] = (float) r;
 	}
 
 
@@ -111,13 +188,8 @@ n_wav_sample_add( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 		n_type_real ll = l + ptr[ p + 0 ];
 		n_type_real rr = r + ptr[ p + 1 ];
 
-		// [!] : don't use SHRT_MIN
-
-		if ( ll >  SHRT_MAX ) { ll =  SHRT_MAX; }
-		if ( ll < -SHRT_MAX ) { ll = -SHRT_MAX; }
-
-		if ( rr >  SHRT_MAX ) { rr =  SHRT_MAX; }
-		if ( rr < -SHRT_MAX ) { rr = -SHRT_MAX; }
+		ll = n_wav_sample_clamp( wav, ll );
+		rr = n_wav_sample_clamp( wav, rr );
 
 		ptr[ p + 0 ] = (s16) ll;
 		ptr[ p + 1 ] = (s16) rr;
@@ -129,11 +201,8 @@ n_wav_sample_add( n_wav *wav, u32 i, n_type_real l, n_type_real r )
 		n_type_real ll = l + ptr[ p + 0 ];
 		n_type_real rr = r + ptr[ p + 1 ];
 
-		if ( ll >  1.0 ) { ll =  1.0; }
-		if ( ll < -1.0 ) { ll = -1.0; }
-
-		if ( rr >  1.0 ) { rr =  1.0; }
-		if ( rr < -1.0 ) { rr = -1.0; }
+		ll = n_wav_sample_clamp( wav, ll );
+		rr = n_wav_sample_clamp( wav, rr );
 
 		ptr[ p + 0 ] = (float) ll;
 		ptr[ p + 1 ] = (float) rr;
@@ -159,6 +228,9 @@ n_wav_sample_mix( n_wav *wav, u32 i, n_type_real l, n_type_real r, n_type_real r
 		l += (n_type_real) ptr[ p + 0 ] * ( 1.0 - ratio_l );
 		r += (n_type_real) ptr[ p + 1 ] * ( 1.0 - ratio_r );
 
+		l = n_wav_sample_clamp( wav, l );
+		r = n_wav_sample_clamp( wav, r );
+
 		ptr[ p + 0 ] = (s16) l;
 		ptr[ p + 1 ] = (s16) r;
 	} else
@@ -171,6 +243,9 @@ n_wav_sample_mix( n_wav *wav, u32 i, n_type_real l, n_type_real r, n_type_real r
 
 		l += (n_type_real) ptr[ p + 0 ] * ( 1.0 - ratio_l );
 		r += (n_type_real) ptr[ p + 1 ] * ( 1.0 - ratio_r );
+
+		l = n_wav_sample_clamp( wav, l );
+		r = n_wav_sample_clamp( wav, r );
 
 		ptr[ p + 0 ] = (float) l;
 		ptr[ p + 1 ] = (float) r;
@@ -189,7 +264,7 @@ n_wav_sample_hz2sample( n_wav *wav, n_type_real hz )
 	static n_type_real p_hz = 0;
 	static n_type_real ret  = 0;
 
-	if ( p_hz != hz ) { ret = 44100.0 / hz; p_hz = hz; }
+	if ( p_hz != hz ) { ret = N_WAV_RATE( wav ) / hz; p_hz = hz; }
 
 
 	return ret;
@@ -280,7 +355,7 @@ n_wav_sample_square( n_wav *wav, n_type_real hz, u32 x )
 }
 
 n_type_real
-n_wav_sample_sandstorm( n_wav *wav, n_type_real hz, u32 x )
+n_wav_sample_whitenoise( n_wav *wav, n_type_real hz, u32 x )
 {
 
 	// [!] : human recognition

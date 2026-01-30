@@ -205,7 +205,7 @@ typedef struct {
 	n_type_gfx    grabber_stretch_start_x;
 	n_type_gfx    grabber_stretch_start_y;
 
-	n_posix_bool  grabber_is_resel;
+	BOOL          grabber_is_resel;
 
 	n_rect        grabber_rect_resizer;
 
@@ -293,9 +293,13 @@ typedef struct {
 	u32            replacer_fr_color;
 	u32            replacer_to_color;
 
-} n_paint;
+} n_paint_struct;
 
 
 #define n_paint_zero( p ) n_memory_zero( p, sizeof( n_paint ) )
+
+
+static n_paint_struct  n_paint_instance;
+static n_paint_struct *n_paint = &n_paint_instance;
 
 

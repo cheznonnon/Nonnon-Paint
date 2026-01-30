@@ -124,6 +124,15 @@ static n_posix_bool n_wav_safemode = n_posix_true;
 
 
 
+#ifdef N_POSIX_PLATFORM_MAC
+
+static NSOperationQueue *n_wav_queue = NULL;
+
+#endif
+
+
+
+
 #define n_wav_zero(  f    ) n_memory_zero( f,    sizeof( n_wav ) )
 #define n_wav_alias( f, t ) n_memory_copy( f, t, sizeof( n_wav ) )
 
@@ -640,6 +649,41 @@ n_wav_enhancer( n_wav *wav )
 }
 
 void
+n_wav_s16_to_float( n_wav *wav )
+{
+
+	u32  fcount = N_WAV_COUNT( wav ) * N_WAV_STEREO( wav );
+	s16    *f16 = (s16*) N_WAV_PTR( wav );
+
+	u32   tbyte = N_WAV_SIZE( wav ) * 2;
+	float  *t32 = (float*) n_memory_new( tbyte ); n_memory_zero( t32, tbyte );
+
+
+	u32 i = 0;
+	n_posix_loop
+	{//break;
+
+		n_type_real d = (n_type_real) f16[ i ] / SHRT_MAX;
+
+		t32[ i ] = (float) d;
+
+		i++;
+		if ( i >= fcount ) { break; }
+	}
+
+
+	n_wav_precalc( wav, tbyte, N_WAV_FORMAT_FLOAT, -1, 32, -1 );
+
+
+	n_memory_free( N_WAV_PTR( wav ) );
+
+	N_WAV_PTR( wav ) = (void*) t32;
+
+
+	return;
+}
+
+void
 n_wav_reducer( n_wav *wav )
 {
 
@@ -935,33 +979,7 @@ n_wav_reducer( n_wav *wav )
 	{
 //NSLog( @"to 32-bit float" );
 
-		u32  fcount = N_WAV_COUNT( wav ) * N_WAV_STEREO( wav );
-		u8     *f8  = ( u8*) N_WAV_PTR( wav );
-		s16    *f16 = (s16*) f8;
-
-		u32  tbyte = N_WAV_SIZE( wav ) * 2;
-		float *t32 = (float*) n_memory_new( tbyte ); n_memory_zero( t32, tbyte );
-
-
-		u32 i = 0;
-		n_posix_loop
-		{//break;
-
-			n_type_real d = (n_type_real) f16[ i ] / SHRT_MAX;
-
-			t32[ i ] = (float) d;
-
-			i++;
-			if ( i >= fcount ) { break; }
-		}
-
-
-		n_wav_precalc( wav, tbyte, N_WAV_FORMAT_FLOAT, -1, 32, -1 );
-
-
-		n_memory_free( N_WAV_PTR( wav ) );
-
-		N_WAV_PTR( wav ) = (void*) t32;
+		n_wav_s16_to_float( wav );
 
 	}
 
@@ -1061,7 +1079,10 @@ n_wav_load_internal( n_wav *wav, void *ptr, n_type_int ptrsize, n_posix_bool is_
 	i = 0;
 	ret += n_wav_search_chunk_onmemory( p, ptrsize, "fmt ", &i );
 
-	n_memory_copy( &p[ i + 8 ], &N_WAV_FMT( &check ), N_WAV_FMTSIZE );
+	if ( ( i + 8 ) < ptrsize )
+	{
+		n_memory_copy( &p[ i + 8 ], &N_WAV_FMT( &check ), N_WAV_FMTSIZE );
+	}
 
 
 	// Subchunk : "data" : WAVEHDR

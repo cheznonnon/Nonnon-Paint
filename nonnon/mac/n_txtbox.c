@@ -35,12 +35,11 @@
 
 #include "../neutral/bmp/ui/rectframe.c"
 #include "../neutral/bmp/ui/roundframe.c"
+#include "../neutral/bmp/ui/timer.c"
 
 #include "../neutral/txt.c"
 
-#include "../game/helper.c"
-
-#include "../win32/gdi.c"
+#include "../bridge/gdi.c"
 
 
 #include "_mac.c"
@@ -332,9 +331,9 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	if ( self )
 	{
 
-		n_bmp_safemode = n_posix_false;
+		n_bmp_safemode = FALSE;
 
-		n_bmp_transparent_onoff_default = n_posix_false;
+		n_bmp_transparent_onoff_default = FALSE;
 
 
 		{
@@ -583,6 +582,25 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 
 
+
+- (void) NonnonTxtboxCaretReset
+{
+
+	n_focus = -1;
+
+	caret_fr = NonnonMakeCaret( 0,0,0,0 );
+	caret_to = NonnonMakeCaret( 0,0,0,0 );
+
+#ifdef N_TXTBOX_IME_ENABLE
+
+	// [!] : Sonoma : popup indicator is implemented : this is used in the first time
+
+	ime_caret_fr = caret_fr;
+	ime_caret_to = caret_to;
+
+#endif
+
+}
 
 - (void) NonnonTxtboxCaretCalculate
 {
@@ -844,9 +862,9 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 
 	if ( scrollbar_fade_captured_onoff )
 	{
-		n_bmp_fade_engine( &scrollbar_fade, n_posix_true );
+		n_bmp_fade_engine( &scrollbar_fade, TRUE );
 //NSLog( @"%d", scrollbar_fade.percent );
-		if ( scrollbar_fade.stop == n_posix_false )
+		if ( scrollbar_fade.stop == FALSE )
 		{
 			[self NonnonTxtboxRedraw];
 		} else {
@@ -881,10 +899,10 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		n_bmp_fade_always_on( &scrollbar_fade, n_bmp_black, n_bmp_white );
 	} 
 
-	n_bmp_fade_engine( &scrollbar_fade, n_posix_true );
+	n_bmp_fade_engine( &scrollbar_fade, TRUE );
 //NSLog( @"%d", scrollbar_fade.percent );
 
-	if ( scrollbar_fade.stop == n_posix_false )
+	if ( scrollbar_fade.stop == FALSE )
 	{
 		[self NonnonTxtboxRedraw];
 	} else {
@@ -935,7 +953,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	}
 
 
-	if ( n_game_timer( &caret_blink_interval, 500 ) )
+	if ( n_bmp_ui_timer( &caret_blink_interval, 500 ) )
 	{
 		n_bmp_fade_init( &caret_blink_fade, n_bmp_black );
 		if ( caret_blink_onoff )
@@ -948,7 +966,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 		}
 	}
 
-	n_bmp_fade_engine( &caret_blink_fade, n_posix_true );
+	n_bmp_fade_engine( &caret_blink_fade, TRUE );
 
 
 //return;
@@ -998,11 +1016,11 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	{
 		BOOL redraw = FALSE;
 
-		n_bmp_fade_engine( &find_icon_fade, n_posix_true );
-		if ( find_icon_fade.stop == n_posix_false ) { redraw = TRUE; }
+		n_bmp_fade_engine( &find_icon_fade, TRUE );
+		if ( find_icon_fade.stop == FALSE ) { redraw = TRUE; }
 
 		n_bmp_fade_engine( &delete_circle_fade_hovered, TRUE );
-		if ( delete_circle_fade_hovered.stop == n_posix_false ) { redraw = TRUE; }
+		if ( delete_circle_fade_hovered.stop == FALSE ) { redraw = TRUE; }
 
 		if ( delete_circle_fade_pressed_phase == 1 )
 		{
@@ -1124,7 +1142,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 					go = TRUE;
 				}
 			} else
-			if ( n_game_timer( &smooth_wheel_animation_timer, smooth_wheel_animation_msec ) )
+			if ( n_bmp_ui_timer( &smooth_wheel_animation_timer, smooth_wheel_animation_msec ) )
 			{
 //NSLog( @"fast" );
 				go = TRUE;
@@ -1159,6 +1177,9 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 - (void) NonnonTxtboxKeyboardInputMethod:(NSString*)nsstring
 {
 //return;
+
+	// [x] : don't make undo buffer : [self NonnonTxtboxUndo:N_TXTBOX_UNDO_REGISTER];
+
 
 	if ( n_txt_data->readonly ) { return; }
 
@@ -1228,9 +1249,6 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	n_string_free( line_f );
 	n_string_free( line_m );
 	n_string_free( line_t );
-
-
-	[self NonnonTxtboxUndo:N_TXTBOX_UNDO_REGISTER];
 
 
 	n_edited = TRUE;
@@ -1964,6 +1982,7 @@ static NonnonTxtbox *n_txtbox_first_responder = nil;
 	ime_nsstr = @"";
 	ime_onoff = FALSE;
 
+	[self NonnonTxtboxUndo:N_TXTBOX_UNDO_REGISTER];
 	[self NonnonTxtboxInsert:string];
 
 

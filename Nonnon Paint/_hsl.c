@@ -215,7 +215,7 @@ n_mac_bmp_tweaker_hsl_thread_main( n_mac_bmp_tweaker_hsl_thread_struct *p )
 	{
 
 		u32 color = N_BMP_PTR( p->bmp )[ i ];
-		if ( n_posix_false == n_bmp_is_trans( p->bmp, color ) )
+		if ( FALSE == n_bmp_is_trans( p->bmp, color ) )
 		{
 			N_BMP_PTR( p->bmp )[ i ] = n_mac_bmp_hsl_tweak_pixel( color, p->hue, p->saturation, p->lightness );
 		}
