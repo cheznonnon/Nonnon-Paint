@@ -410,22 +410,22 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 			{
 				n_type_real ratio = (n_type_real) sx / n_paint->grabber_stretch_sx;
 
-				n_posix_sprintf_literal( str, "%0.0f%%", ratio * 100 );
+				n_posix_snprintf_literal( str, 100, "%0.0f%%", ratio * 100 );
 			} else
 			if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 			{
 				n_type_real ratio_x = (n_type_real) sx / n_paint->grabber_stretch_sx;
 				n_type_real ratio_y = (n_type_real) sy / n_paint->grabber_stretch_sy;
 
-				n_posix_sprintf_literal( str, "%0.0f%% %0.0f%%", ratio_x * 100, ratio_y * 100 );
+				n_posix_snprintf_literal( str, 100, "%0.0f%% %0.0f%%", ratio_x * 100, ratio_y * 100 );
 			} else
 			if ( n_paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
 			{
-				n_posix_sprintf_literal( str, "%d x %d", sx,sy );
+				n_posix_snprintf_literal( str, 100, "%d x %d", sx,sy );
 			} else
 			if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 			{
-				n_posix_sprintf_literal( str, "X %d, Y %d", x,y );
+				n_posix_snprintf_literal( str, 100, "X %d, Y %d", x,y );
 			} else
 			if (
 				( n_paint->grabber_is_key_input )
@@ -433,9 +433,9 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 				( n_paint->grabber_is_key_input_fade )
 			)
 			{
-				n_posix_sprintf_literal( str, "X %d, Y %d", x,y );
+				n_posix_snprintf_literal( str, 100, "X %d, Y %d", x,y );
 			} else {
-				n_posix_sprintf_literal( str, "X %d, Y %d", x,y );
+				n_posix_snprintf_literal( str, 100, "X %d, Y %d", x,y );
 			}
 		}
 
@@ -1064,6 +1064,11 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 
 
 	return;
+}
+
+- (BOOL) isOpaque {
+//NSLog( @" isOpaque " );
+	return NO;
 }
 
 -(void) drawRect:(NSRect) rect

@@ -210,6 +210,11 @@ n_paint_preview_cache_init( NSWindow *window, NSView *view )
 	return self;
 }
 
+- (BOOL) isOpaque {
+//NSLog( @" isOpaque " );
+	return NO;
+}
+
 -(void) drawRect:(NSRect) rect
 {
 

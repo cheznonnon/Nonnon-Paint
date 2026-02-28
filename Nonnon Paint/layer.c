@@ -44,7 +44,7 @@ n_paint_layer_ini_main( n_ini *ini, BOOL is_read )
 		n_posix_char str_i[ N_STRING_INT2STR_CCH_MAX ]; n_string_int2str( str_i, i );
 
 		n_posix_char section[ 100 ];
-		n_posix_sprintf_literal( section, "[%s]", str_i );
+		n_posix_snprintf_literal( section, 100, "[%s]", str_i );
 
 		n_ini_section_add( ini, section );
 
@@ -138,7 +138,7 @@ void
 n_paint_layer_text_set( n_type_int i, n_posix_char *str )
 {
 
-	n_posix_sprintf_literal( n_paint->layer_data[ i ].name, "%s", str );
+	n_posix_snprintf_literal( n_paint->layer_data[ i ].name, N_PAINT_LAYER_CCH, "%s", str );
 
 	// [!] : bug or spec : there is a problem in behavior when empty
 
@@ -170,7 +170,7 @@ void
 n_paint_layer_text_mod( n_type_int i, n_posix_char *str )
 {
 
-	n_posix_sprintf_literal( n_paint->layer_data[ i ].name, "%s", str );
+	n_posix_snprintf_literal( n_paint->layer_data[ i ].name, N_PAINT_LAYER_CCH, "%s", str );
 //NSLog( @"%s %s", n_paint->layer_data[ i ].name, str );
 
 	n_txt_mod( &n_paint->layer_txt, i, str );
@@ -309,7 +309,7 @@ n_paint_layer_load( const n_posix_char *cmdline )
 
 		n_paint->layer_count = n_ini_value_int( &n_paint->layer_ini, N_PAINT_LAYER_INI_SECTION, N_PAINT_LAYER_INI_NUMBER, N_PAINT_LAYER_MAX );
 		if ( n_paint->layer_count < N_PAINT_LAYER_MAX ) { n_paint->layer_count = N_PAINT_LAYER_MAX; }
-//NSLog( @"Layer Cout : %d", paint->layer_count );
+//NSLog( @"Layer Cout : %d", n_paint->layer_count );
 
 		n_paint->layer_data = n_memory_new( sizeof( n_paint_layer ) * n_paint->layer_count );
 		n_memory_zero( n_paint->layer_data, sizeof( n_paint_layer ) * n_paint->layer_count );
@@ -330,10 +330,10 @@ n_paint_layer_load( const n_posix_char *cmdline )
 
 			n_posix_char str_oy[ N_STRING_INT2STR_CCH_MAX ]; n_string_int2str( str_oy, i );
 
-			n_posix_char str[ 100 ]; n_posix_sprintf_literal( str, "%s.png", str_oy );
+			n_posix_char str[ 100 ]; n_posix_snprintf_literal( str, 100, "%s.png", str_oy );
 			/* avoid heap alloc/free each iteration by building path on the stack */
 			n_posix_char name_img_buf[ 1024 ];
-			n_posix_sprintf_literal( name_img_buf, "%s/%s", name, str );
+			n_posix_snprintf_literal( name_img_buf, 1024, "%s/%s", name, str );
 
 			n_bmp_free_fast( &n_paint->layer_data[ i ].bmp_data );
 			n_png_png2bmp( name_img_buf, &n_paint->layer_data[ i ].bmp_data );
@@ -349,7 +349,7 @@ n_paint_layer_load( const n_posix_char *cmdline )
 				n_bmp_mac_color( &n_paint->layer_data[ i ].bmp_data );
 			}
 
-			n_posix_char sec[ N_PAINT_LAYER_CCH ]; n_posix_sprintf_literal( sec, "[%lld]", i );
+			n_posix_char sec[ N_PAINT_LAYER_CCH ]; n_posix_snprintf_literal( sec, N_PAINT_LAYER_CCH, "[%lld]", i );
 
 			BOOL visible = n_ini_value_int( &n_paint->layer_ini, sec, N_PAINT_LAYER_INI_VISIBLE, TRUE );
 			int  percent = n_ini_value_int( &n_paint->layer_ini, sec, N_PAINT_LAYER_INI_PERCENT,  100 );
@@ -504,8 +504,9 @@ n_paint_layer_save( const n_posix_char *cmdline )
 	n_posix_loop
 	{//break;
 
-		n_posix_char *path = n_string_new( n_posix_strlen( name ) * 2 );
-		n_posix_sprintf_literal( path, "%s/%lld.png", name, i );
+		n_type_int    path_cch = n_posix_strlen( name ) * 2;
+		n_posix_char *path     = n_string_new( path_cch );
+		n_posix_snprintf_literal( path, path_cch + 1, "%s/%lld.png", name, i );
 
 		n_bmp bmp_check; n_bmp_zero( &bmp_check );
 		n_png_png2bmp( path, &bmp_check );
@@ -1378,27 +1379,6 @@ n_paint_layer_info( void )
 
 	[n_layer_listbox_global display];
 
-/*
-	n_posix_char str[ 1024 ]; n_string_zero( str, 1024 );
-	n_type_int   cat = 0;
-
-	i = 0;
-	n_posix_loop
-	{
-//NSLog( @"#%lld : %d", i, ptr[ i ] );
-
-		if ( N_BMP_ALPHA_CHANNEL_INVISIBLE != ptr[ i ] )
-		{
-			cat += n_posix_sprintf_literal( &str[ cat ], "%lld ", i );
-		}
-
-		i++;
-		if ( i >= p->layer_count ) { break; }
-	}
-//NSLog( @"%s", str );
-
-	n_mac_window_dialog_ok( str );
-*/
 
 	n_memory_free( ptr );
 

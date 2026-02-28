@@ -89,7 +89,7 @@ n_paint_colorhistory_text( n_bmp *bmp, n_type_gfx sx, n_type_gfx sy, n_type_gfx 
 	int b = n_bmp_b( color );
 
 
-	n_posix_char str[ 100 ]; n_posix_sprintf_literal( str, "%d %d %d %d", a, r, g, b );
+	n_posix_char str[ 100 ]; n_posix_snprintf_literal( str, 100, "%d %d %d %d", a, r, g, b );
 
 	gdi.text                = str;
 	gdi.text_font           = "Trebuchet MS";
@@ -132,6 +132,11 @@ n_paint_colorhistory_text( n_bmp *bmp, n_type_gfx sx, n_type_gfx sy, n_type_gfx 
 	}
 
 	return self;
+}
+
+- (BOOL) isOpaque {
+//NSLog( @" isOpaque " );
+	return NO;
 }
 
 -(void) drawRect:(NSRect) rect

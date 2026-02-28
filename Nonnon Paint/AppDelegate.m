@@ -173,6 +173,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	return self;
 }
 
+- (BOOL) isOpaque {
+//NSLog( @" isOpaque " );
+	return NO;
+}
+
 -(void) drawRect:(NSRect) dirtyRect
 {
 	// [x] : color will be "bg" when alpha is zero
@@ -619,7 +624,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 //NSLog( @"NonnonTxtbox_delegate_listbox_edited" );
 //NSLog( @"%s", n_paint->layer_data[ i ].name );
 
-	n_posix_char *str = n_txt_get( _n_layer_listbox.n_txt_data, i );
+	n_posix_char *str = n_txt_get( _n_layer_listbox.txtbox->txt_data, i );
 //NSLog( @"%s", str );
 
 	n_paint_layer_text_mod( i, str );
@@ -673,18 +678,18 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 {
 //NSLog( @"NonnonTxtbox_delegate_swap" );
 
-	n_paint->layer_index = _n_layer_listbox.n_focus;
+	n_paint->layer_index = _n_layer_listbox.txtbox->focus;
 
 	if ( is_up )
 	{
 		if ( n_paint_layer_swap_up( n_paint->layer_index ) )
 		{
-			_n_layer_listbox.n_focus = n_paint->layer_index;
+			_n_layer_listbox.txtbox->focus = n_paint->layer_index;
 		}
 	} else {
 		if ( n_paint_layer_swap_down( n_paint->layer_index ) )
 		{
-			_n_layer_listbox.n_focus = n_paint->layer_index;
+			_n_layer_listbox.txtbox->focus = n_paint->layer_index;
 		}
 	}
 
@@ -879,8 +884,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		prv_filename = [n_paint->filename copy];
 
 
-		_n_layer_listbox.n_focus = n_paint->layer_index;
-//NSLog( @"%f", _n_layer_listbox.n_focus );
+		_n_layer_listbox.txtbox->focus = n_paint->layer_index;
+//NSLog( @"%f", _n_layer_listbox.txtbox->focus );
 		[self NonnonPaintLayerSelect:n_paint->layer_index];
 
 
@@ -1184,21 +1189,21 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_PEN )
 	{
 
-		n_posix_sprintf_literal( str1, "Pen" );
+		n_posix_snprintf_literal( str1, 100, "Pen" );
 
 		NSPoint pt = [_n_paint_canvas n_paint_point_on_bitmap];
-		n_posix_sprintf_literal( str2, "X:%0.0f", pt.x );
-		n_posix_sprintf_literal( str3, "Y:%0.0f", pt.y );
+		n_posix_snprintf_literal( str2, 100, "X:%0.0f", pt.x );
+		n_posix_snprintf_literal( str3, 100, "Y:%0.0f", pt.y );
 
 	} else
 	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_FILL )
 	{
 
-		n_posix_sprintf_literal( str1, "Fill" );
+		n_posix_snprintf_literal( str1, 100, "Fill" );
 
 		NSPoint pt = [_n_paint_canvas n_paint_point_on_bitmap];
-		n_posix_sprintf_literal( str2, "X:%0.0f", pt.x );
-		n_posix_sprintf_literal( str3, "Y:%0.0f", pt.y );
+		n_posix_snprintf_literal( str2, 100, "X:%0.0f", pt.x );
+		n_posix_snprintf_literal( str3, 100, "Y:%0.0f", pt.y );
 
 	} else
 	if ( n_paint->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
@@ -1206,30 +1211,30 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 		{
-			n_posix_sprintf_literal( str1, "Neutral" );
+			n_posix_snprintf_literal( str1, 100, "Neutral" );
 		} else
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_SELECTING )
 		{
-			n_posix_sprintf_literal( str1, "Selecting" );
+			n_posix_snprintf_literal( str1, 100, "Selecting" );
 		} else
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAG_OK )
 		{
-			n_posix_sprintf_literal( str1, "Drag OK" );
+			n_posix_snprintf_literal( str1, 100, "Drag OK" );
 		} else
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_DRAGGING )
 		{
-			n_posix_sprintf_literal( str1, "Dragging" );
+			n_posix_snprintf_literal( str1, 100, "Dragging" );
 		} else
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_TRANSFORM )
 		{
-			n_posix_sprintf_literal( str1, "Stretching" );
+			n_posix_snprintf_literal( str1, 100, "Stretching" );
 		} else
 		if ( n_paint->grabber_mode == N_PAINT_GRABBER_STRETCH_PROPORTIONAL )
 		{
-			n_posix_sprintf_literal( str1, "Stretching" );
+			n_posix_snprintf_literal( str1, 100, "Stretching" );
 		} else {
-			n_posix_sprintf_literal( str1, "N/A" );
-			//n_posix_sprintf_literal( str1, "%d", n_paint->grabber_mode );
+			n_posix_snprintf_literal( str1, 100, "N/A" );
+			//n_posix_snprintf_literal( str1, 100, "%d", n_paint->grabber_mode );
 		}
 
 
@@ -1242,8 +1247,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 			n_paint_grabber_system_get( &x,&y, &sx,&sy, &fx,&fy );
 		}
 
-		n_posix_sprintf_literal( str2, "X:%d Y:%d", x,y );
-		n_posix_sprintf_literal( str3, "%d x %d", sx,sy );
+		n_posix_snprintf_literal( str2, 100, "X:%d Y:%d", x,y );
+		n_posix_snprintf_literal( str3, 100, "%d x %d", sx,sy );
 
 	}
 
@@ -1391,7 +1396,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_type_int     index = n_paint->layer_index;
 	n_paint_layer *layer = &n_paint->layer_data[ index ];
 
-	_n_layer_listbox.n_focus = index;
+	_n_layer_listbox.txtbox->focus = index;
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
 	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
@@ -1413,7 +1418,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_type_int     index = n_paint->layer_index;
 	n_paint_layer *layer = &n_paint->layer_data[ index ];
 
-	_n_layer_listbox.n_focus = index;
+	_n_layer_listbox.txtbox->focus = index;
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
 	[_n_layer_listbox display];
@@ -2115,13 +2120,13 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_paint->layer_data  = n_memory_new( sizeof( n_paint_layer ) * n_paint->layer_count );
 	n_memory_zero( n_paint->layer_data, sizeof( n_paint_layer ) * n_paint->layer_count );
 
-	_n_layer_listbox.delegate_option     = N_MAC_TXTBOX_DELEGATE_MOUSEDOWN_LEFT | N_MAC_TXTBOX_DELEGATE_MOUSEUP_RIGHT | N_MAC_TXTBOX_DELEGATE_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_MOVED | N_MAC_TXTBOX_DELEGATE_SWAP;
-	_n_layer_listbox.delegate            = self;
-	_n_layer_listbox.n_mode              = N_MAC_TXTBOX_MODE_LISTBOX;
-	_n_layer_listbox.n_txt_data          = &n_paint->layer_txt;
-	_n_layer_listbox.n_txt_deco          = &n_paint->layer_decoration_txt;
-	_n_layer_listbox.n_focus             = 0;
-	_n_layer_listbox.n_option_linenumber = N_MAC_TXTBOX_DRAW_LINENUMBER_ZEROBASED_INDEX;
+	_n_layer_listbox.delegate_option           = N_MAC_TXTBOX_DELEGATE_MOUSEDOWN_LEFT | N_MAC_TXTBOX_DELEGATE_MOUSEUP_RIGHT | N_MAC_TXTBOX_DELEGATE_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_EDITED | N_MAC_TXTBOX_DELEGATE_LISTBOX_MOVED | N_MAC_TXTBOX_DELEGATE_SWAP;
+	_n_layer_listbox.delegate                  = self;
+	_n_layer_listbox.txtbox->mode              = N_MAC_TXTBOX_MODE_LISTBOX;
+	_n_layer_listbox.txtbox->txt_data          = &n_paint->layer_txt;
+	_n_layer_listbox.txtbox->txt_deco          = &n_paint->layer_decoration_txt;
+	_n_layer_listbox.txtbox->focus             = 0;
+	_n_layer_listbox.txtbox->option_linenumber = N_MAC_TXTBOX_DRAW_LINENUMBER_ZEROBASED_INDEX;
 
 	NSFont *font = n_mac_stdfont();
 	[_n_layer_listbox NonnonTxtboxFontChange:font];
@@ -2535,7 +2540,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	case N_MAC_KEYCODE_ARROW_UP   :
 	case N_MAC_KEYCODE_ARROW_DOWN :
 
-		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
+		[self NonnonPaintLayerSelect:_n_layer_listbox.txtbox->focus];
 
 //NSLog( @"NonnonPaintLayerRefresh : %lld", n_paint->layer_index );
 //break;
@@ -3538,14 +3543,14 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( FALSE == n_mac_window_is_keywindow( _n_layer_window ) ) { return; }
 //NSLog( @"n_layer_window_mouseDown" );
 
-	if ( _n_layer_listbox.n_listbox_edit_onoff ) { return; }
+	if ( _n_layer_listbox.txtbox->listbox_edit_onoff ) { return; }
 
 
 	if ( n_mac_window_is_hovered( _n_layer_listbox ) )
 	{
 //NSLog( @"n_layer_window_mouseDown" );
 
-		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
+		[self NonnonPaintLayerSelect:_n_layer_listbox.txtbox->focus];
 
 
 		static n_type_int p_focus = -1;
@@ -3557,11 +3562,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		{
 			layer_click_phase = 1;
 			layer_click_msec  = n_posix_tickcount();
-			p_focus = _n_layer_listbox.n_focus;
+			p_focus = _n_layer_listbox.txtbox->focus;
 		} else
 		if ( layer_click_phase == 1 )
 		{
-			if ( p_focus != _n_layer_listbox.n_focus )
+			if ( p_focus != _n_layer_listbox.txtbox->focus )
 			{
 				layer_click_phase = 0;
 			} else
@@ -3712,6 +3717,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		n_posix_char *path = n_mac_nsstring2str( n_paint->filename );
 //NSLog( @"filename : %s", path );
+//NSLog( @"%d", n_string_path_ext_is_same_literal( ".PNG\0\0", path ) );
 
 		if ( n_string_path_ext_is_same_literal( ".BMP\0\0", path ) )
 		{
@@ -3765,7 +3771,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		[_n_layer_listbox NonnonTxtboxClickEvent:theEvent detailed:YES];
 
-		[self NonnonPaintLayerSelect:_n_layer_listbox.n_focus];
+		[self NonnonPaintLayerSelect:_n_layer_listbox.txtbox->focus];
 //NSLog( @"%lld : %lld", _n_layer_listbox.n_focus, n_paint->layer_index );
 
 		if ( n_paint->layer_index == 0 )
@@ -4359,7 +4365,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( n_paint_layer_swap_up( n_paint->layer_index ) )
 	{
-		_n_layer_listbox.n_focus = n_paint->layer_index;
+		_n_layer_listbox.txtbox->focus = n_paint->layer_index;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
@@ -4373,7 +4379,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( n_paint_layer_swap_down( n_paint->layer_index ) )
 	{
-		_n_layer_listbox.n_focus = n_paint->layer_index;
+		_n_layer_listbox.txtbox->focus = n_paint->layer_index;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
@@ -4499,7 +4505,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	[self NonnonPaintLayerSelect:p->layer_count - 1];
 
-	_n_layer_listbox.n_focus = p->layer_index;
+	_n_layer_listbox.txtbox->focus = p->layer_index;
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
 	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
