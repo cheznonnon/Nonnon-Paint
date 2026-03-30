@@ -694,7 +694,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
-	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
+
+	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDownSwap];
 
 	[_n_paint_canvas display_optimized];
 
@@ -890,8 +891,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 
 		[_n_layer_listbox NonnonTxtboxFocus2Caret];
-		[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
-
+		[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDownSearch];
 		[_n_layer_listbox display];
 
 
@@ -1399,7 +1399,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	_n_layer_listbox.txtbox->focus = index;
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
-	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
 
 	layer->blur    = (int) [_n_layer_blur_value  integerValue];
 	layer->percent = (int) [_n_layer_blend_value integerValue];
@@ -1588,27 +1587,12 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		_n_menu_color_replacer.enabled = TRUE;
 		_n_menu_about         .enabled = TRUE;
 
-		[_n_button_3_1 n_enable:TRUE]; [_n_button_3_1 n_press:FALSE]; [_n_button_3_1 display];
-		[_n_button_4_1 n_enable:TRUE]; [_n_button_4_1 n_press:FALSE]; [_n_button_4_1 display];
-
 	} else {
 
 		_n_menu_clear_canvas  .enabled = FALSE;
 		_n_menu_alpha_tweaker .enabled = FALSE;
 		_n_menu_color_replacer.enabled = FALSE;
 		_n_menu_about         .enabled = FALSE;
-
-		if ( window != _n_resizer_window )
-		{
-			[_n_button_3_1 n_enable:FALSE];
-			[_n_button_3_1 display];
-		}
-
-		//if ( window != nil )
-		{
-			[_n_button_4_1 n_enable:FALSE];
-			[_n_button_4_1 display];
-		}
 
 		n_mac_topmost( window, TRUE );
 
@@ -3451,7 +3435,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( [_n_button_3_1 n_is_pressed] )
 	{
 
-		if ( FALSE == [_n_button_3_1 n_is_enabled] ) { return; }
+		//if ( FALSE == [_n_button_3_1 n_is_enabled] ) { return; }
+
+		[_n_button_3_1 n_no_hot];
 
 		[self NonnonPaintResizerReset];
 		[self NonnonPaintResizerInit ];
@@ -3479,7 +3465,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	if ( [_n_button_4_1 n_is_pressed] )
 	{
 
-		if ( FALSE == [_n_button_4_1 n_is_enabled] ) { return; }
+		//if ( FALSE == [_n_button_4_1 n_is_enabled] ) { return; }
+
+		[_n_button_4_1 n_no_hot];
 
 
 		// [!] : for traditional Mac mice like Magic Mouse
@@ -4369,7 +4357,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
-	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
+
+	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDownSwap];
 
 	[_n_layer_listbox display];
 
@@ -4383,7 +4372,8 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	}
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
-	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
+
+	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDownSwap];
 
 	[_n_layer_listbox display];
 
@@ -4508,7 +4498,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	_n_layer_listbox.txtbox->focus = p->layer_index;
 
 	[_n_layer_listbox NonnonTxtboxFocus2Caret];
-	[_n_layer_listbox NonnonTxtboxCaretOutOfCanvasUpDown];
 
 	[_n_layer_listbox display];
 

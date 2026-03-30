@@ -1351,7 +1351,7 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 
 		int alpha_fade_bg;
 		int alpha_fade_fg;
-		if ( n_paint->scroller_fade.color_fg == n_bmp_white )
+		if ( n_paint->scroller_fade.color_to == n_bmp_white )
 		{
 			alpha_fade_bg = 64;
 			alpha_fade_fg = 96;
@@ -1399,7 +1399,7 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 
 		int alpha_fade_bg;
 		int alpha_fade_fg;
-		if ( n_paint->scroller_fade.color_fg == n_bmp_white )
+		if ( n_paint->scroller_fade.color_to == n_bmp_white )
 		{
 			alpha_fade_bg = 64;
 			alpha_fade_fg = 96;
