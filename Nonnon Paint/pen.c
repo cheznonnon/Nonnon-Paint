@@ -64,6 +64,8 @@ n_paint_pen_air( n_type_gfx x, n_type_gfx y, n_type_gfx radius, n_type_real coef
 
 
 
+static n_type_real n_thickness = 1.0;
+
 void
 n_paint_pen_display( n_type_gfx px, n_type_gfx py, n_type_gfx radius )
 {
@@ -121,7 +123,7 @@ n_paint_pen_engine( n_type_gfx fx, n_type_gfx fy, n_type_real blend )
 	if ( blend == 0.0 ) { return; }
 
 
-	n_type_gfx radius = n_paint->pen_radius * n_paint_global.pressure;
+	n_type_gfx radius = n_paint->pen_radius * n_paint_global.pressure * n_thickness;
 	u32        color  = n_paint->pen_color;
 
 
@@ -441,6 +443,16 @@ n_paint_pen( NSPoint pt, int mode )
 
 		if ( ( fx == tx )&&( fy == ty ) ) { return; }
 
+	}
+
+
+	// [!] : DeepSeek AI : Pen Smoother
+
+	{
+		n_type_real a = 0.33;
+
+		tx = round( ( (n_type_real) px * a ) + ( (n_type_real) tx * ( 1.0 - a ) ) );
+		ty = round( ( (n_type_real) py * a ) + ( (n_type_real) ty * ( 1.0 - a ) ) );
 	}
 
 

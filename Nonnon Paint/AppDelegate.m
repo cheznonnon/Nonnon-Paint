@@ -45,6 +45,7 @@ n_paint_memory_limit( void )
 #define N_PAINT_ID_RESIZER_VIVIDNESS  ( 103 )
 #define N_PAINT_ID_RESIZER_SHARPNESS  ( 104 )
 #define N_PAINT_ID_RESIZER_CONTRAST   ( 105 )
+#define N_PAINT_ID_RESIZER_MORPHOLOGY ( 106 )
 
 #define N_PAINT_ID_LAYER_BLUR         ( 200 )
 #define N_PAINT_ID_LAYER_BLEND        ( 201 )
@@ -327,6 +328,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 @property (weak) IBOutlet NSTextField     *n_resizer_contrast_value;
 @property (weak) IBOutlet NonnonScrollbar *n_resizer_contrast_scrollbar;
+
+@property (weak) IBOutlet NSTextField     *n_resizer_morphology_value;
+@property (weak) IBOutlet NonnonScrollbar *n_resizer_morphology_scrollbar;
 
 @property (weak) IBOutlet NSButton        *n_resizer_button_go;
 
@@ -1327,6 +1331,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_resizer_contrast_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_CONTRAST step:1 page:10 max:100 pos:0 redraw:TRUE];
 	[_n_resizer_contrast_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
 	[_n_resizer_contrast_value setIntegerValue:0];
+
+	_n_resizer_morphology_scrollbar.delegate = self;
+	[_n_resizer_morphology_scrollbar n_scrollbar_parameter:N_PAINT_ID_RESIZER_MORPHOLOGY step:2 page:5 max:20 pos:10 redraw:TRUE];
+	[_n_resizer_morphology_scrollbar n_scrollbar_nswindow_set:_n_resizer_window];
+	[_n_resizer_morphology_value setIntegerValue:0];
 
 
 	n_paint->grabber_rect_resizer = n_paint->grabber_rect;
@@ -2330,6 +2339,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_win_scrollbar_on_settingchange( [_n_resizer_vividness_scrollbar  n_scrollbar_struct_get], 0, TRUE );
 	n_win_scrollbar_on_settingchange( [_n_resizer_sharpness_scrollbar  n_scrollbar_struct_get], 0, TRUE );
 	n_win_scrollbar_on_settingchange( [_n_resizer_contrast_scrollbar   n_scrollbar_struct_get], 0, TRUE );
+	n_win_scrollbar_on_settingchange( [_n_resizer_morphology_scrollbar n_scrollbar_struct_get], 0, TRUE );
 
 	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_x_scrollbar n_scrollbar_struct_get], 0, TRUE );
 	n_win_scrollbar_on_settingchange( [_n_formatter_cur_hotspot_y_scrollbar n_scrollbar_struct_get], 0, TRUE );
@@ -3113,6 +3123,22 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		[self n_paint_delayed_apply_timer_go:n_id reason:reason];
 	} else
+	if ( n_id == N_PAINT_ID_RESIZER_MORPHOLOGY )
+	{
+		int value = v - 10;
+		if ( ( value % 2 ) == 0 )
+		{
+			if ( value > 0 ) { value++; }
+			if ( value < 0 ) { value--; }
+		}
+
+		if ( value ==  1 ) { value =  3; }
+		if ( value == -1 ) { value = -3; }
+
+		[_n_resizer_morphology_value setIntegerValue:value];
+
+		[self n_paint_delayed_apply_timer_go:n_id reason:reason];
+	} else
 	if ( n_id == N_PAINT_ID_FORMATTER_CUR_X )
 	{
 		[_n_formatter_cur_hotspot_x_value setIntegerValue:v];
@@ -3541,35 +3567,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		[self NonnonPaintLayerSelect:_n_layer_listbox.txtbox->focus];
 
 
-		static n_type_int p_focus = -1;
-
-
-		BOOL double_click_onoff = FALSE;
-
-		if ( layer_click_phase == 0 )
+		if ( [theEvent clickCount] >= 3 )
 		{
-			layer_click_phase = 1;
-			layer_click_msec  = n_posix_tickcount();
-			p_focus = _n_layer_listbox.txtbox->focus;
+			//
 		} else
-		if ( layer_click_phase == 1 )
-		{
-			if ( p_focus != _n_layer_listbox.txtbox->focus )
-			{
-				layer_click_phase = 0;
-			} else
-			if ( FALSE == n_bmp_ui_timer_once( &layer_click_msec, 500 ) )
-			{
-				double_click_onoff = TRUE;
-				layer_click_phase = 0;
-			} else {
-				layer_click_msec  = n_posix_tickcount();
-			}
-		}
-
-		//double_click_onoff = ( ( [theEvent clickCount] % 3 ) == 2 );
-
-		if ( double_click_onoff )
+		if ( [theEvent clickCount] == 2 )
 		{
 //NSLog( @"n_layer_window_mouseDown" );
 
@@ -3668,6 +3670,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	[_n_resizer_vividness_scrollbar  mouseDragged:theEvent];
 	[_n_resizer_sharpness_scrollbar  mouseDragged:theEvent];
 	[_n_resizer_contrast_scrollbar   mouseDragged:theEvent];
+	[_n_resizer_morphology_scrollbar mouseDragged:theEvent];
 
 	[_n_formatter_cur_hotspot_x_scrollbar mouseDragged:theEvent];
 	[_n_formatter_cur_hotspot_y_scrollbar mouseDragged:theEvent];
@@ -4005,6 +4008,23 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		int ctrst = (int) [_n_resizer_contrast_scrollbar n_scrollbar_position_get];
 
 		n_bmp_flush_contrast( resizer_bmp, ctrst );
+		//n_paint_bmp_flush_posterization( resizer_bmp, ctrst ); // test
+
+	}
+
+	//if ( 0 )
+	{ // Thick/Thin
+
+		int v = (int) [_n_resizer_morphology_scrollbar n_scrollbar_position_get] - 10;
+
+		if ( v > 0 )
+		{
+			n_paint_bmp_thicken( resizer_bmp, abs( v ) );
+		} else
+		if ( v < 0 )
+		{
+			n_paint_bmp_thin   ( resizer_bmp, abs( v ) );
+		}
 
 	}
 
@@ -4422,36 +4442,6 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	n_paint_layer_text_mod( i, nam );
 
 	[_n_layer_listbox display];
-
-	[_n_paint_canvas display_optimized];
-
-}
-
-- (IBAction)n_layer_menu_thicken_lines:(id)sender {
-
-	n_type_int y = n_paint->layer_index;
-
-	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-	{
-		n_paint_bmp_thicken( &n_paint->layer_data[ y ].bmp_data, n_paint->color );
-	} else {
-		n_paint_bmp_thicken( &n_paint->layer_data[ y ].bmp_grab, n_paint->color );
-	}
-
-	[_n_paint_canvas display_optimized];
-
-}
-
-- (IBAction)n_layer_menu_thin_lines:(id)sender {
-
-	n_type_int y = n_paint->layer_index;
-
-	if ( n_paint->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-	{
-		n_paint_bmp_thin( &n_paint->layer_data[ y ].bmp_data, n_paint->color );
-	} else {
-		n_paint_bmp_thin( &n_paint->layer_data[ y ].bmp_grab, n_paint->color );
-	}
 
 	[_n_paint_canvas display_optimized];
 

@@ -138,13 +138,14 @@ n_paint_bmp_flush_alpha_base_color( n_bmp *bmp, u32 base_color )
 
 
 void
-n_paint_bmp_thicken( n_bmp *bmp, u32 color_target )
+n_paint_bmp_flush_posterization( n_bmp *bmp, int param )
 {
 
-	n_bmp_flush_antialias( bmp, 1.0 );
+	if ( n_bmp_error( bmp ) ) { return; }
 
 
-	const n_type_real ratio = 1.5;
+	if ( param <= 0 ) { return;}
+
 
 	n_type_gfx sx = N_BMP_SX( bmp );
 	n_type_gfx sy = N_BMP_SY( bmp );
@@ -156,13 +157,12 @@ n_paint_bmp_thicken( n_bmp *bmp, u32 color_target )
 
 		u32 color; n_bmp_ptr_get_fast( bmp, x,y, &color );
 
-		int a = n_bmp_a( color );
-		if ( a != 0 )
-		{
-			u32 c = n_bmp_blend_pixel( n_bmp_white_invisible, color_target, (n_type_real) a * ratio * n_bmp_coeff_channel );
-			n_bmp_ptr_set_fast( bmp, x,y, c );
-		}
+		int a =       n_bmp_a( color );
+		int r = (int) n_bmp_r( color ) / param * param;
+		int g = (int) n_bmp_g( color ) / param * param;
+		int b = (int) n_bmp_b( color ) / param * param;
 
+		n_bmp_ptr_set_fast( bmp, x,y, n_bmp_argb( a,r,g,b ) );
 
 		x++;
 		if ( x >= sx )
@@ -177,44 +177,154 @@ n_paint_bmp_thicken( n_bmp *bmp, u32 color_target )
 	return;
 }
 
+
+
+
 void
-n_paint_bmp_thin( n_bmp *bmp, u32 color_target )
+n_paint_bmp_thicken( n_bmp *arg, int kernel )
 {
 
-	n_bmp_flush_antialias( bmp, 1.0 );
-	n_bmp_flush_antialias( bmp, 1.0 );
+	// [!] : DeepSeek AI : Morphology Delation
 
 
-	n_type_gfx sx = N_BMP_SX( bmp );
-	n_type_gfx sy = N_BMP_SY( bmp );
+	if ( kernel < 3 ) { return; }
+
+
+	n_bmp bmp; n_bmp_carboncopy( arg, &bmp );
+
+
+	//const int kernel = 3;
+	const int offset = kernel / 2;
+
+
+	const n_type_gfx sx = N_BMP_SX( arg );
+	const n_type_gfx sy = N_BMP_SY( arg );
 
 	n_type_gfx x = 0;
 	n_type_gfx y = 0;
 	n_posix_loop
 	{
 
-		u32 color; n_bmp_ptr_get_fast( bmp, x,y, &color );
+		int a = 0, r = 0, g = 0, b = 0;
 
-		if ( color != n_bmp_white_invisible )
+		n_type_gfx kx = -offset;
+		n_type_gfx ky = -offset;
+		n_posix_loop
 		{
-			n_type_real a = n_bmp_a( color ) * n_bmp_coeff_channel;
 
-			//n_type_real d = pow( a, 2 );
-			n_type_real d = sin( 2 * M_PI * pow( a, 2 ) / 4 );
+			int nx = x + kx;
+			int ny = y + ky;
+			if ( n_bmp_ptr_is_accessible( arg, nx,ny ) )
+			{
+				u32 color; n_bmp_ptr_get_fast( arg, nx,ny, &color );
 
-			color = n_bmp_blend_pixel( n_bmp_white_invisible, color_target, d );
-			n_bmp_ptr_set_fast( bmp, x,y, color );
+				if ( a < n_bmp_a( color ) ) { a = n_bmp_a( color ); }
+				if ( r < n_bmp_r( color ) ) { r = n_bmp_r( color ); }
+				if ( g < n_bmp_g( color ) ) { g = n_bmp_g( color ); };
+				if ( b < n_bmp_b( color ) ) { b = n_bmp_b( color ); };
+			}
+
+			kx++;
+			if ( kx > offset )
+			{
+				kx = -offset;
+
+				ky++;
+				if ( ky > offset ) { break; }
+			}
 		}
+
+		n_bmp_ptr_set_fast( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
 
 
 		x++;
 		if ( x >= sx )
 		{
 			x = 0;
+
 			y++;
 			if ( y >= sy ) { break; }
 		}
 	}
+
+
+	n_bmp_free_fast( arg );
+	n_bmp_alias( &bmp, arg );
+
+
+	return;
+}
+
+void
+n_paint_bmp_thin( n_bmp *arg, int kernel )
+{
+
+	// [!] : DeepSeek AI : Morphology Erosion
+
+
+	if ( kernel < 3 ) { return; }
+
+
+	n_bmp bmp; n_bmp_carboncopy( arg, &bmp );
+
+
+	//const int kernel = 3;
+	const int offset = kernel / 2;
+
+
+	const n_type_gfx sx = N_BMP_SX( arg );
+	const n_type_gfx sy = N_BMP_SY( arg );
+
+	n_type_gfx x = 0;
+	n_type_gfx y = 0;
+	n_posix_loop
+	{
+
+		int a = 255, r = 255, g = 255, b = 255;
+
+		n_type_gfx kx = -offset;
+		n_type_gfx ky = -offset;
+		n_posix_loop
+		{
+
+			int nx = x + kx;
+			int ny = y + ky;
+			if ( n_bmp_ptr_is_accessible( arg, nx,ny ) )
+			{
+				u32 color; n_bmp_ptr_get_fast( arg, nx,ny, &color );
+
+				if ( a > n_bmp_a( color ) ) { a = n_bmp_a( color ); }
+				if ( r > n_bmp_r( color ) ) { r = n_bmp_r( color ); }
+				if ( g > n_bmp_g( color ) ) { g = n_bmp_g( color ); };
+				if ( b > n_bmp_b( color ) ) { b = n_bmp_b( color ); };
+			}
+
+			kx++;
+			if ( kx > offset )
+			{
+				kx = -offset;
+
+				ky++;
+				if ( ky > offset ) { break; }
+			}
+		}
+
+		n_bmp_ptr_set_fast( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
+
+
+		x++;
+		if ( x >= sx )
+		{
+			x = 0;
+
+			y++;
+			if ( y >= sy ) { break; }
+		}
+	}
+
+
+	n_bmp_free_fast( arg );
+	n_bmp_alias( &bmp, arg );
 
 
 	return;
@@ -430,3 +540,127 @@ n_paint_bmp_line( n_bmp *bmp, n_type_gfx fx, n_type_gfx fy, n_type_gfx tx, n_typ
 	return;
 }
 
+
+
+
+BOOL
+n_paint_bmp_color_similarity( u32 f, u32 t, int threshold )
+{
+
+	// [!] : Thx : DeepSeek AI : Euclid Distance Method
+
+	int da = n_bmp_a( f ) - n_bmp_a( t );
+	int dr = n_bmp_r( f ) - n_bmp_r( t );
+	int dg = n_bmp_g( f ) - n_bmp_g( t );
+	int db = n_bmp_b( f ) - n_bmp_b( t );
+
+	n_type_real distance = sqrt( da*da + dr*dr + dg*dg + db*db );
+
+
+	return ( distance < threshold );
+}
+
+n_type_index
+n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 color, u32 white )
+{
+
+	// [!] : return value : processed pixel count
+
+
+	if ( n_bmp_error( bmp ) ) { return 0; }
+	if ( n_bmp_error( ret ) ) { return 0; }
+
+
+	// [!] : fail-safe
+
+	u32 color_to;
+
+	n_bmp_ptr_get( bmp, x,y, &color_to );
+	if ( color == color_to ) { return 0; }
+
+
+	const int threshold = 256;
+
+
+	u8 *map = (u8*) n_memory_new_closed( N_BMP_SX( bmp ) * N_BMP_SY( bmp ) * sizeof( u8 ) );
+
+
+	int move = 0;
+	int stop = 0;
+
+	n_type_index count = 0;
+	n_type_index i     = 0;
+	n_posix_loop
+	{
+
+		u32 c1 = 0;
+		u32 c2 = 0;
+
+		if (
+			( FALSE == n_bmp_ptr_get( bmp, x,y, &c1 ) )
+			&&
+			( FALSE == n_bmp_ptr_get( ret, x,y, &c2 ) )
+			&&
+			(
+				//( c1 == color_to )
+				//||
+				( n_paint_bmp_color_similarity( c1, color_to, threshold ) )
+			)
+			&&
+			( c2 != white )
+		)
+		{
+
+			stop = 0;
+
+			n_bmp_ptr_set_fast( bmp, x,y, color ); count++;
+			n_bmp_ptr_set_fast( ret, x,y, white );
+
+			map[ i ] = move;
+
+			i++;
+
+		} else {
+
+			if ( move == 0 ) { y++; } else
+			if ( move == 1 ) { x--; } else
+			if ( move == 2 ) { y--; } else
+			if ( move == 3 ) { x++; }
+
+			stop++;
+			if ( stop >= 4 )
+			{
+
+				stop = 0;
+
+				if ( i <= 1 ) { break; }
+
+
+				i--;
+
+				move = map[ i ];
+				if ( move == 0 ) { y++; } else
+				if ( move == 1 ) { x--; } else
+				if ( move == 2 ) { y--; } else
+				if ( move == 3 ) { x++; }
+
+			}
+
+			move++;
+			if ( move >= 4 ) { move = 0; }
+
+		}
+
+		if ( move == 0 ) { y--; } else
+		if ( move == 1 ) { x++; } else
+		if ( move == 2 ) { y++; } else
+		if ( move == 3 ) { x--; }
+
+	}
+
+
+	n_memory_free_closed( map );
+
+
+	return count;
+}

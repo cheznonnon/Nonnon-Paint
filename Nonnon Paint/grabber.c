@@ -332,105 +332,46 @@ n_paint_grabber_fill( n_type_gfx tx, n_type_gfx ty, u32 color )
 
 // internal
 void
-n_paint_grabber_fill_special( n_type_gfx tx, n_type_gfx ty, u32 color )
+n_paint_grabber_fill_special( n_type_gfx fx, n_type_gfx fy, u32 color )
 {
 
 	n_paint_struct *p = n_paint;
 
 
-	n_type_gfx gx, gy;
+	n_type_gfx tx, ty;
 	{
 		n_type_gfx x,y,sx,sy; n_paint_grabber_system_get( &x,&y, &sx,&sy, NULL,NULL );
 
-		gx = tx - x;
-		gy = ty - y;
+		tx = fx - x;
+		ty = fy - y;
 	}
 
-/*
-	u32 color_orig;
-	if ( p->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-	{
-		n_bmp_ptr_get( p->pen_bmp_data, tx, ty, &color_orig );
-	} else {
-		n_bmp_ptr_get( p->pen_bmp_grab, gx, gy, &color_orig );
-	}
-*/
 
-	n_bmp bmp; n_bmp_zero( &bmp );
+	n_bmp *arg;
 
 	if ( p->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
 	{
-		n_bmp_carboncopy( p->pen_bmp_data, &bmp );
+		arg = p->pen_bmp_data;
 	} else {
-		n_bmp_carboncopy( p->pen_bmp_grab, &bmp );
+		arg = p->pen_bmp_grab;
 	}
 
-	{
-		n_type_index c = N_BMP_SX( &bmp ) * N_BMP_SY( &bmp );
-		n_type_index i = 0;
-		n_posix_loop
-		{
+	n_bmp bmp; n_bmp_zero( &bmp ); n_bmp_carboncopy( arg, &bmp );
+	n_bmp map; n_bmp_zero( &map ); n_bmp_carboncopy( arg, &map );
 
-			u32 clr = N_BMP_PTR( &bmp )[ i ];
+	// [!] : make grayscaled 0 to 255 bitmap
 
-			if ( n_bmp_a( clr ) )
-			{
-				N_BMP_PTR( &bmp )[ i ] = n_bmp_black;
-			}
+	n_bmp_flush( &map, 0 );
+	n_bmp_fill_special( &bmp, &map, tx, ty, color, n_bmp_white );
 
-			i++;
-			if ( i >= c ) { break; }
-		}
-	}
+	// [!] : tune is needed
+	//n_paint_bmp_thicken( &map, 11 ); // [x] : too much
+	n_bmp_flush_antialias( &map, 1.0 );
 
-	if ( p->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-	{
-		n_bmp_fill( &bmp, tx, ty, color );
-	} else {
-		n_bmp_fill( &bmp, gx, gy, color );
-	}
+	n_bmp_rasterizer( &map, arg, 0,0, color );
 
-
-	n_type_gfx x = 0;
-	n_type_gfx y = 0;
-	n_posix_loop
-	{
-
-		u32 c1; n_bmp_ptr_get_fast( &bmp, x, y, &c1 );
-
-		if ( c1 != n_bmp_black )
-		{
-			u32 c2;
-			if ( p->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-			{
-				n_bmp_ptr_get_fast( p->pen_bmp_data, x, y, &c2 );
-			} else {
-				n_bmp_ptr_get_fast( p->pen_bmp_grab, x, y, &c2 );
-			}
-
-			int a = n_posix_min( n_bmp_a( c1 ), n_bmp_a( c2 ) );
-			int r = n_bmp_r( c1 );
-			int g = n_bmp_g( c1 );
-			int b = n_bmp_b( c1 );
-
-			u32 c3 = n_bmp_argb( a,r,g,b );
-
-			if ( p->grabber_mode == N_PAINT_GRABBER_NEUTRAL )
-			{
-				n_bmp_ptr_set_fast( p->pen_bmp_data, x, y, c3 );
-			} else {
-				n_bmp_ptr_set_fast( p->pen_bmp_grab, x, y, c3 );
-			}
-		}
-
-		x++;
-		if ( x >= N_BMP_SX( &bmp ) )
-		{
-			x = 0;
-			y++;
-			if ( y >= N_BMP_SY( &bmp ) ) { break; }
-		}
-	}
+	n_bmp_free( &bmp );
+	n_bmp_free( &map );
 
 
 	return;
@@ -1356,6 +1297,8 @@ n_paint_grabber_wholegrb_stretch( int mode, n_type_real ratio_x, n_type_real rat
 
 	n_paint_struct *p = n_paint;
 
+	if ( p->grabber_stretch_bmp == NULL ) { return; }
+
 	if ( mode == N_PAINT_GRABBER_WHOLEGRAB_STRETCH_BACKUP )
 	{
 
@@ -1909,6 +1852,9 @@ void
 NonnonPaintGrabber_mouseUp( void )
 {
 
+	static BOOL mutex = FALSE;
+
+
 	if ( n_paint->tooltype != N_PAINT_TOOL_TYPE_GRABBER ) { return; }
 
 
@@ -2029,10 +1975,16 @@ NonnonPaintGrabber_mouseUp( void )
 	{
 //n_win_text_set_literal( hwnd, "Grabber : STRETCHING : WM_LBUTTONUP" );
 
+		if ( mutex ) { return; }
+
+		if ( n_paint->grabber_stretch_bmp == NULL ) { return; }
+
+		mutex = TRUE;
+
 		n_paint->xmouse_stop = TRUE;
 		BOOL ret = n_mac_window_dialog_yesno( "Really OK?" );
 		n_paint->xmouse_stop = FALSE;
-		
+
 		if ( ret )
 		{
 
@@ -2099,11 +2051,14 @@ NonnonPaintGrabber_mouseUp( void )
 		}
 
 		n_memory_free( n_paint->grabber_stretch_bmp );
+		n_paint->grabber_stretch_bmp = NULL;
 
 
 		n_paint->grabber_mode = N_PAINT_GRABBER_DRAG_OK;
 
 		[n_paint_global.delegate NonnonPaintStatus];
+
+		mutex = FALSE;
 
 	}
 

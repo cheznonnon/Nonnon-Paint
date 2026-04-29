@@ -537,10 +537,13 @@
 
 		Smooth Fill
 
-			press Comamnd key when click
+			click while pressing Comamnd key
 
-			+ currently fill-as-chunk only available
-			+ you cannot use black(RGB 0,0,0) as filling color
+			[ not perfect solution ]
+
+			+ please use after saved
+			+ don't use similar tone, else all will be painted
+			+ Euclid Distance is used : parameter 256 is used internally
 
 
 	3 : Grabber
@@ -759,7 +762,7 @@
 				an output image is jaggy as intended
 
 				+ use "Fill" and "Color Replacer" to remove garbage pixels
-				+ you can use "Thicken Lines" of Multi-Layer too
+				+ you can use "Thick/Thin" of Multi-Layer too
 
 	Gamma
 
@@ -802,6 +805,18 @@
 		tweak contrast
 
 		+ very strong tool, use a small value
+
+
+	Thick/Thin
+
+		make chunk thick or thin
+
+		+  plus value :  larger value of color grows
+		+ minus value : smaller value of color grows
+
+		+ so called "Morphology Delation/Erosion"
+		+ not almighty, not working well in some cases
+
 
 </pre>
 
@@ -1061,14 +1076,6 @@
 			[ This Only ]
 
 			turn off except for a selected layer
-
-			[ Thicken Lines ]
-			[ Thin Lines ]
-
-			make lines thicker/thinner
-
-			+ background : argb(   0,255,255,255 )
-			+ foreground : color on color picker
 
 			[ Add A New Layer ]
 
@@ -1335,8 +1342,6 @@ icon_style         = stretch             : stretch when "icon_size" is larger th
                      tile                : other parameters are not used
 icon_size          = Explorer Compatible : margin will be added
                      Image Loader        : an image will be resized
-
-icon_clip          = "image name(.BMP or .PNG)", offset_x, offset_y : use non-draw area
 
 </pre>
 </pre>

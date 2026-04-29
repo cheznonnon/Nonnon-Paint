@@ -66,7 +66,7 @@ n_paint_layer_ini_main( n_ini *ini, BOOL is_read )
 		} else {
 			n_posix_char str[ N_PAINT_LAYER_CCH ];
 			n_string_copy( n_paint->layer_data[ i ].name, str );
-//NSLog( @"ini_write() : %lld : %s", i, paint->layer_data[ i ].name );
+//NSLog( @"ini_write() : %lld : %s", i, n_paint->layer_data[ i ].name );
 
 			BOOL visible = n_paint->layer_data[ i ].visible;
 			int  percent = n_paint->layer_data[ i ].percent;
@@ -428,6 +428,7 @@ n_paint_layer_save( const n_posix_char *cmdline )
 
 	if ( n_paint->layer_load_as_layer )
 	{
+//NSLog( @"layer_load_as_layer" );
 
 		n_paint_layer_ini_write( &n_paint->layer_ini );
 

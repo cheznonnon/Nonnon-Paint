@@ -131,7 +131,7 @@
 	n_paint->cursor_grab_n_drag_onoff = FALSE;
 	[self resetCursorRects];
 
-	//[self.delegate otherMouseUp:theEvent];
+	[self.delegate otherMouseUp:theEvent];
 
 }
 /*
