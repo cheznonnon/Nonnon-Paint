@@ -94,10 +94,12 @@ n_paint_colorhistory_text( n_bmp *bmp, n_type_gfx sx, n_type_gfx sy, n_type_gfx 
 	gdi.text                = str;
 	gdi.text_font           = "Trebuchet MS";
 	gdi.text_size           = 14;
-	gdi.text_style          = N_GDI_TEXT_SMOOTH | N_GDI_TEXT_CONTOUR;
+	gdi.text_style          = N_GDI_TEXT_SMOOTH;
 	gdi.text_color_main     = n_bmp_white;
-	gdi.text_color_contour  = n_bmp_black;
-	gdi.text_fxsize2        = 1;
+
+	gdi.text_effect_style[ 0 ] = N_GDI_EFFECT_OUTLINE;
+	gdi.text_effect_color[ 0 ] = n_bmp_black;
+	gdi.text_effect_param[ 0 ] = 1;
 
 
 	n_bmp_free( bmp );

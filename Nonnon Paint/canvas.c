@@ -457,7 +457,6 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 		gdi.text_size          = 14;
 		gdi.text_color_main    = n_bmp_rgb_mac( 255,255,255 );
 		gdi.text_style         = N_GDI_TEXT_MAC_NO_CROP;
-		gdi.text_fxsize2       = 0;
 
 
 		n_bmp bmp; n_bmp_zero( &bmp ); n_gdi_bmp( &gdi, &bmp );

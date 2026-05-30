@@ -3334,13 +3334,24 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 	if ( [_n_button_0_0 n_is_pressed] )
 	{
-		n_paint_grabber_filter( N_PAINT_FILTER_SCALE_LIL );
+		if ( theEvent.modifierFlags & NSEventModifierFlagCommand )
+		{
+//NSLog( @"_n_button_0_0 : n_is_pressed : NSEventModifierFlagCommand" );
+			n_paint_grabber_filter( N_PAINT_FILTER_RESAMPLE_LIL );
+		} else {
+			n_paint_grabber_filter( N_PAINT_FILTER_SCALE_LIL );
+		}
 		[_n_paint_canvas display_optimized];
 		[self NonnonPaintTitle];
 	} else
 	if ( [_n_button_1_0 n_is_pressed] )
 	{
-		n_paint_grabber_filter( N_PAINT_FILTER_SCALE_BIG );
+		if ( theEvent.modifierFlags & NSEventModifierFlagCommand )
+		{
+			n_paint_grabber_filter( N_PAINT_FILTER_RESAMPLE_BIG );
+		} else {
+			n_paint_grabber_filter( N_PAINT_FILTER_SCALE_BIG );
+		}
 		[_n_paint_canvas display_optimized];
 		[self NonnonPaintTitle];
 	} else
@@ -3951,7 +3962,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	} else
 	if ( index == 7 )
 	{
-		n_paint_bmp_contour( resizer_bmp );
+		n_paint_bmp_flush_outline( resizer_bmp, n_paint->color );
 	}// else
 
 

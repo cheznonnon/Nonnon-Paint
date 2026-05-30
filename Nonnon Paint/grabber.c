@@ -755,13 +755,15 @@ n_paint_grabber_filter_go( n_bmp *b, int mode )
 	const int mirror = N_BMP_MIRROR_LEFTSIDE_RIGHT;
 
 
-	if ( mode == N_PAINT_FILTER_SCALE_LIL ) { n_bmp_scaler_lil(    b, 2                  ); } else
-	if ( mode == N_PAINT_FILTER_SCALE_BIG ) { n_bmp_scaler_big(    b, 2                  ); } else
-	if ( mode == N_PAINT_FILTER_MIRROR    ) { n_bmp_flush_mirror(  b, mirror             ); } else
-	if ( mode == N_PAINT_FILTER_ROTATE_L  ) { n_bmp_rotate(        b, N_BMP_ROTATE_LEFT  ); } else
-	if ( mode == N_PAINT_FILTER_ROTATE_R  ) { n_bmp_rotate(        b, N_BMP_ROTATE_RIGHT ); } else
-	if ( mode == N_PAINT_FILTER_ALPHA_CLR ) { n_bmp_alpha_visible( b                     ); } else
-	if ( mode == N_PAINT_FILTER_ALPHA_REV ) { n_bmp_alpha_reverse( b                     ); }// else
+	if ( mode == N_PAINT_FILTER_SCALE_LIL    ) { n_bmp_scaler_lil(    b, 2                  ); } else
+	if ( mode == N_PAINT_FILTER_SCALE_BIG    ) { n_bmp_scaler_big(    b, 2                  ); } else
+	if ( mode == N_PAINT_FILTER_MIRROR       ) { n_bmp_flush_mirror(  b, mirror             ); } else
+	if ( mode == N_PAINT_FILTER_ROTATE_L     ) { n_bmp_rotate(        b, N_BMP_ROTATE_LEFT  ); } else
+	if ( mode == N_PAINT_FILTER_ROTATE_R     ) { n_bmp_rotate(        b, N_BMP_ROTATE_RIGHT ); } else
+	if ( mode == N_PAINT_FILTER_ALPHA_CLR    ) { n_bmp_alpha_visible( b                     ); } else
+	if ( mode == N_PAINT_FILTER_ALPHA_REV    ) { n_bmp_alpha_reverse( b                     ); } else
+	if ( mode == N_PAINT_FILTER_RESAMPLE_LIL ) { n_bmp_resampler(     b, 0.5, 0.5           ); } else
+	if ( mode == N_PAINT_FILTER_RESAMPLE_BIG ) { n_bmp_resampler(     b, 2.0, 2.0           ); }// else
 
 
 	return;
@@ -833,7 +835,11 @@ n_paint_grabber_filter_sync_calc( n_bmp *bmp_base, int filter_type )
 	n_type_gfx px = x;
 	n_type_gfx py = y;
 
-	if ( filter_type == N_PAINT_FILTER_SCALE_LIL )
+	if (
+		( filter_type == N_PAINT_FILTER_SCALE_LIL )
+		||
+		( filter_type == N_PAINT_FILTER_RESAMPLE_LIL )
+	)
 	{
 		 x =  x / 2;
 		 y =  y / 2;
@@ -843,7 +849,11 @@ n_paint_grabber_filter_sync_calc( n_bmp *bmp_base, int filter_type )
 		n_paint->scroll.x /= 2;
 		n_paint->scroll.y /= 2;
 	} else
-	if ( filter_type == N_PAINT_FILTER_SCALE_BIG )
+	if (
+		( filter_type == N_PAINT_FILTER_SCALE_BIG )
+		||
+		( filter_type == N_PAINT_FILTER_RESAMPLE_BIG )
+	)
 	{
 //NSLog( @"N_PAINT_FILTER_SCALE_BIG" );
 		 x =  x * 2;
@@ -906,7 +916,11 @@ n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_c
 	n_type_gfx px = x;
 	n_type_gfx py = y;
 
-	if ( filter_type == N_PAINT_FILTER_SCALE_LIL )
+	if (
+		( filter_type == N_PAINT_FILTER_SCALE_LIL )
+		||
+		( filter_type == N_PAINT_FILTER_RESAMPLE_LIL )
+	)
 	{
 		if ( whole_canvas )
 		{
@@ -917,7 +931,11 @@ n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_c
 		sx = sx / 2;
 		sy = sy / 2;
 	} else
-	if ( filter_type == N_PAINT_FILTER_SCALE_BIG )
+	if (
+		( filter_type == N_PAINT_FILTER_SCALE_BIG )
+		||
+		( filter_type == N_PAINT_FILTER_RESAMPLE_BIG )
+	)
 	{
 		if ( whole_canvas )
 		{

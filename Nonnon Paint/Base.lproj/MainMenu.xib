@@ -695,7 +695,7 @@
                                 <string>Color Reduction</string>
                                 <string>Auto White Balance</string>
                                 <string>Squircle Icon Maker</string>
-                                <string>Contour</string>
+                                <string>Outline with Picked Color</string>
                             </objectValues>
                         </comboBoxCell>
                         <connections>

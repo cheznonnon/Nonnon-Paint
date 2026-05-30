@@ -428,70 +428,6 @@ n_paint_bmp_icon_squircle( n_bmp *bmp_ret )
 
 
 void
-n_paint_bmp_contour( n_bmp *bmp )
-{
-
-	if ( n_bmp_error( bmp ) ) { return; }
-
-
-	n_type_gfx x = 0;
-	n_type_gfx y = 0;
-	n_posix_loop
-	{
-
-		u32 color; n_bmp_ptr_get_fast( bmp, x,y, &color );
-
-		int a = n_bmp_a( color );
-		//int r = n_bmp_r( color );
-		//int g = n_bmp_g( color );
-		//int b = n_bmp_b( color );
-
-		if ( a != 0 )
-		{
-			color = n_bmp_black;
-			n_bmp_ptr_set_fast( bmp, x,y, color );
-		}
-
-		x++;
-		if ( x >= N_BMP_SX( bmp ) )
-		{
-			x = 0;
-			y++;
-			if ( y >= N_BMP_SY( bmp ) ) { break; }
-		}
-	}
-
-
-	const n_type_gfx contour = 1;
-
-	n_bmp bmp_old; n_bmp_zero( &bmp_old ); n_bmp_carboncopy( bmp, &bmp_old );
-
-	x = -contour;
-	y = -contour;
-	n_posix_loop
-	{
-
-		n_bmp_transcopy( &bmp_old, bmp, 0,0,N_BMP_SX( bmp ),N_BMP_SY( bmp ), x,y );
-
-		x++;
-		if ( x > contour )
-		{
-			x = -contour;
-			y++;
-			if ( y > contour ) { break; }
-		}
-	}
-
-	n_bmp_free( &bmp_old );
-
-
-	return;
-}
-
-
-
-
-void
 n_paint_bmp_line( n_bmp *bmp, n_type_gfx fx, n_type_gfx fy, n_type_gfx tx, n_type_gfx ty, u32 color, n_type_real blend )
 {
 
@@ -543,23 +479,6 @@ n_paint_bmp_line( n_bmp *bmp, n_type_gfx fx, n_type_gfx fy, n_type_gfx tx, n_typ
 
 
 
-BOOL
-n_paint_bmp_color_similarity( u32 f, u32 t, int threshold )
-{
-
-	// [!] : Thx : DeepSeek AI : Euclid Distance Method
-
-	int da = n_bmp_a( f ) - n_bmp_a( t );
-	int dr = n_bmp_r( f ) - n_bmp_r( t );
-	int dg = n_bmp_g( f ) - n_bmp_g( t );
-	int db = n_bmp_b( f ) - n_bmp_b( t );
-
-	n_type_real distance = sqrt( da*da + dr*dr + dg*dg + db*db );
-
-
-	return ( distance < threshold );
-}
-
 n_type_index
 n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 color, u32 white )
 {
@@ -604,7 +523,7 @@ n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 colo
 			(
 				//( c1 == color_to )
 				//||
-				( n_paint_bmp_color_similarity( c1, color_to, threshold ) )
+				( n_bmp_color_similarity( c1, color_to, threshold ) )
 			)
 			&&
 			( c2 != white )
@@ -663,4 +582,97 @@ n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 colo
 
 
 	return count;
+}
+
+
+
+
+void
+n_paint_bmp_flush_outline( n_bmp *bmp_arg, u32 color_outline )
+{
+
+	// [!] : Thx : DeepSeek AI : Simplified Sobel Filter
+
+
+	// [x] : this logic cannot control thickness
+
+
+	if ( n_bmp_error( bmp_arg ) ) { return; }
+
+
+	n_bmp bmp; n_bmp_carboncopy( bmp_arg, &bmp );
+
+	u32 c; n_bmp_ptr_get( &bmp, 0,0, &c );
+	n_bmp_flush_replacer( &bmp, c, n_bmp_black_invisible );
+
+
+	n_bmp ret; n_bmp_carboncopy( bmp_arg, &ret );
+	n_bmp_flush( &ret, n_bmp_black_invisible );
+
+
+	const int threshold = 100;
+
+
+	n_type_gfx sx = N_BMP_SX( &bmp );
+	n_type_gfx sy = N_BMP_SY( &bmp );
+
+	n_type_gfx x = 0;
+	n_type_gfx y = 0;
+	n_posix_loop
+	{//break;
+
+		u32 color_tl = 0; n_bmp_ptr_get( &bmp, x-1,y-1, &color_tl );
+		u32 color_tm = 0; n_bmp_ptr_get( &bmp, x-0,y-1, &color_tm );
+		u32 color_tr = 0; n_bmp_ptr_get( &bmp, x+1,y-1, &color_tr );
+
+		u32 color_ml = 0; n_bmp_ptr_get( &bmp, x-1,y-0, &color_ml );
+		//u32 color_mm = 0; n_bmp_ptr_get( &bmp, x-0,y-0, &color_mm );
+		u32 color_mr = 0; n_bmp_ptr_get( &bmp, x+1,y-0, &color_mr );
+
+		u32 color_bl = 0; n_bmp_ptr_get( &bmp, x-1,y+1, &color_bl );
+		u32 color_bm = 0; n_bmp_ptr_get( &bmp, x-0,y+1, &color_bm );
+		u32 color_br = 0; n_bmp_ptr_get( &bmp, x+1,y+1, &color_br );
+
+		int tl = n_bmp_a( color_tl );
+		int tm = n_bmp_a( color_tm );
+		int tr = n_bmp_a( color_tr );
+
+		int ml = n_bmp_a( color_ml );
+		//int mm = n_bmp_a( color_mm );
+		int mr = n_bmp_a( color_mr );
+
+		int bl = n_bmp_a( color_bl );
+		int bm = n_bmp_a( color_bm );
+		int br = n_bmp_a( color_br );
+
+		n_type_gfx gx = -tl + tr - 2*ml + 2*mr - bl + br;
+		n_type_gfx gy = -tl - 2*tm - tr + bl + 2*bm + br;
+
+		int mag = (int) sqrt( gx*gx + gy*gy );
+
+		if ( mag > threshold )
+		{
+			n_bmp_ptr_set_fast( &ret, x,y, n_bmp_white );
+		}
+
+		x++;
+		if ( x >= sx )
+		{
+			x = 0;
+			y++;
+			if ( y >= sy ) { break; }
+		}
+	}
+
+
+	n_bmp_flush_antialias( &ret, 1.0 );
+	n_paint_bmp_thicken( &ret, 7 );
+
+	n_bmp_rasterizer( &ret, bmp_arg, 0,0, color_outline );
+
+	n_bmp_free_fast( &bmp );
+	n_bmp_free_fast( &ret );
+
+
+	return;
 }
