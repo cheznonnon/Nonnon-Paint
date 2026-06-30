@@ -171,7 +171,7 @@ n_paint_grabber_resync( n_type_gfx x, n_type_gfx y, n_type_gfx sx, n_type_gfx sy
 //NSLog( @"T : %0.0f %0.0f %0.0f %0.0f", tx,ty,tsx,tsy );
 
 	p->redraw_type = N_PAINT_REDRAW_TYPE_PEN;
-	[n_paint_global displayRect:NSMakeRect( tx,ty,tsx,tsy )];[n_paint_global displayRect:NSMakeRect( tx,ty,tsx,tsy )];
+	[n_paint_global displayRect:NSMakeRect( tx,ty,tsx,tsy )];
 
 	p->grabber_resync_rect = NSMakeRect( cx,cy,csx,csy );
 
@@ -182,15 +182,17 @@ n_paint_grabber_resync( n_type_gfx x, n_type_gfx y, n_type_gfx sx, n_type_gfx sy
 void
 n_paint_grabber_resync_auto( void )
 {
-//[n_paint_global display_optimized]; return;
-
-
-	[n_paint_global displayRect:n_paint->grabber_tooltip_rect_drawn];
+//[n_paint_global display_optimized]; return; // [x] : too much heavy
 
 
 	n_type_gfx x,y,sx,sy; n_paint_grabber_system_get( &x,&y, &sx,&sy, NULL,NULL );
 
 	n_paint_grabber_resync( x,y,sx,sy );
+
+
+	// [Needed] : after resync()
+
+	[n_paint_global displayRect:n_paint->grabber_tooltip_rect_drawn];
 
 
 	return;

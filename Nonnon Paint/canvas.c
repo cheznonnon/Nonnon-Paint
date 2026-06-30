@@ -846,7 +846,7 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 						{
 							redraw_color = n_bmp_rgb_mac( 255,0,128 );
 						} else
-						if ( ( yy >= ( center_x - zoom ) )&&( yy <= ( center_x + zoom ) ) )
+						if ( ( yy >= ( center_y - zoom ) )&&( yy <= ( center_y + zoom ) ) )
 						{
 							redraw_color = n_bmp_rgb_mac( 255,0,128 );
 						}

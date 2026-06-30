@@ -299,7 +299,7 @@ typedef struct {
 } n_paint_struct;
 
 
-#define n_paint_zero( p ) n_memory_zero( p, sizeof( n_paint ) )
+#define n_paint_zero( p ) n_memory_zero( p, sizeof( n_paint_struct ) )
 
 
 static n_paint_struct  n_paint_instance;

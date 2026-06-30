@@ -234,7 +234,7 @@ n_paint_bmp_thicken( n_bmp *arg, int kernel )
 			}
 		}
 
-		n_bmp_ptr_set_fast( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
+		n_bmp_ptr_set( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
 
 
 		x++;
@@ -309,7 +309,7 @@ n_paint_bmp_thin( n_bmp *arg, int kernel )
 			}
 		}
 
-		n_bmp_ptr_set_fast( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
+		n_bmp_ptr_set( &bmp, x,y, n_bmp_argb( a,r,g,b ) );
 
 
 		x++;
