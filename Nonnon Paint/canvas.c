@@ -1016,6 +1016,10 @@ static BOOL     n_paint_grabber_frame_anim_onoff = FALSE;
 				}
 
 				c = n_bmp_alpha_visible_pixel( c );
+				if ( n_paint->gray_canvas_onoff )
+				{
+					c = n_bmp_grayscale_pixel( c );
+				}
 				n_bmp_ptr_set( n_paint_canvas, tx + x + bx, ty + y + by, c );
 
 				bx++;

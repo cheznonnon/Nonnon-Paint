@@ -295,6 +295,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 @property (weak) IBOutlet NSMenuItem *n_menu_grid;
 @property (weak) IBOutlet NSMenuItem *n_menu_pixelgrid;
 @property (weak) IBOutlet NSMenuItem *n_menu_alpha_emphasizer;
+@property (weak) IBOutlet NSMenuItem *n_menu_gray_canvas;
 @property (weak) IBOutlet NSMenuItem *n_menu_pressure;
 
 @property (weak) IBOutlet NSMenuItem *n_menu_clear_canvas;
@@ -333,6 +334,7 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 @property (weak) IBOutlet NonnonScrollbar *n_resizer_morphology_scrollbar;
 
 @property (weak) IBOutlet NSButton        *n_resizer_button_go;
+
 
 // Formatter
 
@@ -561,6 +563,11 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 		n_paint->alpha_emphasizer_onoff = [str intValue];
 		if ( n_paint->alpha_emphasizer_onoff ) { [_n_menu_alpha_emphasizer setState:NSControlStateValueOn]; }
 
+		str = n_mac_settings_read( @"gray_canvas_onoff" );
+		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"0"]; }
+		n_paint->gray_canvas_onoff = [str intValue];
+		if ( n_paint->gray_canvas_onoff ) { [_n_menu_gray_canvas setState:NSControlStateValueOn]; }
+
 		str = n_mac_settings_read( @"pressure_onoff" );
 		if ( str.length == 0 ) { str = [NSString stringWithFormat:@"1"]; }
 		n_paint->pressure_onoff = [str intValue];
@@ -608,6 +615,9 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 
 		str = [NSString stringWithFormat:@"%d", n_paint->alpha_emphasizer_onoff];
 		n_mac_settings_write( @"alpha_emphasizer_onoff", str );
+
+		str = [NSString stringWithFormat:@"%d", n_paint->gray_canvas_onoff];
+		n_mac_settings_write( @"gray_canvas_onoff", str );
 
 		str = [NSString stringWithFormat:@"%d", n_paint->pressure_onoff];
 		n_mac_settings_write( @"pressure_onoff", str );
@@ -2619,6 +2629,22 @@ NonnonTxtbox *n_layer_listbox_global = NULL;
 	} else {
 		[_n_menu_alpha_emphasizer setState:NSControlStateValueOff];
 		n_paint->alpha_emphasizer_onoff = FALSE;
+	}
+
+	[_n_paint_canvas display_optimized];
+
+}
+
+- (IBAction)n_menu_gray_canvas_method:(NSMenuItem *)sender {
+
+	NSControlStateValue s = [_n_menu_gray_canvas state];
+	if ( s == NSControlStateValueOff )
+	{
+		[_n_menu_gray_canvas setState:NSControlStateValueOn];
+		n_paint->gray_canvas_onoff = TRUE;
+	} else {
+		[_n_menu_gray_canvas setState:NSControlStateValueOff];
+		n_paint->gray_canvas_onoff = FALSE;
 	}
 
 	[_n_paint_canvas display_optimized];

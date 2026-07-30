@@ -88,6 +88,7 @@
                 <outlet property="n_menu_alpha_tweaker" destination="UQD-Ju-lph" id="qyx-Qe-2r9"/>
                 <outlet property="n_menu_clear_canvas" destination="Wuv-1D-zh4" id="yMY-Yn-Mg4"/>
                 <outlet property="n_menu_color_replacer" destination="MgF-hv-wqx" id="ZNm-i6-fBs"/>
+                <outlet property="n_menu_gray_canvas" destination="5Js-Rm-C3C" id="S63-Z3-8V4"/>
                 <outlet property="n_menu_grid" destination="qxb-7c-Dd6" id="0Ad-sA-2DS"/>
                 <outlet property="n_menu_pixelgrid" destination="iMn-r9-Poh" id="BsQ-qi-JB8"/>
                 <outlet property="n_menu_pressure" destination="8jZ-rK-vKk" id="aY7-5Y-7t2"/>
@@ -180,6 +181,12 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="n_menu_alpha_emphasizer_method:" target="Voe-Tx-rLC" id="UQf-Zk-R3o"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Gray Canvas On/Off" id="5Js-Rm-C3C">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="n_menu_gray_canvas_method:" target="Voe-Tx-rLC" id="ueG-ST-sLa"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Pressure On/Off" id="8jZ-rK-vKk">

@@ -143,6 +143,7 @@ typedef struct {
 	BOOL       pixel_grid_onoff;
 	BOOL       alpha_emphasizer_onoff;
 	BOOL       pressure_onoff;
+	BOOL       gray_canvas_onoff;
 
 
 	// [!] : Canvas
