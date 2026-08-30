@@ -480,7 +480,7 @@ n_paint_bmp_line( n_bmp *bmp, n_type_gfx fx, n_type_gfx fy, n_type_gfx tx, n_typ
 
 
 n_type_index
-n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 color, u32 white )
+n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 color, u32 white, int threshold )
 {
 
 	// [!] : return value : processed pixel count
@@ -498,7 +498,7 @@ n_bmp_fill_special( n_bmp *bmp, n_bmp *ret, n_type_gfx x, n_type_gfx y, u32 colo
 	if ( color == color_to ) { return 0; }
 
 
-	const int threshold = 256;
+	//const int threshold = 256;
 
 
 	u8 *map = (u8*) n_memory_new_closed( N_BMP_SX( bmp ) * N_BMP_SY( bmp ) * sizeof( u8 ) );

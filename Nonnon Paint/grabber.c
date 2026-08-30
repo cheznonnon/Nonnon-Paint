@@ -361,13 +361,13 @@ n_paint_grabber_fill_special( n_type_gfx fx, n_type_gfx fy, u32 color )
 	n_bmp bmp; n_bmp_zero( &bmp ); n_bmp_carboncopy( arg, &bmp );
 	n_bmp map; n_bmp_zero( &map ); n_bmp_carboncopy( arg, &map );
 
+	n_bmp_fill( &bmp, 0,0, ~color );
+
 	// [!] : make grayscaled 0 to 255 bitmap
 
 	n_bmp_flush( &map, 0 );
-	n_bmp_fill_special( &bmp, &map, tx, ty, color, n_bmp_white );
+	n_bmp_fill_special( &bmp, &map, tx, ty, color, n_bmp_white, 128 );
 
-	// [!] : tune is needed
-	//n_paint_bmp_thicken( &map, 11 ); // [x] : too much
 	n_bmp_flush_antialias( &map, 1.0 );
 
 	n_bmp_rasterizer( &map, arg, 0,0, color );
@@ -823,93 +823,12 @@ n_paint_grabber_filter_go_thread( int filter_type, BOOL data_onoff, BOOL grab_on
 
 // internal
 void
-n_paint_grabber_filter_sync_calc( n_bmp *bmp_base, int filter_type )
+n_paint_grabber_warp( n_bmp *bmp_canvas, n_bmp *bmp_grab, int filter_type, BOOL whole_canvas )
 {
 //return;
 
-	n_type_gfx psx = N_BMP_SX( bmp_base );
-	n_type_gfx psy = N_BMP_SY( bmp_base );
-
-
-	n_type_gfx x,y,sx,sy,fx,fy; n_paint_grabber_system_get( &x,&y, &sx,&sy, &fx,&fy );
-//NSLog( @"Before : %d %d %d %d ", x, y, sx, sy );
-
-	n_type_gfx px = x;
-	n_type_gfx py = y;
-
-	if (
-		( filter_type == N_PAINT_FILTER_SCALE_LIL )
-		||
-		( filter_type == N_PAINT_FILTER_RESAMPLE_LIL )
-	)
-	{
-		 x =  x / 2;
-		 y =  y / 2;
-		sx = sx / 2;
-		sy = sy / 2;
-
-		n_paint->scroll.x /= 2;
-		n_paint->scroll.y /= 2;
-	} else
-	if (
-		( filter_type == N_PAINT_FILTER_SCALE_BIG )
-		||
-		( filter_type == N_PAINT_FILTER_RESAMPLE_BIG )
-	)
-	{
-//NSLog( @"N_PAINT_FILTER_SCALE_BIG" );
-		 x =  x * 2;
-		 y =  y * 2;
-		sx = sx * 2;
-		sy = sy * 2;
-
-		n_paint->scroll.x *= 2;
-		n_paint->scroll.y *= 2;
-	} else
-	if ( filter_type == N_PAINT_FILTER_MIRROR    )
-	{
-		x = psx - ( x + sx );
-	} else
-	if ( filter_type == N_PAINT_FILTER_ROTATE_L  )
-	{
-		x = py;
-		y = psx - ( px + sx );
-
-		CGFloat tmp = n_paint->scroll.x;
-		n_paint->scroll.x = n_paint->scroll.y;
-		n_paint->scroll.y = tmp;
-	} else
-	if ( filter_type == N_PAINT_FILTER_ROTATE_R  )
-	{
-		x = psy - ( py + sy );
-		y = px;
-
-		CGFloat tmp = n_paint->scroll.x;
-		n_paint->scroll.x = n_paint->scroll.y;
-		n_paint->scroll.y = tmp;
-	}
-
-	fx = x;
-	fy = y;
-
-//NSLog( @"After : %d %d %d %d ", x, y, sx, sy );
-
-	n_paint_grabber_system_set( &x,&y, &sx,&sy, &fx,&fy );
-
-
-	return;
-}
-
-// internal
-void
-n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_canvas )
-{
-//return;
-
-	n_paint_struct *p = n_paint;
-
-	n_type_gfx psx = N_BMP_SX( &p->layer_data[ 0 ].bmp_data );
-	n_type_gfx psy = N_BMP_SY( &p->layer_data[ 0 ].bmp_data );
+	n_type_gfx psx = N_BMP_SX( bmp_canvas );
+	n_type_gfx psy = N_BMP_SY( bmp_canvas );
 
 
 	n_type_gfx x,y,sx,sy,fx,fy; n_paint_grabber_system_get( &x,&y, &sx,&sy, &fx,&fy );
@@ -963,8 +882,8 @@ n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_c
 			y = psx - ( px + sx );
 		}
 
-		sx = N_BMP_SY( p->pen_bmp_grab );
-		sy = N_BMP_SX( p->pen_bmp_grab );
+		sx = N_BMP_SY( bmp_grab );
+		sy = N_BMP_SX( bmp_grab );
 	} else
 	if ( filter_type == N_PAINT_FILTER_ROTATE_R  )
 	{
@@ -974,8 +893,8 @@ n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_c
 			y = px;
 		}
 
-		sx = N_BMP_SY( p->pen_bmp_grab );
-		sy = N_BMP_SX( p->pen_bmp_grab );
+		sx = N_BMP_SY( bmp_grab );
+		sy = N_BMP_SX( bmp_grab );
 	}
 
 	fx = x;
@@ -991,7 +910,7 @@ n_paint_grabber_filter_sync_calc_for_grabbed_area( int filter_type, BOOL whole_c
 
 // internal
 BOOL
-n_paint_grabber_filter_sync( int filter_type, BOOL calc, BOOL refresh )
+n_paint_grabber_filter_sync( int filter_type, BOOL refresh )
 {
 
 	n_paint_struct *p = n_paint;
@@ -1002,33 +921,18 @@ n_paint_grabber_filter_sync( int filter_type, BOOL calc, BOOL refresh )
 
 	if ( p->tooltype != N_PAINT_TOOL_TYPE_GRABBER )
 	{
+		n_paint_grabber_warp( p->pen_bmp_data, p->pen_bmp_grab, filter_type, YES );
 		n_paint_grabber_filter_go( p->pen_bmp_data, filter_type );
 	}
 
 
-	if ( calc )
 	{
-		n_paint_grabber_filter_sync_calc( p->pen_bmp_data, filter_type );
-	}
+		n_bmp b; n_bmp_carboncopy( p->pen_bmp_grab, &b );
 
+		n_paint_grabber_filter_go( &b, filter_type );
 
-	n_bmp b; n_bmp_carboncopy( p->pen_bmp_grab, &b );
-
-	n_paint_grabber_filter_go( &b, filter_type );
-
-//n_paint_grabber_select( &b, n_false );
-
-	{
 		n_bmp_free( p->pen_bmp_grab );
 		n_bmp_alias( &b, p->pen_bmp_grab );
-
-		if ( calc )
-		{
-			n_type_gfx sx = N_BMP_SX( &b );
-			n_type_gfx sy = N_BMP_SY( &b );
-
-			n_paint_grabber_system_set( NULL,NULL, &sx,&sy, NULL,NULL );
-		}
 
 		if ( refresh )
 		{
@@ -1116,10 +1020,8 @@ n_paint_grabber_load( n_posix_char *name, int mode, int filter_type )
 
 			if ( p->layer_onoff )
 			{
-				n_paint_grabber_filter_sync_calc( &p->layer_data[ 0 ].bmp_data, filter_type );
 				n_paint_grabber_filter_go_thread( filter_type, YES, NO );
 			} else {
-				n_paint_grabber_filter_sync_calc( p->pen_bmp_data, filter_type );
 				n_paint_grabber_filter_go( p->pen_bmp_data, filter_type );
 			}
 
@@ -1133,14 +1035,14 @@ n_paint_grabber_load( n_posix_char *name, int mode, int filter_type )
 			if ( p->tooltype == N_PAINT_TOOL_TYPE_GRABBER )
 			{
 //NSLog( @"Grabber Only" );
-				n_paint_grabber_filter_sync_calc_for_grabbed_area( filter_type, NO );
+				n_paint_grabber_warp( &p->layer_data[ 0 ].bmp_data, p->pen_bmp_grab, filter_type, NO );
 
 				n_paint_grabber_filter_go_thread( filter_type, NO, YES );
 
 				n_paint_grabber_resync_auto();
 			} else {
 //NSLog( @"Whole Canvas" );
-				n_paint_grabber_filter_sync_calc_for_grabbed_area( filter_type, YES );
+				n_paint_grabber_warp( &p->layer_data[ 0 ].bmp_data, p->pen_bmp_grab, filter_type, YES );
 
 				n_paint_grabber_filter_go_thread( filter_type, YES, YES );
 
@@ -1158,7 +1060,7 @@ n_paint_grabber_load( n_posix_char *name, int mode, int filter_type )
 				n_bmp_carboncopy( p->pen_bmp_grab, &b );
 				n_paint_grabber_filter_go( &b, filter_type );
 			} else {
-				return n_paint_grabber_filter_sync( filter_type, TRUE, TRUE );
+				return n_paint_grabber_filter_sync( filter_type, TRUE );
 			}
 
 		}
